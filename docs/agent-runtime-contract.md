@@ -1,4 +1,4 @@
-# Agent Runtime 接口约定（草案 v0.2）
+# Agent Runtime 接口约定（草案 v0.3）
 
 维护人：成员4（Agent 执行层）  
 状态：**草案，待全组确认**。确认后，第 2–5 节的数据结构会落到 `backend/common/` 中的代码定义，以代码为准。
@@ -114,7 +114,7 @@ class ToolResult(BaseModel):
     case_version: int | None = None      # 修改了案件状态的工具返回新版本号
 
 class ToolError(BaseModel):
-    code: Literal["INVALID_ARGS", "NOT_FOUND", "TIMEOUT", "UPSTREAM", "INTERNAL"]
+    code: Literal["INVALID_ARGS", "NOT_ALLOWED", "NOT_FOUND", "TIMEOUT", "UPSTREAM", "INTERNAL"]
     message: str
     retryable: bool = False
 ```
@@ -125,6 +125,8 @@ class ToolError(BaseModel):
 | `empty` | 正常执行，但没有找到任何结果 | 改写查询或换工具，最多重复 3 轮 |
 | `insufficient` | 有结果，但工具判断依据不足或信息缺失 | 追问用户、补充检索，或在输出中标注缺口 |
 | `error` | 执行失败 | 可重试错误由 Runtime 重试；其余交给模型决定 |
+
+错误码中，`INVALID_ARGS`（参数不符合 Schema）、`NOT_ALLOWED`（当前阶段未开放该工具）和 `NOT_FOUND`（工具不存在）由 Runtime 在调用工具之前返回；`TIMEOUT` 由 Runtime 计时；工具未捕获的异常记为 `INTERNAL`。只有 `retryable=True` 的错误会被重试，`TIMEOUT` 默认可重试。
 
 工具只报告“缺什么、发现了什么问题”，**不直接决定追问用户**。是否追问由 Agent 决定（见第 6 节）。例如 `check_evidence` 发现缺少保险信息时，返回 `status="insufficient"`，并在 `data` 中列出缺失字段和建议问题。
 
@@ -237,7 +239,6 @@ class LLMClient:
         *,
         temperature: float = 0.0,
         max_tokens: int | None = None,
-        run_id: str | None = None,     # 传入后自动写入该运行的执行记录
     ) -> LLMResponse: ...
 
 class LLMResponse(BaseModel):
@@ -250,7 +251,16 @@ class LLMResponse(BaseModel):
 ```
 
 - 采用 OpenAI 兼容的 tool calling 格式，便于切换 DeepSeek 等模型供应商。
-- 模型名称、API 地址和单价从环境变量与配置文件读取，API Key 只放在 `.env`，不提交到仓库。
+- 实现：`backend/agent/llm.py` 中的 `OpenAICompatibleClient`（真实模型）和 `ScriptedLLM`（按脚本回复，用于测试和演示）。
+- `chat` 只负责调用和计算用量；在 Agent 运行中，模型调用由 Runtime 写入执行记录。基线直接调用 `chat` 时，用返回的 `usage` 和 `estimated_cost` 自行统计。
+- 配置从环境变量读取，API Key 只放在 `.env`，不提交到仓库：
+
+| 变量 | 含义 |
+|---|---|
+| `CIVRA_LLM_BASE_URL` | OpenAI 兼容接口地址，例如 `https://api.deepseek.com` |
+| `CIVRA_LLM_API_KEY` | API Key |
+| `CIVRA_LLM_MODEL` | 模型名称 |
+| `CIVRA_LLM_PRICE_IN` / `CIVRA_LLM_PRICE_OUT` | 每百万输入 / 输出 token 的价格（元），用于估算费用 |
 - 评测时固定 `temperature` 和模型版本，并写入运行记录。
 
 ---
@@ -261,9 +271,9 @@ class LLMResponse(BaseModel):
 
 ```python
 class AgentRunner:
-    def start_run(self, case_id: str, user_message: str, *, config: RunConfig | None = None) -> RunHandle: ...
-    def resume_run(self, run_id: str, user_reply: UserReply) -> RunHandle: ...
-    def cancel_run(self, run_id: str) -> None: ...
+    def start_run(self, case_id: str, user_message: str, *, config: RunConfig | None = None) -> RunInfo: ...
+    def resume_run(self, run_id: str, user_reply: UserReply) -> RunInfo: ...
+    def cancel_run(self, run_id: str) -> RunInfo: ...
     def get_run(self, run_id: str) -> RunInfo: ...
     def iter_events(self, run_id: str, after_seq: int = 0) -> Iterator[RunEvent]: ...
     def get_trace(self, run_id: str) -> list[TraceStep]: ...
@@ -281,6 +291,19 @@ class RunInfo(BaseModel):
     pending: dict | None               # waiting_user 时，待回答的问题或待选择的路线
     final: FinalOutput | None          # completed 时的最终结果
     usage: RunUsage                    # 累计调用次数、token、费用、耗时
+    error: str | None                  # failed 时的原因
+```
+
+- `start_run` 和 `resume_run` 是同步调用：一直执行到运行进入 `waiting_user` 或结束才返回。API 层可以在后台线程中调用，同时用 `iter_events` 向前端推送进度。
+- `resume_run` 只能用于 `waiting_user` 状态的运行，否则抛出 `RunStateError`；同一案件已有 `running` 的运行时抛出 `RunConflict`（对应 HTTP 409）。
+- `cancel_run` 对 `waiting_user` 的运行立即生效；对 `running` 的运行，在下一步开始前生效。
+
+Runtime 通过一个很小的接口读取案件状态（`backend/agent/case_port.py`）。成员3和成员1确定案件存储后实现这个接口，在此之前使用内存版 `InMemoryCaseStore`：
+
+```python
+class CaseStatePort(Protocol):
+    def get_snapshot(self, case_id: str) -> CaseSnapshot: ...   # case_id、case_version、stage、summary
+    def set_stage(self, case_id: str, stage: str) -> int: ...   # 用户选择路线后调用，返回新的 case_version
 ```
 
 ### 4.2 最终输出 `FinalOutput`
@@ -320,9 +343,9 @@ class RunEvent(BaseModel):
     seq: int                   # 本次运行内递增
     run_id: str
     type: Literal[
-        "run.started", "step.started", "step.finished",
+        "run.started", "run.resumed", "step.started", "step.finished",
         "assistant.delta", "run.waiting_user",
-        "run.completed", "run.failed", "run.cancelled",
+        "run.completed", "run.failed", "run.cancelled", "run.budget_exhausted",
     ]
     step_id: int | None = None
     data: dict = {}
@@ -332,11 +355,12 @@ class RunEvent(BaseModel):
 | 事件 | `data` 内容 |
 |---|---|
 | `run.started` | `case_id`、`case_version`、`mode` |
+| `run.resumed` | `reply`：用户的回答或路线选择 |
 | `step.started` | `step_type`、`tool_name`、`arguments` 摘要 |
 | `step.finished` | `status`、`summary`、`duration_ms`、`error` |
 | `assistant.delta` | 模型回答的增量文本（可选，用于流式显示） |
 | `run.waiting_user` | `pending`：问题列表或路线选项 |
-| `run.completed` | `final`（`FinalOutput`） |
+| `run.completed` / `run.budget_exhausted` | `final`（`FinalOutput`） |
 | `run.failed` / `run.cancelled` | `reason` |
 
 SSE 格式示例：
@@ -483,3 +507,4 @@ class UserSimulator(Protocol):
 |---|---|---|
 | v0.1 | 2026-10-31 | 初稿 |
 | v0.2 | 2026-11-01 | 按仓库目录框架补充工具代码分层（2.0）；运行记录改存 `var/runs/`；补充待确认问题 9、10 |
+| v0.3 | 2026-11-01 | 与骨架代码对齐：新增错误码 `NOT_ALLOWED`、事件 `run.resumed` 和 `run.budget_exhausted`；运行接口返回 `RunInfo` 且为同步调用；`chat` 去掉 `run_id` 参数；补充模型环境变量和 `CaseStatePort` |
