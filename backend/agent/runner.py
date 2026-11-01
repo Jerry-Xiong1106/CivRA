@@ -88,6 +88,8 @@ class AgentRunner:
 
         cp.messages.append({"role": "user", "content": _reply_text(reply, pending)})
         cp.status, cp.pending = "running", None
+        # New information from the user opens a fresh retrieve/verify budget.
+        cp.feedback_rounds, cp.limit_notes = {}, []
         self._emit(cp, "run.resumed", data={"reply": reply.model_dump(exclude_defaults=True)})
         return self._drive(cp)
 
@@ -104,7 +106,10 @@ class AgentRunner:
         return _info(cp)
 
     def get_run(self, run_id: str) -> RunInfo:
-        return _info(self.store.load_checkpoint(run_id))
+        info = _info(self.store.load_checkpoint(run_id))
+        if info.final is not None:
+            info.stale = self.cases.get_snapshot(info.case_id).case_version > info.final.case_version
+        return info
 
     def iter_events(self, run_id: str, after_seq: int = 0) -> Iterator[RunEvent]:
         yield from self.store.read_events(run_id, after_seq)
@@ -128,8 +133,13 @@ class AgentRunner:
             if cp.run_id in self._cancel_requested:
                 self._cancel_requested.discard(cp.run_id)
                 return self._end(cp, "cancelled", "run.cancelled", reason="用户取消")
-            if cp.usage.steps >= cfg.max_steps or cp.usage.tool_calls >= cfg.max_tool_calls:
-                return self._budget_exhausted(cp)
+            if cp.usage.steps >= cfg.max_steps:
+                return self._budget_exhausted(cp, f"达到步数上限（{cfg.max_steps} 步）")
+            if cp.usage.tool_calls >= cfg.max_tool_calls:
+                return self._budget_exhausted(cp, f"达到工具调用上限（{cfg.max_tool_calls} 次）")
+            used_tokens = cp.usage.prompt_tokens + cp.usage.completion_tokens
+            if cfg.max_total_tokens is not None and used_tokens >= cfg.max_total_tokens:
+                return self._budget_exhausted(cp, f"达到 token 上限（已用 {used_tokens}，上限 {cfg.max_total_tokens}）")
 
             snap = self.cases.get_snapshot(cp.case_id)
             cp.case_version, cp.stage = snap.case_version, snap.stage
@@ -137,7 +147,7 @@ class AgentRunner:
                 s for s in BUILTINS.values() if cp.stage in s.stages
             ]
 
-            resp = self._call_model(cp, assemble(cp.messages, snap), tools)
+            resp = self._call_model(cp, assemble(cp.messages, snap, cfg.max_context_chars), tools)
             if resp is None:
                 return _info(cp)  # _call_model already ended the run as failed
             cp.messages.append(_assistant_message(resp))
@@ -194,15 +204,27 @@ class AgentRunner:
             case_id=cp.case_id, run_id=cp.run_id, step_id=step_id, case_version=cp.case_version,
             deadline=datetime.now(timezone.utc) + timedelta(seconds=timeout), stage=cp.stage,
         )
-        ex = self.registry.execute(call.tool_name, call.arguments, ctx, cp.config.enabled_tools)
+        loop = spec.feedback_loop if spec else None
+        limit = cp.config.max_feedback_rounds
+        if loop and cp.feedback_rounds.get(loop, 0) >= limit:
+            # Not executed: tell the model to stop retrying and report the gap instead.
+            result, attempts = ToolResult.fail(
+                "NOT_ALLOWED", f"{loop} 已达到 {limit} 轮上限，请停止重试，在 finish 的 open_issues 中说明缺口。"
+            ), 0
+        else:
+            ex = self.registry.execute(call.tool_name, call.arguments, ctx, cp.config.enabled_tools)
+            result, attempts = ex.result, ex.attempts
+            if loop and result.status != "ok":
+                cp.feedback_rounds[loop] = cp.feedback_rounds.get(loop, 0) + 1
+                if cp.feedback_rounds[loop] == limit:
+                    cp.limit_notes.append(f"检索与核验已重复 {limit} 轮仍未得到充分依据（{loop}），相关结论需进一步核实。")
         cp.usage.tool_calls += 1
-        result = ex.result
         if result.case_version is not None:
             cp.case_version = result.case_version
         _merge_sources(cp.source_refs, result.source_refs)
         self._finish_step(cp, step_id, "tool_call", started, t0, status=result.status, tool_name=call.tool_name,
                           arguments=call.arguments, result_summary=result.summary, source_refs=result.source_refs,
-                          error=result.error, attempt=max(ex.attempts, 1))
+                          error=result.error, attempt=max(attempts, 1))
         cp.messages.append(_tool_message(call.id, result))
 
     def _handle_builtin(self, cp: Checkpoint, call: ToolCall) -> str | None:
@@ -238,11 +260,13 @@ class AgentRunner:
 
     def _finish(self, cp: Checkpoint, args: dict[str, Any]) -> RunInfo:
         snap = self.cases.get_snapshot(cp.case_id)
+        issues = list(args.get("open_issues", []))
+        issues += [n for n in cp.limit_notes if n not in issues]
         cp.final = FinalOutput(
             answer=args.get("answer", ""),
             output_refs=args.get("output_refs", []),
             source_refs=cp.source_refs,
-            open_issues=args.get("open_issues", []),
+            open_issues=issues,
             case_version=snap.case_version,
         )
         step_id = self._begin_step(cp, "finish", "finish", None)
@@ -250,15 +274,14 @@ class AgentRunner:
                           tool_name="finish", result_summary=cp.final.answer[:200])
         return self._end(cp, "completed", "run.completed", final=cp.final.model_dump())
 
-    def _budget_exhausted(self, cp: Checkpoint) -> RunInfo:
-        cfg = cp.config
+    def _budget_exhausted(self, cp: Checkpoint, reason: str) -> RunInfo:
         cp.final = FinalOutput(
-            answer="已达到本次运行的调用上限，以下为目前已完成的部分。",
+            answer="已达到本次运行的预算上限，以下为目前已完成的部分。",
             source_refs=cp.source_refs,
-            open_issues=[f"达到预算上限（最多 {cfg.max_steps} 步、{cfg.max_tool_calls} 次工具调用），任务未完成。"],
+            open_issues=[f"{reason}，任务未完成。", *cp.limit_notes],
             case_version=cp.case_version,
         )
-        return self._end(cp, "budget_exhausted", "run.budget_exhausted", final=cp.final.model_dump())
+        return self._end(cp, "budget_exhausted", "run.budget_exhausted", reason=reason, final=cp.final.model_dump())
 
     def _end(self, cp: Checkpoint, status: str, event: str, **data: Any) -> RunInfo:
         cp.status, cp.pending = status, None

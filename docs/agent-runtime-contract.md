@@ -1,4 +1,4 @@
-# Agent Runtime 接口约定（草案 v0.3）
+# Agent Runtime 接口约定（草案 v0.4）
 
 维护人：成员4（Agent 执行层）  
 状态：**草案，待全组确认**。确认后，第 2–5 节的数据结构会落到 `backend/common/` 中的代码定义，以代码为准。
@@ -67,7 +67,10 @@ class ToolSpec(BaseModel):
     timeout_s: float = 30.0      # 单次调用超时
     max_retries: int = 1         # 仅对 retryable 错误重试
     side_effects: bool = False   # 是否修改案件状态或文件，例如 update_case 为 True
+    feedback_loop: str | None = None  # 所属的反馈循环，例如 "retrieve_verify"，见第 6.2 节
 ```
+
+`search_statutes`、`search_cases` 和 `verify_output` 请设置 `feedback_loop="retrieve_verify"`，Runtime 据此限制检索—核验的重复轮数。
 
 注册方式：
 
@@ -292,6 +295,7 @@ class RunInfo(BaseModel):
     final: FinalOutput | None          # completed 时的最终结果
     usage: RunUsage                    # 累计调用次数、token、费用、耗时
     error: str | None                  # failed 时的原因
+    stale: bool                        # 最终结果依据的案件版本是否已过时（第 6.4 节）
 ```
 
 - `start_run` 和 `resume_run` 是同步调用：一直执行到运行进入 `waiting_user` 或结束才返回。API 层可以在后台线程中调用，同时用 `iter_events` 向前端推送进度。
@@ -428,12 +432,21 @@ running ──► waiting_user ──(resume_run)──► running
 
 | 项目 | 默认值 |
 |---|---|
-| 每次运行最多步数 | 30 |
-| 每次运行最多工具调用 | 20 |
-| 检索—核验循环 | 3 轮（与计划书一致） |
-| 单次工具超时 | 30 秒（工具可在 `ToolSpec` 中另设） |
-| 可重试错误的重试次数 | 1 次 |
-| 单次运行 token 上限 | 待定，试点后确定 |
+| 项目 | 默认值 | `RunConfig` 字段 |
+|---|---|---|
+| 每次运行最多步数 | 30 | `max_steps` |
+| 每次运行最多工具调用 | 20 | `max_tool_calls` |
+| 每次运行 token 上限（输入加输出累计） | 200,000，试点后调整 | `max_total_tokens` |
+| 检索—核验循环 | 3 轮（与计划书一致） | `max_feedback_rounds` |
+| 发给模型的上下文长度 | 60,000 字符 | `max_context_chars` |
+| 单次工具超时 | 30 秒（工具可在 `ToolSpec` 中另设） | `ToolSpec.timeout_s` |
+| 可重试错误的重试次数 | 1 次 | `ToolSpec.max_retries` |
+
+步数、工具调用或 token 达到上限时，运行进入 `budget_exhausted`，`FinalOutput.open_issues` 说明是哪项达到上限。
+
+**检索—核验循环**：同一 `feedback_loop` 中的工具每返回一次非 `ok` 结果（`empty`、`insufficient`、`error`），算作一轮。达到 3 轮后，Runtime 不再执行该循环中的工具，而是返回 `NOT_ALLOWED`，提示模型停止重试；最终输出的 `open_issues` 会自动加入一条说明。用户回复后轮数重新计算，因为新信息可能让检索重新有效。
+
+**上下文压缩**：保存的完整历史不会被修改，只在发给模型时压缩。超过长度上限时，先把较早的工具结果缩减为 `status`、`summary` 和 `error`；仍然过长时，省略最早的几轮对话，并插入一条说明。用户的第一条消息和最近 4 轮始终完整保留；已确认的事实在每次调用时由案件状态提供，因此不依赖旧对话。
 
 ### 6.3 案件阶段与工具开放
 
@@ -454,7 +467,7 @@ running ──► waiting_user ──(resume_run)──► running
 - Runtime 在每个步骤结束、进入 `waiting_user` 时保存检查点：消息历史、`step_id`、预算用量、待回答问题、`case_version`。
 - `resume_run` 从最近检查点继续，不重复执行已完成的工具调用。
 - 进程中断后，处于 `running` 的运行可从最近检查点继续，或标记为 `failed`。
-- 用户补充材料使 `case_version` 增加后，依赖旧版本的输出标记为 `stale`，Agent 在下一次运行中决定是否重新生成。
+- 用户补充材料使 `case_version` 增加后，依赖旧版本的输出标记为 `stale`，Agent 在下一次运行中决定是否重新生成。目前 `get_run` 返回的 `RunInfo.stale` 表示最终结果所依据的案件版本已经过时；具体到每一份业务输出（证据目录、文书草稿）的过期标记，需要成员3的输出存储记录各自的 `case_version`。
 
 ---
 
@@ -469,6 +482,9 @@ class RunConfig(BaseModel):
     temperature: float = 0.0
     max_steps: int = 30
     max_tool_calls: int = 20
+    max_total_tokens: int | None = 200_000
+    max_feedback_rounds: int = 3
+    max_context_chars: int = 60_000
     enabled_tools: list[str] | None = None   # None 表示按阶段默认开放
     seed: int | None = None
 
@@ -508,3 +524,4 @@ class UserSimulator(Protocol):
 | v0.1 | 2026-10-31 | 初稿 |
 | v0.2 | 2026-11-01 | 按仓库目录框架补充工具代码分层（2.0）；运行记录改存 `var/runs/`；补充待确认问题 9、10 |
 | v0.3 | 2026-11-01 | 与骨架代码对齐：新增错误码 `NOT_ALLOWED`、事件 `run.resumed` 和 `run.budget_exhausted`；运行接口返回 `RunInfo` 且为同步调用；`chat` 去掉 `run_id` 参数；补充模型环境变量和 `CaseStatePort` |
+| v0.4 | 2026-11-01 | 新增 token 上限、检索—核验 3 轮上限（`ToolSpec.feedback_loop`）、上下文压缩和 `RunInfo.stale`（6.2、6.4） |

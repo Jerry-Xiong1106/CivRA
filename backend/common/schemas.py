@@ -65,6 +65,9 @@ class ToolSpec(BaseModel):
     timeout_s: float = 30.0
     max_retries: int = 1
     side_effects: bool = False
+    # Tools in the same feedback loop share a round limit, e.g. "retrieve_verify" for
+    # search_statutes / search_cases / verify_output. Every non-ok result uses one round.
+    feedback_loop: str | None = None
 
 
 class ToolContext(BaseModel):
@@ -111,6 +114,9 @@ class RunConfig(BaseModel):
     temperature: float = 0.0
     max_steps: int = 30
     max_tool_calls: int = 20
+    max_total_tokens: int | None = 200_000   # prompt + completion over the run; None = no limit
+    max_feedback_rounds: int = 3             # per feedback loop, reset when the user replies
+    max_context_chars: int = 60_000          # older history is compacted beyond this size
     enabled_tools: list[str] | None = None
     seed: int | None = None
 
@@ -148,6 +154,7 @@ class RunInfo(BaseModel):
     final: FinalOutput | None = None
     usage: RunUsage = Field(default_factory=RunUsage)
     error: str | None = None
+    stale: bool = False   # final was built on an older case_version than the case has now
 
 
 # ---------------------------------------------------------------- events and trace (§5)

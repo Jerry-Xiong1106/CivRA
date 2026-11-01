@@ -35,6 +35,8 @@ class Checkpoint(BaseModel):
     usage: RunUsage = Field(default_factory=RunUsage)
     pending: dict[str, Any] | None = None
     source_refs: list[SourceRef] = Field(default_factory=list)
+    feedback_rounds: dict[str, int] = Field(default_factory=dict)
+    limit_notes: list[str] = Field(default_factory=list)  # limits hit, added to open_issues on finish
     final: FinalOutput | None = None
     error: str | None = None
     cancel_requested: bool = False

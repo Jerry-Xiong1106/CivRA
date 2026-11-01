@@ -31,14 +31,79 @@ def case_context(snapshot: CaseSnapshot) -> str:
     return "当前案件状态（由系统提供，每次调用时更新）：\n" + json.dumps(body, ensure_ascii=False, indent=2)
 
 
-def assemble(history: list[dict[str, Any]], snapshot: CaseSnapshot) -> list[dict[str, Any]]:
+def assemble(history: list[dict[str, Any]], snapshot: CaseSnapshot, max_chars: int | None = None) -> list[dict[str, Any]]:
     """System prompt + fresh case state + conversation history.
 
     Case state is rebuilt on every call instead of stored in history, so the
-    model always sees the latest case_version.
+    model always sees the latest case_version. The stored history is never
+    modified; only this view is compacted when it grows past max_chars.
     """
-    return [
+    head = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "system", "content": case_context(snapshot)},
-        *history,
     ]
+    if max_chars is not None:
+        history = compact_history(history, max(max_chars - _size(head), 0))
+    return [*head, *history]
+
+
+KEEP_RECENT_UNITS = 4  # most recent turns are always sent in full
+
+
+def compact_history(history: list[dict[str, Any]], max_chars: int) -> list[dict[str, Any]]:
+    """Shrink older history to fit max_chars, in two passes.
+
+    1. Older tool results keep only status / summary / error (data and full
+       excerpts dropped). Confirmed facts are already in the case state.
+    2. If still too long, drop the oldest turns after the first user message.
+
+    A turn is a user message, or an assistant message together with its tool
+    replies, so every tool_call keeps its matching tool message.
+    """
+    if _size(history) <= max_chars:
+        return history
+    units = _units(history)
+    first, rest = units[:1], units[1:]
+    cut = max(len(rest) - KEEP_RECENT_UNITS, 0)
+    older = [[_slim(m) for m in u] for u in rest[:cut]]
+    recent = rest[cut:]
+
+    def flat(*parts: list[list[dict]]) -> list[dict]:
+        return [m for part in parts for u in part for m in u]
+
+    out = flat(first, older, recent)
+    dropped = 0
+    while _size(out) > max_chars and older:
+        older.pop(0)
+        dropped += 1
+        out = flat(first, older, recent)
+    if dropped:
+        note = {"role": "user", "content": f"（系统提示：为控制长度，较早的 {dropped} 轮对话已省略；已确认的事实见案件状态。）"}
+        out = flat(first) + [note] + flat(older, recent)
+    return out
+
+
+def _units(history: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
+    units: list[list[dict[str, Any]]] = []
+    for m in history:
+        if m["role"] == "tool" and units:
+            units[-1].append(m)
+        else:
+            units.append([m])
+    return units
+
+
+def _slim(m: dict[str, Any]) -> dict[str, Any]:
+    if m["role"] != "tool":
+        return m
+    try:
+        full = json.loads(m["content"])
+    except (json.JSONDecodeError, TypeError):
+        return m
+    kept = {k: full[k] for k in ("status", "summary", "error") if k in full}
+    kept["note"] = "较早的工具结果，详细数据已省略"
+    return {**m, "content": json.dumps(kept, ensure_ascii=False)}
+
+
+def _size(messages: list[dict[str, Any]]) -> int:
+    return sum(len(json.dumps(m, ensure_ascii=False)) for m in messages)

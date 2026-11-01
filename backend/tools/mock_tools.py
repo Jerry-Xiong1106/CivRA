@@ -42,6 +42,20 @@ SEARCH_STATUTES = ToolSpec(
         "additionalProperties": False,
     },
     owner="member2",
+    feedback_loop="retrieve_verify",
+)
+
+VERIFY_OUTPUT = ToolSpec(
+    name="verify_output",
+    description="核验草稿或分析：引用是否存在、版本是否适用、原文是否支持结论、事实和金额是否与案件记录一致。返回发现的问题和修改建议。",
+    parameters={
+        "type": "object",
+        "properties": {"text": {"type": "string", "minLength": 1}},
+        "required": ["text"],
+        "additionalProperties": False,
+    },
+    owner="member3",
+    feedback_loop="retrieve_verify",
 )
 
 CHECK_EVIDENCE = ToolSpec(
@@ -111,6 +125,10 @@ def build_mock_registry(cases: InMemoryCaseStore) -> ToolRegistry:
     def update_case(args: dict, ctx: ToolContext) -> ToolResult:
         version = cases.update_facts(ctx.case_id, args["facts"])
         return ToolResult(status="ok", summary=f"已更新 {len(args['facts'])} 项事实。", case_version=version)
+
+    @reg.tool(VERIFY_OUTPUT)
+    def verify_output(args: dict, ctx: ToolContext) -> ToolResult:
+        return ToolResult(status="ok", summary="未发现问题（mock）。", data={"issues": []})
 
     @reg.tool(DRAFT_DOCUMENT)
     def draft_document(args: dict, ctx: ToolContext) -> ToolResult:
