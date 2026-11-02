@@ -61,3 +61,4 @@ Do not commit credentials, identifiable personal data, or materials without conf
 - [Protocol](../docs/evaluation/protocol.md)
 - [Annotation guide](../docs/evaluation/annotation_guide.md)
 - [Scoring rubric](../docs/evaluation/rubric.md)
+- [Interface requirements (draft)](../docs/evaluation/interface_requirements.md)
