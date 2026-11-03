@@ -14,7 +14,7 @@ from typing import Any, Iterator
 from pydantic import BaseModel, Field
 
 from backend.common.schemas import (
-    FinalOutput, RunConfig, RunEvent, RunStatus, RunUsage, SourceRef, TraceStep,
+    FinalOutput, RunConfig, RunEvent, RunStatus, RunUsage, SourceRef, TraceStep, Wait,
 )
 
 DEFAULT_RUNS_DIR = Path(os.environ.get("CIVRA_RUNS_DIR", "var/runs"))
@@ -33,7 +33,10 @@ class Checkpoint(BaseModel):
     case_version: int
     stage: str
     usage: RunUsage = Field(default_factory=RunUsage)
-    pending: dict[str, Any] | None = None
+    wait: Wait | None = None
+    experiment_run_id: str | None = None
+    start_request_id: str | None = None
+    applied_requests: list[str] = Field(default_factory=list)  # resume request_ids already applied
     source_refs: list[SourceRef] = Field(default_factory=list)
     feedback_rounds: dict[str, int] = Field(default_factory=dict)
     limit_notes: list[str] = Field(default_factory=list)  # limits hit, added to open_issues on finish
@@ -77,6 +80,21 @@ class RunStore:
 
     def append_event(self, event: RunEvent) -> None:
         self._append(event.run_id, "events.jsonl", event)
+
+    def save_result(self, run_id: str, step_id: int, payload: dict[str, Any]) -> str:
+        """Store a step's full input/result; returns the result_ref recorded in the trace."""
+        ref = f"results/step_{step_id:04d}.json"
+        path = self._dir(run_id) / ref
+        path.parent.mkdir(exist_ok=True)
+        path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+        return ref
+
+    def read_result(self, run_id: str, ref: str) -> dict[str, Any]:
+        base = (self.root / run_id / "results").resolve()
+        path = (self.root / run_id / ref).resolve()
+        if base not in path.parents or not path.exists():  # only files under this run's results/
+            raise KeyError(f"unknown result_ref for {run_id}: {ref}")
+        return json.loads(path.read_text(encoding="utf-8"))
 
     def read_trace(self, run_id: str) -> list[TraceStep]:
         return [TraceStep.model_validate_json(line) for line in self._lines(run_id, "trace.jsonl")]

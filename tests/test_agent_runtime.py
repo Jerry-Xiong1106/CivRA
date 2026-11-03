@@ -40,8 +40,8 @@ def test_tool_feedback_leads_to_question_then_resume_after_restart(cases, tmp_pa
         result = last_tool_result(messages)
         assert result["status"] == "insufficient"
         return tool_call("ask_user", questions=[
-            {"id": "q1", "text": "交警是否出具了事故责任认定书？结论是什么？", "field": "liability_finding"},
-            {"id": "q2", "text": "对方车辆是否投保了交强险和商业险？", "field": "insurance"},
+            {"question_id": "q1", "text": "交警是否出具了事故责任认定书？结论是什么？", "field": "liability_finding"},
+            {"question_id": "q2", "text": "对方车辆是否投保了交强险和商业险？", "field": "insurance"},
         ])
 
     def record_answers(messages, tools):
@@ -63,12 +63,13 @@ def test_tool_feedback_leads_to_question_then_resume_after_restart(cases, tmp_pa
 
     info = runner.start_run(CASE, "我的车被追尾了，想要对方赔偿维修费。")
     assert info.status == "waiting_user"
-    assert info.pending["type"] == "questions"
-    assert [q["id"] for q in info.pending["questions"]] == ["q1", "q2"]
+    assert info.wait.kind == "clarification"
+    assert [q.question_id for q in info.wait.questions] == ["q1", "q2"]
 
     # Simulate a process restart: a new runner with the same store continues from the checkpoint.
     runner2 = AgentRunner(llm, build_mock_registry(cases), cases, store)
-    info = runner2.resume_run(info.run_id, UserReply(answers={"q1": "对方全责", "q2": "交强险+商业三者险100万"}))
+    info = runner2.resume_run(info.run_id, UserReply(answers={"q1": "对方全责", "q2": "交强险+商业三者险100万"}),
+                              wait_id=info.wait.wait_id, expected_case_version=1)
 
     assert info.status == "completed"
     assert info.final.open_issues == ["医疗费票据尚未上传"]
@@ -132,12 +133,12 @@ def test_route_choice_moves_stage_and_unlocks_tools(cases, tmp_path):
     ]
     runner = make_runner(cases, tmp_path, script)
     info = runner.start_run(CASE, "我想走法律途径")
-    assert info.status == "waiting_user" and info.pending["type"] == "route_choice"
+    assert info.status == "waiting_user" and info.wait.kind == "route_selection"
 
     with pytest.raises(RunStateError):
-        runner.resume_run(info.run_id, UserReply(route_choice="mediation"))  # not offered
+        runner.resume_run(info.run_id, UserReply(route_choice="mediation"), wait_id=info.wait.wait_id)  # not offered
 
-    info = runner.resume_run(info.run_id, UserReply(route_choice="litigation"))
+    info = runner.resume_run(info.run_id, UserReply(route_choice="litigation"), wait_id=info.wait.wait_id)
     assert info.status == "completed"
     assert cases.get_snapshot(CASE).stage == "litigation"
     assert info.final.output_refs == ["draft_mock_1"]
@@ -203,13 +204,13 @@ def test_retrieve_verify_round_limit(cases, tmp_path):
 
 def test_round_limit_resets_after_user_reply(cases, tmp_path):
     script = [tool_call("search_statutes", query="q")] * 3 + [
-        tool_call("ask_user", questions=[{"id": "q1", "text": "事故在哪个城市？"}]),
+        tool_call("ask_user", questions=[{"question_id": "q1", "text": "事故在哪个城市？"}]),
         tool_call("search_statutes", query="q"),
         lambda m, t: tool_call("finish", answer="ok") if last_tool_result(m)["status"] == "empty" else None,
     ]
     runner = AgentRunner(ScriptedLLM(script), _registry_with_failing_search(cases), cases, RunStore(tmp_path))
     info = runner.start_run(CASE, "查")
-    info = runner.resume_run(info.run_id, UserReply(answers={"q1": "上海"}))
+    info = runner.resume_run(info.run_id, UserReply(answers={"q1": "上海"}), wait_id=info.wait.wait_id)
     assert info.status == "completed"
     assert not any("3 轮" in i for i in info.final.open_issues)
 
@@ -264,11 +265,11 @@ def test_model_error_fails_run(cases, tmp_path):
 
 
 def test_cancel_while_waiting_and_conflicts(cases, tmp_path):
-    runner = make_runner(cases, tmp_path, [tool_call("ask_user", questions=[{"id": "q1", "text": "?"}])])
+    runner = make_runner(cases, tmp_path, [tool_call("ask_user", questions=[{"question_id": "q1", "text": "?"}])])
     info = runner.start_run(CASE, "hi")
     assert runner.cancel_run(info.run_id).status == "cancelled"
     with pytest.raises(RunStateError):
-        runner.resume_run(info.run_id, UserReply(text="late"))
+        runner.resume_run(info.run_id, UserReply(text="late"), wait_id="wait_x")
 
 
 def test_one_running_run_per_case(cases, tmp_path):

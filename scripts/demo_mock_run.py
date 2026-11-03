@@ -29,8 +29,8 @@ def main() -> None:
     llm = ScriptedLLM([
         tool_call("check_evidence"),
         tool_call("ask_user", questions=[
-            {"id": "q1", "text": "交警是否出具了事故责任认定书？结论是什么？"},
-            {"id": "q2", "text": "对方车辆是否投保了交强险和商业险？"},
+            {"question_id": "q1", "text": "交警是否出具了事故责任认定书？结论是什么？"},
+            {"question_id": "q2", "text": "对方车辆是否投保了交强险和商业险？"},
         ]),
         tool_call("update_case", facts={"liability_finding": "对方全责", "insurance": "交强险+商业三者险100万"}),
         tool_call("check_evidence"),
@@ -42,10 +42,11 @@ def main() -> None:
 
     info = runner.start_run(CASE, "我的车被追尾了，想要对方赔偿维修费。")
     print(f"[{info.status}] {info.run_id}")
-    for q in info.pending["questions"]:
-        print(f"  Agent 追问：{q['text']}")
+    for q in info.wait.questions:
+        print(f"  Agent 追问：{q.text}")
 
-    info = runner.resume_run(info.run_id, UserReply(answers={"q1": "对方全责", "q2": "交强险+商业三者险100万"}))
+    info = runner.resume_run(info.run_id, UserReply(answers={"q1": "对方全责", "q2": "交强险+商业三者险100万"}),
+                             wait_id=info.wait.wait_id)
     print(f"[{info.status}] {info.final.answer}")
     print(f"  未解决：{info.final.open_issues}")
     print(f"  引用：{[f'{s.title} {s.locator}' for s in info.final.source_refs]}")

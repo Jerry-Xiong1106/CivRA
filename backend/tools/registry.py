@@ -45,6 +45,9 @@ class ToolRegistry:
     def names(self) -> list[str]:
         return list(self._tools)
 
+    def all_specs(self) -> list[ToolSpec]:
+        return [spec for spec, _ in self._tools.values()]
+
     def available(self, stage: str, enabled: list[str] | None = None) -> list[ToolSpec]:
         """Tools the model may see in this stage, optionally narrowed by RunConfig.enabled_tools."""
         return [
