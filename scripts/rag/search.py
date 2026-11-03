@@ -5,38 +5,37 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from backend.knowledge.config import (DEFAULT_MODE, DEFAULT_VARIANT, DEFAULT_TOP_K,
+    DEFAULT_CANDIDATE_K, DEFAULT_RRF_K, MODES, INPUT_VARIANTS, RetrievalConfig)
+from backend.knowledge.retrieval.search import RetrievalService
+from backend.knowledge.retrieval.results import query_preflight
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("query")
-    parser.add_argument("--mode", choices=("keyword", "vector", "exact-vector", "hybrid"), default="exact-vector")
-    parser.add_argument("--keyword-index", type=Path, default=Path("data/index/bm25.pkl"))
-    parser.add_argument("--vector-index", type=Path, default=Path("data/index/vector_metadata.npz"))
-    parser.add_argument("--top-k", type=int, default=5)
-    parser.add_argument("--candidate-k", type=int, default=50)
-    parser.add_argument("--rrf-k", type=int, default=60)
+    parser.add_argument("--mode", choices=MODES, default=DEFAULT_MODE)
+    parser.add_argument("--variant", choices=INPUT_VARIANTS, default=DEFAULT_VARIANT,
+                        help="Document input; in hybrid mode selects vector input, BM25 stays metadata")
+    parser.add_argument("--keyword-index", type=Path)
+    parser.add_argument("--vector-index", type=Path)
+    parser.add_argument("--top-k", type=int, default=DEFAULT_TOP_K)
+    parser.add_argument("--candidate-k", type=int, default=DEFAULT_CANDIDATE_K)
+    parser.add_argument("--rrf-k", type=int, default=DEFAULT_RRF_K)
     args = parser.parse_args()
-    if min(args.top_k, args.candidate_k, args.rrf_k) < 1:
-        parser.error("top-k, candidate-k and rrf-k must be positive")
-    if args.mode == "keyword":
-        from backend.knowledge.keyword.bm25_index import load_index
-        from backend.knowledge.retrieval.search import search_keyword
+    try:
+        config = RetrievalConfig.from_mode(args.mode, variant=args.variant, top_k=args.top_k,
+                                           candidate_k=args.candidate_k, rrf_k=args.rrf_k)
+    except ValueError as exc:
+        parser.error(str(exc))
 
-        result = search_keyword(args.query, load_index(args.keyword_index), args.top_k)
-    else:
-        from backend.knowledge.vector.embedding import EmbeddingClient
-        from backend.knowledge.vector.vector_index import load_vector_index, search_vector
-
-        index, client = load_vector_index(args.vector_index), EmbeddingClient()
-        if args.mode == "hybrid":
-            from backend.knowledge.keyword.bm25_index import load_index
-            from backend.knowledge.retrieval.hybrid_search import HybridRetriever
-
-            result = HybridRetriever(load_index(args.keyword_index), index, client,
-                                     args.candidate_k, args.rrf_k).search(args.query, args.top_k)
-        else:
-            result = search_vector(args.query, index, client, args.top_k, use_exact=args.mode == "exact-vector")
+    result = query_preflight(args.query)
+    if result is not None:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return
+    service = RetrievalService.from_config(config, keyword_path=args.keyword_index,
+                                           vector_path=args.vector_index)
+    result = service.search(args.query)
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 

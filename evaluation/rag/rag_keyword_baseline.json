@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "created_at": "2026-11-03T12:50:40.887210+08:00",
+  "created_at": "2026-11-03T22:32:03.977736+08:00",
   "python": "3.12.9",
   "dependencies": {
     "rank-bm25": "0.2.2",
@@ -80,13 +80,14 @@
             "recall@5": 1.0,
             "mrr@5": 0.5
           },
-          "query_seconds": 0.002317999955266714,
+          "query_seconds": 0.0022043000208213925,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千二百零八条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百零八条",
               "retrieval": {
+                "rank": 1,
                 "score": 14.903834980571546,
                 "matched_by": [
                   "keyword"
@@ -98,6 +99,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十六条",
               "retrieval": {
+                "rank": 2,
                 "score": 9.020602172847022,
                 "matched_by": [
                   "keyword"
@@ -109,6 +111,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第八百四十二条",
               "retrieval": {
+                "rank": 3,
                 "score": 8.726585565992911,
                 "matched_by": [
                   "keyword"
@@ -120,6 +123,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十二条",
               "retrieval": {
+                "rank": 4,
                 "score": 8.643661736949708,
                 "matched_by": [
                   "keyword"
@@ -131,6 +135,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百四十四条",
               "retrieval": {
+                "rank": 5,
                 "score": 8.179101450842515,
                 "matched_by": [
                   "keyword"
@@ -167,13 +172,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0023144999286159873,
+          "query_seconds": 0.0021077999845147133,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第七十六条",
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十六条",
               "retrieval": {
+                "rank": 1,
                 "score": 27.48377029051793,
                 "matched_by": [
                   "keyword"
@@ -185,6 +191,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百八十六条",
               "retrieval": {
+                "rank": 2,
                 "score": 17.45872146957597,
                 "matched_by": [
                   "keyword"
@@ -196,6 +203,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百零九条",
               "retrieval": {
+                "rank": 3,
                 "score": 16.818776054481006,
                 "matched_by": [
                   "keyword"
@@ -207,6 +215,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十二条",
               "retrieval": {
+                "rank": 4,
                 "score": 16.818776054481006,
                 "matched_by": [
                   "keyword"
@@ -218,6 +227,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十三条",
               "retrieval": {
+                "rank": 5,
                 "score": 13.07237658964385,
                 "matched_by": [
                   "keyword"
@@ -257,13 +267,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.002362299943342805,
+          "query_seconds": 0.002242599963210523,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第七十条",
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十条",
               "retrieval": {
+                "rank": 1,
                 "score": 20.29296042781244,
                 "matched_by": [
                   "keyword"
@@ -275,6 +286,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十六条",
               "retrieval": {
+                "rank": 2,
                 "score": 12.912126380702261,
                 "matched_by": [
                   "keyword"
@@ -286,6 +298,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十三条",
               "retrieval": {
+                "rank": 3,
                 "score": 12.542015954165288,
                 "matched_by": [
                   "keyword"
@@ -297,6 +310,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十二条",
               "retrieval": {
+                "rank": 4,
                 "score": 12.413006824956081,
                 "matched_by": [
                   "keyword"
@@ -308,6 +322,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十二条",
               "retrieval": {
+                "rank": 5,
                 "score": 11.332778902942575,
                 "matched_by": [
                   "keyword"
@@ -347,13 +362,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.002255300059914589,
+          "query_seconds": 0.0019449000246822834,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第七十三条",
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十三条",
               "retrieval": {
+                "rank": 1,
                 "score": 20.67179316384226,
                 "matched_by": [
                   "keyword"
@@ -365,6 +381,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第十五条",
               "retrieval": {
+                "rank": 2,
                 "score": 11.268713645773289,
                 "matched_by": [
                   "keyword"
@@ -376,6 +393,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第二百一十七条",
               "retrieval": {
+                "rank": 3,
                 "score": 11.09834790996908,
                 "matched_by": [
                   "keyword"
@@ -387,6 +405,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千零三十一条",
               "retrieval": {
+                "rank": 4,
                 "score": 8.887681734443403,
                 "matched_by": [
                   "keyword"
@@ -398,6 +417,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第二百二十条",
               "retrieval": {
+                "rank": 5,
                 "score": 8.689561932670758,
                 "matched_by": [
                   "keyword"
@@ -436,13 +456,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0036224001087248325,
+          "query_seconds": 0.0020607999758794904,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第七十六条",
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十六条",
               "retrieval": {
+                "rank": 1,
                 "score": 35.89473903248077,
                 "matched_by": [
                   "keyword"
@@ -454,6 +475,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十七条",
               "retrieval": {
+                "rank": 2,
                 "score": 24.48996325912709,
                 "matched_by": [
                   "keyword"
@@ -465,6 +487,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百零九条",
               "retrieval": {
+                "rank": 3,
                 "score": 23.607201878613473,
                 "matched_by": [
                   "keyword"
@@ -476,6 +499,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十二条",
               "retrieval": {
+                "rank": 4,
                 "score": 23.607201878613473,
                 "matched_by": [
                   "keyword"
@@ -487,6 +511,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百零八条",
               "retrieval": {
+                "rank": 5,
                 "score": 20.909829408707346,
                 "matched_by": [
                   "keyword"
@@ -533,13 +558,14 @@
             "recall@5": 0.5,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.004276300081983209,
+          "query_seconds": 0.0024010000051930547,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第七十六条",
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十六条",
               "retrieval": {
+                "rank": 1,
                 "score": 19.707687043562796,
                 "matched_by": [
                   "keyword"
@@ -551,6 +577,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十六条",
               "retrieval": {
+                "rank": 2,
                 "score": 14.71636402186381,
                 "matched_by": [
                   "keyword"
@@ -562,6 +589,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十五条",
               "retrieval": {
+                "rank": 3,
                 "score": 13.531637918665554,
                 "matched_by": [
                   "keyword"
@@ -573,6 +601,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百零九条",
               "retrieval": {
+                "rank": 4,
                 "score": 12.704843235587598,
                 "matched_by": [
                   "keyword"
@@ -584,6 +613,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十二条",
               "retrieval": {
+                "rank": 5,
                 "score": 12.704843235587598,
                 "matched_by": [
                   "keyword"
@@ -626,13 +656,14 @@
             "recall@5": 0.0,
             "mrr@5": 0.0
           },
-          "query_seconds": 0.003081300063058734,
+          "query_seconds": 0.001802300103008747,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千一百八十三条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百八十三条",
               "retrieval": {
+                "rank": 1,
                 "score": 15.950417397482745,
                 "matched_by": [
                   "keyword"
@@ -644,6 +675,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第五百零六条",
               "retrieval": {
+                "rank": 2,
                 "score": 14.948080124845092,
                 "matched_by": [
                   "keyword"
@@ -655,6 +687,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十条",
               "retrieval": {
+                "rank": 3,
                 "score": 14.112213933598087,
                 "matched_by": [
                   "keyword"
@@ -666,6 +699,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一百八十六条",
               "retrieval": {
+                "rank": 4,
                 "score": 13.141901395401915,
                 "matched_by": [
                   "keyword"
@@ -677,6 +711,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第九百九十六条",
               "retrieval": {
+                "rank": 5,
                 "score": 11.868196328587999,
                 "matched_by": [
                   "keyword"
@@ -717,13 +752,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.003508300054818392,
+          "query_seconds": 0.0020094000501558185,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千一百八十三条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百八十三条",
               "retrieval": {
+                "rank": 1,
                 "score": 56.26865539393686,
                 "matched_by": [
                   "keyword"
@@ -735,6 +771,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第九百九十六条",
               "retrieval": {
+                "rank": 2,
                 "score": 36.837796146229095,
                 "matched_by": [
                   "keyword"
@@ -746,6 +783,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第二百三十八条",
               "retrieval": {
+                "rank": 3,
                 "score": 21.021714261178616,
                 "matched_by": [
                   "keyword"
@@ -757,6 +795,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一百八十六条",
               "retrieval": {
+                "rank": 4,
                 "score": 17.16762533540234,
                 "matched_by": [
                   "keyword"
@@ -768,6 +807,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一百二十条",
               "retrieval": {
+                "rank": 5,
                 "score": 13.408389868736327,
                 "matched_by": [
                   "keyword"
@@ -809,13 +849,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.003689299919642508,
+          "query_seconds": 0.0024007000029087067,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千二百一十三条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十三条",
               "retrieval": {
+                "rank": 1,
                 "score": 27.655922642094232,
                 "matched_by": [
                   "keyword"
@@ -827,6 +868,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百零九条",
               "retrieval": {
+                "rank": 2,
                 "score": 24.855004560855605,
                 "matched_by": [
                   "keyword"
@@ -838,6 +880,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十二条",
               "retrieval": {
+                "rank": 3,
                 "score": 24.855004560855605,
                 "matched_by": [
                   "keyword"
@@ -849,6 +892,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十七条",
               "retrieval": {
+                "rank": 4,
                 "score": 24.53588603636034,
                 "matched_by": [
                   "keyword"
@@ -860,6 +904,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十六条",
               "retrieval": {
+                "rank": 5,
                 "score": 23.372322320342917,
                 "matched_by": [
                   "keyword"
@@ -902,13 +947,14 @@
             "recall@5": 1.0,
             "mrr@5": 0.5
           },
-          "query_seconds": 0.002962099970318377,
+          "query_seconds": 0.001729500014334917,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第四百九十五条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第四百九十五条",
               "retrieval": {
+                "rank": 1,
                 "score": 16.75340755734749,
                 "matched_by": [
                   "keyword"
@@ -920,6 +966,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第五百七十七条",
               "retrieval": {
+                "rank": 2,
                 "score": 15.197979275762211,
                 "matched_by": [
                   "keyword"
@@ -931,6 +978,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第五百八十二条",
               "retrieval": {
+                "rank": 3,
                 "score": 14.48510879116585,
                 "matched_by": [
                   "keyword"
@@ -942,6 +990,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第五百六十六条",
               "retrieval": {
+                "rank": 4,
                 "score": 13.431777111831249,
                 "matched_by": [
                   "keyword"
@@ -953,6 +1002,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第五百七十八条",
               "retrieval": {
+                "rank": 5,
                 "score": 13.342155105395054,
                 "matched_by": [
                   "keyword"
@@ -992,13 +1042,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.003248400054872036,
+          "query_seconds": 0.00208020000718534,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第五百零九条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第五百零九条",
               "retrieval": {
+                "rank": 1,
                 "score": 19.112685617926548,
                 "matched_by": [
                   "keyword"
@@ -1010,6 +1061,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第四百九十条",
               "retrieval": {
+                "rank": 2,
                 "score": 18.185994951232185,
                 "matched_by": [
                   "keyword"
@@ -1021,6 +1073,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第五百五十八条",
               "retrieval": {
+                "rank": 3,
                 "score": 17.41683280658677,
                 "matched_by": [
                   "keyword"
@@ -1032,6 +1085,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第四百九十五条",
               "retrieval": {
+                "rank": 4,
                 "score": 12.788548082157178,
                 "matched_by": [
                   "keyword"
@@ -1043,6 +1097,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第五百七十七条",
               "retrieval": {
+                "rank": 5,
                 "score": 12.703064258213697,
                 "matched_by": [
                   "keyword"
@@ -1085,13 +1140,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0027820999966934323,
+          "query_seconds": 0.0017489000456407666,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第六百八十条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百八十条",
               "retrieval": {
+                "rank": 1,
                 "score": 27.875338642751828,
                 "matched_by": [
                   "keyword"
@@ -1103,6 +1159,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百七十六条",
               "retrieval": {
+                "rank": 2,
                 "score": 24.683001339444907,
                 "matched_by": [
                   "keyword"
@@ -1114,6 +1171,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百六十七条",
               "retrieval": {
+                "rank": 3,
                 "score": 23.96771237017355,
                 "matched_by": [
                   "keyword"
@@ -1125,6 +1183,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百七十四条",
               "retrieval": {
+                "rank": 4,
                 "score": 23.67615821695355,
                 "matched_by": [
                   "keyword"
@@ -1136,6 +1195,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百七十一条",
               "retrieval": {
+                "rank": 5,
                 "score": 22.96886829643548,
                 "matched_by": [
                   "keyword"
@@ -1176,13 +1236,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0015650000423192978,
+          "query_seconds": 0.0010108000133186579,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第六百六十七条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百六十七条",
               "retrieval": {
+                "rank": 1,
                 "score": 12.60799093126714,
                 "matched_by": [
                   "keyword"
@@ -1194,6 +1255,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百七十九条",
               "retrieval": {
+                "rank": 2,
                 "score": 11.53836691433512,
                 "matched_by": [
                   "keyword"
@@ -1205,6 +1267,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百六十八条",
               "retrieval": {
+                "rank": 3,
                 "score": 11.42710921066971,
                 "matched_by": [
                   "keyword"
@@ -1216,6 +1279,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百六十九条",
               "retrieval": {
+                "rank": 4,
                 "score": 10.365511514811601,
                 "matched_by": [
                   "keyword"
@@ -1227,6 +1291,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百八十条",
               "retrieval": {
+                "rank": 5,
                 "score": 9.921517116361114,
                 "matched_by": [
                   "keyword"
@@ -1262,13 +1327,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.003254899987950921,
+          "query_seconds": 0.001777700032107532,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第七百零五条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百零五条",
               "retrieval": {
+                "rank": 1,
                 "score": 30.871121463333495,
                 "matched_by": [
                   "keyword"
@@ -1280,6 +1346,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百三十四条",
               "retrieval": {
+                "rank": 2,
                 "score": 17.80115042955064,
                 "matched_by": [
                   "keyword"
@@ -1291,6 +1358,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百三十二条",
               "retrieval": {
+                "rank": 3,
                 "score": 16.458271968945255,
                 "matched_by": [
                   "keyword"
@@ -1302,6 +1370,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百一十七条",
               "retrieval": {
+                "rank": 4,
                 "score": 16.071468085516436,
                 "matched_by": [
                   "keyword"
@@ -1313,6 +1382,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第三百三十二条",
               "retrieval": {
+                "rank": 5,
                 "score": 12.060040278750396,
                 "matched_by": [
                   "keyword"
@@ -1358,13 +1428,14 @@
             "recall@5": 0.5,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.00314539996907115,
+          "query_seconds": 0.001901900046505034,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第七百零九条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百零九条",
               "retrieval": {
+                "rank": 1,
                 "score": 33.347431573204325,
                 "matched_by": [
                   "keyword"
@@ -1376,6 +1447,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百一十条",
               "retrieval": {
+                "rank": 2,
                 "score": 29.08106285354317,
                 "matched_by": [
                   "keyword"
@@ -1387,6 +1459,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百零三条",
               "retrieval": {
+                "rank": 3,
                 "score": 28.84986807470099,
                 "matched_by": [
                   "keyword"
@@ -1398,6 +1471,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百三十五条",
               "retrieval": {
+                "rank": 4,
                 "score": 28.294733586075978,
                 "matched_by": [
                   "keyword"
@@ -1409,6 +1483,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百一十一条",
               "retrieval": {
+                "rank": 5,
                 "score": 28.2473553172915,
                 "matched_by": [
                   "keyword"
@@ -1450,13 +1525,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.00228020001668483,
+          "query_seconds": 0.0017254999838769436,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一百八十八条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第一百八十八条",
               "retrieval": {
+                "rank": 1,
                 "score": 14.205187048687723,
                 "matched_by": [
                   "keyword"
@@ -1468,6 +1544,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第十六条",
               "retrieval": {
+                "rank": 2,
                 "score": 11.117959570516634,
                 "matched_by": [
                   "keyword"
@@ -1479,6 +1556,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一百二十八条",
               "retrieval": {
+                "rank": 3,
                 "score": 10.988151961562675,
                 "matched_by": [
                   "keyword"
@@ -1490,6 +1568,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百九十四条",
               "retrieval": {
+                "rank": 4,
                 "score": 10.915705828046718,
                 "matched_by": [
                   "keyword"
@@ -1501,6 +1580,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第四百一十九条",
               "retrieval": {
+                "rank": 5,
                 "score": 10.80568447262807,
                 "matched_by": [
                   "keyword"
@@ -1540,13 +1620,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.002407899941317737,
+          "query_seconds": 0.0021772999316453934,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第六十六条",
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第六十六条",
               "retrieval": {
+                "rank": 1,
                 "score": 22.855012669436952,
                 "matched_by": [
                   "keyword"
@@ -1558,6 +1639,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第三百五十二条",
               "retrieval": {
+                "rank": 2,
                 "score": 12.558885322749068,
                 "matched_by": [
                   "keyword"
@@ -1569,6 +1651,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第六十七条",
               "retrieval": {
+                "rank": 3,
                 "score": 12.558483057510802,
                 "matched_by": [
                   "keyword"
@@ -1580,6 +1663,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第八十四条",
               "retrieval": {
+                "rank": 4,
                 "score": 12.252208193734157,
                 "matched_by": [
                   "keyword"
@@ -1591,6 +1675,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百四十一条",
               "retrieval": {
+                "rank": 5,
                 "score": 11.211689702678445,
                 "matched_by": [
                   "keyword"
@@ -1631,13 +1716,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0018063000170513988,
+          "query_seconds": 0.0016179000958800316,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第六十七条",
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第六十七条",
               "retrieval": {
+                "rank": 1,
                 "score": 20.886215869884794,
                 "matched_by": [
                   "keyword"
@@ -1649,6 +1735,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第六十八条",
               "retrieval": {
+                "rank": 2,
                 "score": 17.613709009326172,
                 "matched_by": [
                   "keyword"
@@ -1660,6 +1747,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第十三条",
               "retrieval": {
+                "rank": 3,
                 "score": 9.877212689751435,
                 "matched_by": [
                   "keyword"
@@ -1671,6 +1759,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百一十八条",
               "retrieval": {
+                "rank": 4,
                 "score": 8.129943082891687,
                 "matched_by": [
                   "keyword"
@@ -1682,6 +1771,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第八百七十条",
               "retrieval": {
+                "rank": 5,
                 "score": 7.801309384484387,
                 "matched_by": [
                   "keyword"
@@ -1719,13 +1809,14 @@
             "recall@5": 0.0,
             "mrr@5": 0.0
           },
-          "query_seconds": 0.002001300104893744,
+          "query_seconds": 0.0020100000547245145,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第五十八条",
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第五十八条",
               "retrieval": {
+                "rank": 1,
                 "score": 14.440472400156558,
                 "matched_by": [
                   "keyword"
@@ -1737,6 +1828,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第三十六条",
               "retrieval": {
+                "rank": 2,
                 "score": 13.655135307752202,
                 "matched_by": [
                   "keyword"
@@ -1748,6 +1840,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千零七十三条",
               "retrieval": {
+                "rank": 3,
                 "score": 12.809098594495389,
                 "matched_by": [
                   "keyword"
@@ -1759,6 +1852,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二十三条",
               "retrieval": {
+                "rank": 4,
                 "score": 12.24788236467975,
                 "matched_by": [
                   "keyword"
@@ -1770,6 +1864,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第三十四条",
               "retrieval": {
+                "rank": 5,
                 "score": 12.121143760378496,
                 "matched_by": [
                   "keyword"
@@ -1808,13 +1903,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0028397999703884125,
+          "query_seconds": 0.0019197999499738216,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第一百二十四条",
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百二十四条",
               "retrieval": {
+                "rank": 1,
                 "score": 12.510950197422467,
                 "matched_by": [
                   "keyword"
@@ -1826,6 +1922,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百二十三条",
               "retrieval": {
+                "rank": 2,
                 "score": 10.479868938199314,
                 "matched_by": [
                   "keyword"
@@ -1837,6 +1934,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百八十五条",
               "retrieval": {
+                "rank": 3,
                 "score": 8.709924853812778,
                 "matched_by": [
                   "keyword"
@@ -1848,6 +1946,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第十六条",
               "retrieval": {
+                "rank": 4,
                 "score": 8.378371668720506,
                 "matched_by": [
                   "keyword"
@@ -1859,6 +1958,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千零三十四条",
               "retrieval": {
+                "rank": 5,
                 "score": 8.114486108578516,
                 "matched_by": [
                   "keyword"
@@ -1902,13 +2002,14 @@
             "recall@5": 0.0,
             "mrr@5": 0.0
           },
-          "query_seconds": 0.003032199922017753,
+          "query_seconds": 0.0020378000335767865,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第二百三十四条",
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百三十四条",
               "retrieval": {
+                "rank": 1,
                 "score": 16.381589874933823,
                 "matched_by": [
                   "keyword"
@@ -1920,6 +2021,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百五十条",
               "retrieval": {
+                "rank": 2,
                 "score": 16.030797550363868,
                 "matched_by": [
                   "keyword"
@@ -1931,6 +2033,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百二十三条",
               "retrieval": {
+                "rank": 3,
                 "score": 15.213706367320839,
                 "matched_by": [
                   "keyword"
@@ -1942,6 +2045,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一百六十七条",
               "retrieval": {
+                "rank": 4,
                 "score": 13.335533196438712,
                 "matched_by": [
                   "keyword"
@@ -1953,6 +2057,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百一十八条",
               "retrieval": {
+                "rank": 5,
                 "score": 12.487632497267839,
                 "matched_by": [
                   "keyword"
@@ -1978,13 +2083,14 @@
           "expected_status": "insufficient_corpus",
           "gold": [],
           "metrics": null,
-          "query_seconds": 0.0034232999896630645,
+          "query_seconds": 0.002210599952377379,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第七百四十一条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百四十一条",
               "retrieval": {
+                "rank": 1,
                 "score": 19.674296453714312,
                 "matched_by": [
                   "keyword"
@@ -1996,6 +2102,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百四十三条",
               "retrieval": {
+                "rank": 2,
                 "score": 17.39887810246064,
                 "matched_by": [
                   "keyword"
@@ -2007,6 +2114,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百四十二条",
               "retrieval": {
+                "rank": 3,
                 "score": 12.627394673967487,
                 "matched_by": [
                   "keyword"
@@ -2018,6 +2126,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百六十五条",
               "retrieval": {
+                "rank": 4,
                 "score": 11.051180555533735,
                 "matched_by": [
                   "keyword"
@@ -2029,6 +2138,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第四百五十条",
               "retrieval": {
+                "rank": 5,
                 "score": 8.429438218212338,
                 "matched_by": [
                   "keyword"
@@ -2056,13 +2166,14 @@
           "expected_status": "insufficient_corpus",
           "gold": [],
           "metrics": null,
-          "query_seconds": 0.003314599976874888,
+          "query_seconds": 0.0019353999523445964,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第七百三十三条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百三十三条",
               "retrieval": {
+                "rank": 1,
                 "score": 15.622946205309173,
                 "matched_by": [
                   "keyword"
@@ -2074,6 +2185,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百六十条",
               "retrieval": {
+                "rank": 2,
                 "score": 11.48695685809259,
                 "matched_by": [
                   "keyword"
@@ -2085,6 +2197,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一百二十二条",
               "retrieval": {
+                "rank": 3,
                 "score": 10.514080715294163,
                 "matched_by": [
                   "keyword"
@@ -2096,6 +2209,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第二百七十九条",
               "retrieval": {
+                "rank": 4,
                 "score": 9.884040744272308,
                 "matched_by": [
                   "keyword"
@@ -2107,6 +2221,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第一百二十三条",
               "retrieval": {
+                "rank": 5,
                 "score": 9.787540812364593,
                 "matched_by": [
                   "keyword"
@@ -2133,13 +2248,14 @@
           "expected_status": "insufficient_corpus",
           "gold": [],
           "metrics": null,
-          "query_seconds": 0.003746400005184114,
+          "query_seconds": 0.0023351999698206782,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第二百一十条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第二百一十条",
               "retrieval": {
+                "rank": 1,
                 "score": 12.62942185423724,
                 "matched_by": [
                   "keyword"
@@ -2151,6 +2267,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百二十一条",
               "retrieval": {
+                "rank": 2,
                 "score": 11.310239948685354,
                 "matched_by": [
                   "keyword"
@@ -2162,6 +2279,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百三十四条",
               "retrieval": {
+                "rank": 3,
                 "score": 11.100988824812669,
                 "matched_by": [
                   "keyword"
@@ -2173,6 +2291,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百零四条",
               "retrieval": {
+                "rank": 4,
                 "score": 10.972210515034787,
                 "matched_by": [
                   "keyword"
@@ -2184,6 +2303,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百三十六条",
               "retrieval": {
+                "rank": 5,
                 "score": 10.863417237730186,
                 "matched_by": [
                   "keyword"
@@ -2226,13 +2346,14 @@
             "recall@5": 0.0,
             "mrr@5": 0.0
           },
-          "query_seconds": 0.0016132999444380403,
+          "query_seconds": 0.00163870002143085,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第四百七十五条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第四百七十五条",
               "retrieval": {
+                "rank": 1,
                 "score": 10.17726037170843,
                 "matched_by": [
                   "keyword"
@@ -2244,6 +2365,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第四百八十五条",
               "retrieval": {
+                "rank": 2,
                 "score": 10.17726037170843,
                 "matched_by": [
                   "keyword"
@@ -2255,6 +2377,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百六十三条",
               "retrieval": {
+                "rank": 3,
                 "score": 9.178226320745543,
                 "matched_by": [
                   "keyword"
@@ -2266,6 +2389,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百零四条",
               "retrieval": {
+                "rank": 4,
                 "score": 8.16745395916387,
                 "matched_by": [
                   "keyword"
@@ -2277,6 +2401,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第三百三十八条",
               "retrieval": {
+                "rank": 5,
                 "score": 8.050859006629484,
                 "matched_by": [
                   "keyword"
@@ -2312,13 +2437,14 @@
             "recall@5": 1.0,
             "mrr@5": 0.2
           },
-          "query_seconds": 0.001411900040693581,
+          "query_seconds": 0.001402699970640242,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第二十四条",
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第二十四条",
               "retrieval": {
+                "rank": 1,
                 "score": 13.329229401616873,
                 "matched_by": [
                   "keyword"
@@ -2330,6 +2456,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第一百零一条",
               "retrieval": {
+                "rank": 2,
                 "score": 12.794428397618915,
                 "matched_by": [
                   "keyword"
@@ -2341,6 +2468,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第九十九条",
               "retrieval": {
+                "rank": 3,
                 "score": 10.648412078497376,
                 "matched_by": [
                   "keyword"
@@ -2352,6 +2480,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第一百一十三条",
               "retrieval": {
+                "rank": 4,
                 "score": 8.876751068591794,
                 "matched_by": [
                   "keyword"
@@ -2363,6 +2492,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第十九条",
               "retrieval": {
+                "rank": 5,
                 "score": 8.5771245048585,
                 "matched_by": [
                   "keyword"
@@ -2398,13 +2528,14 @@
             "recall@5": 0.0,
             "mrr@5": 0.0
           },
-          "query_seconds": 0.001194800017401576,
+          "query_seconds": 0.0010753999231383204,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千一百一十一条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百一十一条",
               "retrieval": {
+                "rank": 1,
                 "score": 6.141711187088437,
                 "matched_by": [
                   "keyword"
@@ -2416,6 +2547,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千零二十一条",
               "retrieval": {
+                "rank": 2,
                 "score": 5.976117089673063,
                 "matched_by": [
                   "keyword"
@@ -2427,6 +2559,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千零七十二条",
               "retrieval": {
+                "rank": 3,
                 "score": 5.451302450376678,
                 "matched_by": [
                   "keyword"
@@ -2438,6 +2571,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百一十三条",
               "retrieval": {
+                "rank": 4,
                 "score": 5.357209844427025,
                 "matched_by": [
                   "keyword"
@@ -2449,6 +2583,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第九十条",
               "retrieval": {
+                "rank": 5,
                 "score": 5.357209844427025,
                 "matched_by": [
                   "keyword"
@@ -2483,13 +2618,14 @@
             "recall@5": 1.0,
             "mrr@5": 0.5
           },
-          "query_seconds": 0.0014890000456944108,
+          "query_seconds": 0.0016351999947801232,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千二百零八条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百零八条",
               "retrieval": {
+                "rank": 1,
                 "score": 10.461277104563983,
                 "matched_by": [
                   "keyword"
@@ -2501,6 +2637,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十六条",
               "retrieval": {
+                "rank": 2,
                 "score": 9.939368779211701,
                 "matched_by": [
                   "keyword"
@@ -2512,6 +2649,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十二条",
               "retrieval": {
+                "rank": 3,
                 "score": 8.64701990602768,
                 "matched_by": [
                   "keyword"
@@ -2523,6 +2661,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十六条",
               "retrieval": {
+                "rank": 4,
                 "score": 8.2841595278251,
                 "matched_by": [
                   "keyword"
@@ -2534,6 +2673,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十三条",
               "retrieval": {
+                "rank": 5,
                 "score": 7.813588757443377,
                 "matched_by": [
                   "keyword"
@@ -2569,13 +2709,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.002556600025855005,
+          "query_seconds": 0.0025464000646024942,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千一百八十六条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百八十六条",
               "retrieval": {
+                "rank": 1,
                 "score": 38.00873731634478,
                 "matched_by": [
                   "keyword"
@@ -2587,6 +2728,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百六十五条",
               "retrieval": {
+                "rank": 2,
                 "score": 16.834330568497503,
                 "matched_by": [
                   "keyword"
@@ -2598,6 +2740,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百七十四条",
               "retrieval": {
+                "rank": 3,
                 "score": 16.82538257168701,
                 "matched_by": [
                   "keyword"
@@ -2609,6 +2752,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百九十条",
               "retrieval": {
+                "rank": 4,
                 "score": 16.234580789618015,
                 "matched_by": [
                   "keyword"
@@ -2620,6 +2764,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第九百九十八条",
               "retrieval": {
+                "rank": 5,
                 "score": 14.803604394220967,
                 "matched_by": [
                   "keyword"
@@ -2660,13 +2805,14 @@
             "recall@5": 0.0,
             "mrr@5": 0.0
           },
-          "query_seconds": 0.001741899992339313,
+          "query_seconds": 0.001882599899545312,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第三十条",
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第三十条",
               "retrieval": {
+                "rank": 1,
                 "score": 8.997528077575701,
                 "matched_by": [
                   "keyword"
@@ -2678,6 +2824,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百零七条",
               "retrieval": {
+                "rank": 2,
                 "score": 8.672949456861193,
                 "matched_by": [
                   "keyword"
@@ -2689,6 +2836,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十七条",
               "retrieval": {
+                "rank": 3,
                 "score": 7.455602856502056,
                 "matched_by": [
                   "keyword"
@@ -2700,6 +2848,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百五十五条",
               "retrieval": {
+                "rank": 4,
                 "score": 6.692275623307932,
                 "matched_by": [
                   "keyword"
@@ -2711,6 +2860,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第六十三条",
               "retrieval": {
+                "rank": 5,
                 "score": 6.69044044872863,
                 "matched_by": [
                   "keyword"
@@ -2748,13 +2898,14 @@
             "recall@5": 1.0,
             "mrr@5": 0.5
           },
-          "query_seconds": 0.0014742000494152308,
+          "query_seconds": 0.0016691000200808048,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第十九条",
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第十九条",
               "retrieval": {
+                "rank": 1,
                 "score": 17.433118420886196,
                 "matched_by": [
                   "keyword"
@@ -2766,6 +2917,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二十一条",
               "retrieval": {
+                "rank": 2,
                 "score": 17.379105835513126,
                 "matched_by": [
                   "keyword"
@@ -2777,6 +2929,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第三十九条",
               "retrieval": {
+                "rank": 3,
                 "score": 12.220946815512363,
                 "matched_by": [
                   "keyword"
@@ -2788,6 +2941,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二十条",
               "retrieval": {
+                "rank": 4,
                 "score": 11.974150868189914,
                 "matched_by": [
                   "keyword"
@@ -2799,6 +2953,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第十八条",
               "retrieval": {
+                "rank": 5,
                 "score": 11.441202527577047,
                 "matched_by": [
                   "keyword"
@@ -2835,13 +2990,14 @@
             "recall@5": 1.0,
             "mrr@5": 0.5
           },
-          "query_seconds": 0.0020309999817982316,
+          "query_seconds": 0.0021705999970436096,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第一百零一条",
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百零一条",
               "retrieval": {
+                "rank": 1,
                 "score": 20.44670837704683,
                 "matched_by": [
                   "keyword"
@@ -2853,6 +3009,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百条",
               "retrieval": {
+                "rank": 2,
                 "score": 20.265883818003015,
                 "matched_by": [
                   "keyword"
@@ -2864,6 +3021,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百四十五条",
               "retrieval": {
+                "rank": 3,
                 "score": 14.19290486552481,
                 "matched_by": [
                   "keyword"
@@ -2875,6 +3033,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百二十三条",
               "retrieval": {
+                "rank": 4,
                 "score": 12.983338207376933,
                 "matched_by": [
                   "keyword"
@@ -2886,6 +3045,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百零九条",
               "retrieval": {
+                "rank": 5,
                 "score": 12.085221548803315,
                 "matched_by": [
                   "keyword"
@@ -2924,13 +3084,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0019922000356018543,
+          "query_seconds": 0.00212760001886636,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第一百五十四条",
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百五十四条",
               "retrieval": {
+                "rank": 1,
                 "score": 26.133368359789905,
                 "matched_by": [
                   "keyword"
@@ -2942,6 +3103,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百二十一条",
               "retrieval": {
+                "rank": 2,
                 "score": 14.837534848475816,
                 "matched_by": [
                   "keyword"
@@ -2953,6 +3115,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百二十七条",
               "retrieval": {
+                "rank": 3,
                 "score": 14.142666053079365,
                 "matched_by": [
                   "keyword"
@@ -2964,6 +3127,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第三十四条",
               "retrieval": {
+                "rank": 4,
                 "score": 13.427915152305237,
                 "matched_by": [
                   "keyword"
@@ -2975,6 +3139,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百五十二条",
               "retrieval": {
+                "rank": 5,
                 "score": 13.424040719050014,
                 "matched_by": [
                   "keyword"
@@ -3013,13 +3178,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0026941999094560742,
+          "query_seconds": 0.00253649998921901,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第九十条",
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第九十条",
               "retrieval": {
+                "rank": 1,
                 "score": 23.768663859280572,
                 "matched_by": [
                   "keyword"
@@ -3031,6 +3197,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第八十九条",
               "retrieval": {
+                "rank": 2,
                 "score": 23.466546340479127,
                 "matched_by": [
                   "keyword"
@@ -3042,6 +3209,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第五十一条",
               "retrieval": {
+                "rank": 3,
                 "score": 17.2540425197911,
                 "matched_by": [
                   "keyword"
@@ -3053,6 +3221,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第三十六条",
               "retrieval": {
+                "rank": 4,
                 "score": 13.443306591320137,
                 "matched_by": [
                   "keyword"
@@ -3064,6 +3233,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第四十一条",
               "retrieval": {
+                "rank": 5,
                 "score": 12.786576374454329,
                 "matched_by": [
                   "keyword"
@@ -3104,13 +3274,14 @@
             "recall@5": 0.0,
             "mrr@5": 0.0
           },
-          "query_seconds": 0.0016145999543368816,
+          "query_seconds": 0.0013862999621778727,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第四十一条",
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第四十一条",
               "retrieval": {
+                "rank": 1,
                 "score": 12.814307148667783,
                 "matched_by": [
                   "keyword"
@@ -3122,6 +3293,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第九十条",
               "retrieval": {
+                "rank": 2,
                 "score": 9.500948693885489,
                 "matched_by": [
                   "keyword"
@@ -3133,6 +3305,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第八十九条",
               "retrieval": {
+                "rank": 3,
                 "score": 8.887345946508795,
                 "matched_by": [
                   "keyword"
@@ -3144,6 +3317,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百七十条",
               "retrieval": {
+                "rank": 4,
                 "score": 7.346454070666292,
                 "matched_by": [
                   "keyword"
@@ -3155,6 +3329,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第二十四条",
               "retrieval": {
+                "rank": 5,
                 "score": 6.774397792538901,
                 "matched_by": [
                   "keyword"
@@ -3190,13 +3365,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0018325999844819307,
+          "query_seconds": 0.0018195000011473894,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第十九条",
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第十九条",
               "retrieval": {
+                "rank": 1,
                 "score": 13.345739235702256,
                 "matched_by": [
                   "keyword"
@@ -3208,6 +3384,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第二十四条",
               "retrieval": {
+                "rank": 2,
                 "score": 12.266355993393336,
                 "matched_by": [
                   "keyword"
@@ -3219,6 +3396,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第一百一十三条",
               "retrieval": {
+                "rank": 3,
                 "score": 9.751882610260827,
                 "matched_by": [
                   "keyword"
@@ -3230,6 +3408,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第一百零一条",
               "retrieval": {
+                "rank": 4,
                 "score": 8.883102189537073,
                 "matched_by": [
                   "keyword"
@@ -3241,6 +3420,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第九十一条",
               "retrieval": {
+                "rank": 5,
                 "score": 8.285951317317522,
                 "matched_by": [
                   "keyword"
@@ -3278,13 +3458,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0032221999717876315,
+          "query_seconds": 0.0026165000163018703,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第二百一十条",
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百一十条",
               "retrieval": {
+                "rank": 1,
                 "score": 31.71101737328395,
                 "matched_by": [
                   "keyword"
@@ -3296,6 +3477,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百零九条",
               "retrieval": {
+                "rank": 2,
                 "score": 22.87929386781525,
                 "matched_by": [
                   "keyword"
@@ -3307,6 +3489,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百二十条",
               "retrieval": {
+                "rank": 3,
                 "score": 22.739684258171458,
                 "matched_by": [
                   "keyword"
@@ -3318,6 +3501,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百一十八条",
               "retrieval": {
+                "rank": 4,
                 "score": 22.35682757010776,
                 "matched_by": [
                   "keyword"
@@ -3329,6 +3513,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百一十五条",
               "retrieval": {
+                "rank": 5,
                 "score": 18.539182969036503,
                 "matched_by": [
                   "keyword"
@@ -3370,13 +3555,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0036139999283477664,
+          "query_seconds": 0.003714199992828071,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千二百五十四条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百五十四条",
               "retrieval": {
+                "rank": 1,
                 "score": 26.035602214599155,
                 "matched_by": [
                   "keyword"
@@ -3388,6 +3574,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百零六条",
               "retrieval": {
+                "rank": 2,
                 "score": 17.711671658214605,
                 "matched_by": [
                   "keyword"
@@ -3399,6 +3586,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百九十八条",
               "retrieval": {
+                "rank": 3,
                 "score": 17.62014186267481,
                 "matched_by": [
                   "keyword"
@@ -3410,6 +3598,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百七十七条",
               "retrieval": {
+                "rank": 4,
                 "score": 17.3063374032002,
                 "matched_by": [
                   "keyword"
@@ -3421,6 +3610,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第九百四十二条",
               "retrieval": {
+                "rank": 5,
                 "score": 17.203340440696536,
                 "matched_by": [
                   "keyword"
@@ -3451,13 +3641,14 @@
           "expected_status": "insufficient_corpus",
           "gold": [],
           "metrics": null,
-          "query_seconds": 0.002469999948516488,
+          "query_seconds": 0.002102399943396449,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第一百零一条",
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第一百零一条",
               "retrieval": {
+                "rank": 1,
                 "score": 10.89661674707132,
                 "matched_by": [
                   "keyword"
@@ -3469,6 +3660,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十六条",
               "retrieval": {
+                "rank": 2,
                 "score": 10.13861328978195,
                 "matched_by": [
                   "keyword"
@@ -3480,6 +3672,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十一条",
               "retrieval": {
+                "rank": 3,
                 "score": 10.090684403923667,
                 "matched_by": [
                   "keyword"
@@ -3491,6 +3684,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一条",
               "retrieval": {
+                "rank": 4,
                 "score": 9.577597256672046,
                 "matched_by": [
                   "keyword"
@@ -3502,6 +3696,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十五条",
               "retrieval": {
+                "rank": 5,
                 "score": 9.465899633399,
                 "matched_by": [
                   "keyword"
@@ -3541,13 +3736,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.001908699981868267,
+          "query_seconds": 0.0016955999890342355,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第六十七条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第六十七条",
               "retrieval": {
+                "rank": 1,
                 "score": 19.708869536806876,
                 "matched_by": [
                   "keyword"
@@ -3559,6 +3755,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第八十三条",
               "retrieval": {
+                "rank": 2,
                 "score": 11.08446901234049,
                 "matched_by": [
                   "keyword"
@@ -3570,6 +3767,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第六十九条",
               "retrieval": {
+                "rank": 3,
                 "score": 10.296652833137635,
                 "matched_by": [
                   "keyword"
@@ -3581,6 +3779,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七十五条",
               "retrieval": {
+                "rank": 4,
                 "score": 9.887732831294715,
                 "matched_by": [
                   "keyword"
@@ -3592,6 +3791,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第五百二十九条",
               "retrieval": {
+                "rank": 5,
                 "score": 9.660822505799407,
                 "matched_by": [
                   "keyword"
@@ -3679,13 +3879,14 @@
             "recall@5": 1.0,
             "mrr@5": 0.5
           },
-          "query_seconds": 0.0031773000955581665,
+          "query_seconds": 0.0022356000263243914,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千二百零八条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百零八条",
               "retrieval": {
+                "rank": 1,
                 "score": 14.422118678875625,
                 "matched_by": [
                   "keyword"
@@ -3697,6 +3898,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十六条",
               "retrieval": {
+                "rank": 2,
                 "score": 8.959508821058902,
                 "matched_by": [
                   "keyword"
@@ -3708,6 +3910,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十二条",
               "retrieval": {
+                "rank": 3,
                 "score": 8.488596823934808,
                 "matched_by": [
                   "keyword"
@@ -3719,6 +3922,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百三十三条",
               "retrieval": {
+                "rank": 4,
                 "score": 8.387258780675744,
                 "matched_by": [
                   "keyword"
@@ -3730,6 +3934,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百四十四条",
               "retrieval": {
+                "rank": 5,
                 "score": 8.151603368231926,
                 "matched_by": [
                   "keyword"
@@ -3766,13 +3971,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0028677000664174557,
+          "query_seconds": 0.002092899987474084,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第七十六条",
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十六条",
               "retrieval": {
+                "rank": 1,
                 "score": 29.420293290467118,
                 "matched_by": [
                   "keyword"
@@ -3784,6 +3990,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百八十六条",
               "retrieval": {
+                "rank": 2,
                 "score": 19.512843146455747,
                 "matched_by": [
                   "keyword"
@@ -3795,6 +4002,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百零九条",
               "retrieval": {
+                "rank": 3,
                 "score": 17.403926507048826,
                 "matched_by": [
                   "keyword"
@@ -3806,6 +4014,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十二条",
               "retrieval": {
+                "rank": 4,
                 "score": 17.403926507048826,
                 "matched_by": [
                   "keyword"
@@ -3817,6 +4026,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十三条",
               "retrieval": {
+                "rank": 5,
                 "score": 14.042718788361803,
                 "matched_by": [
                   "keyword"
@@ -3856,13 +4066,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0028054999420419335,
+          "query_seconds": 0.0022388999350368977,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第七十条",
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十条",
               "retrieval": {
+                "rank": 1,
                 "score": 22.962931333858837,
                 "matched_by": [
                   "keyword"
@@ -3874,6 +4085,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十二条",
               "retrieval": {
+                "rank": 2,
                 "score": 14.68194144549998,
                 "matched_by": [
                   "keyword"
@@ -3885,6 +4097,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十六条",
               "retrieval": {
+                "rank": 3,
                 "score": 14.144610134632785,
                 "matched_by": [
                   "keyword"
@@ -3896,6 +4109,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十三条",
               "retrieval": {
+                "rank": 4,
                 "score": 13.316604289529511,
                 "matched_by": [
                   "keyword"
@@ -3907,6 +4121,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十二条",
               "retrieval": {
+                "rank": 5,
                 "score": 12.780000139818577,
                 "matched_by": [
                   "keyword"
@@ -3946,13 +4161,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0023151999339461327,
+          "query_seconds": 0.0018971000099554658,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第七十三条",
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十三条",
               "retrieval": {
+                "rank": 1,
                 "score": 21.59893252163675,
                 "matched_by": [
                   "keyword"
@@ -3964,6 +4180,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第十五条",
               "retrieval": {
+                "rank": 2,
                 "score": 11.09943060591908,
                 "matched_by": [
                   "keyword"
@@ -3975,6 +4192,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第二百一十七条",
               "retrieval": {
+                "rank": 3,
                 "score": 10.314647493887431,
                 "matched_by": [
                   "keyword"
@@ -3986,6 +4204,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十二条",
               "retrieval": {
+                "rank": 4,
                 "score": 10.050458097500572,
                 "matched_by": [
                   "keyword"
@@ -3997,6 +4216,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千零三十一条",
               "retrieval": {
+                "rank": 5,
                 "score": 9.114807347894992,
                 "matched_by": [
                   "keyword"
@@ -4035,13 +4255,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.003657100023701787,
+          "query_seconds": 0.002092299982905388,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第七十六条",
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十六条",
               "retrieval": {
+                "rank": 1,
                 "score": 38.32167058484905,
                 "matched_by": [
                   "keyword"
@@ -4053,6 +4274,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十七条",
               "retrieval": {
+                "rank": 2,
                 "score": 25.344267746813205,
                 "matched_by": [
                   "keyword"
@@ -4064,6 +4286,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百零九条",
               "retrieval": {
+                "rank": 3,
                 "score": 24.47033142098099,
                 "matched_by": [
                   "keyword"
@@ -4075,6 +4298,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十二条",
               "retrieval": {
+                "rank": 4,
                 "score": 24.47033142098099,
                 "matched_by": [
                   "keyword"
@@ -4086,6 +4310,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百零八条",
               "retrieval": {
+                "rank": 5,
                 "score": 23.030614706627965,
                 "matched_by": [
                   "keyword"
@@ -4132,13 +4357,14 @@
             "recall@5": 0.5,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.003104700008407235,
+          "query_seconds": 0.002369399997405708,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第七十六条",
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十六条",
               "retrieval": {
+                "rank": 1,
                 "score": 20.878644097031188,
                 "matched_by": [
                   "keyword"
@@ -4150,6 +4376,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十六条",
               "retrieval": {
+                "rank": 2,
                 "score": 16.126769415271944,
                 "matched_by": [
                   "keyword"
@@ -4161,6 +4388,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十五条",
               "retrieval": {
+                "rank": 3,
                 "score": 14.520040327006168,
                 "matched_by": [
                   "keyword"
@@ -4172,6 +4400,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百零九条",
               "retrieval": {
+                "rank": 4,
                 "score": 13.164101530930076,
                 "matched_by": [
                   "keyword"
@@ -4183,6 +4412,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十二条",
               "retrieval": {
+                "rank": 5,
                 "score": 13.164101530930076,
                 "matched_by": [
                   "keyword"
@@ -4225,13 +4455,14 @@
             "recall@5": 1.0,
             "mrr@5": 0.3333333333333333
           },
-          "query_seconds": 0.0026277999859303236,
+          "query_seconds": 0.002610699972137809,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千一百八十三条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百八十三条",
               "retrieval": {
+                "rank": 1,
                 "score": 19.521621051853106,
                 "matched_by": [
                   "keyword"
@@ -4243,6 +4474,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十条",
               "retrieval": {
+                "rank": 2,
                 "score": 15.600281963771351,
                 "matched_by": [
                   "keyword"
@@ -4254,6 +4486,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百七十九条",
               "retrieval": {
+                "rank": 3,
                 "score": 14.318976735687105,
                 "matched_by": [
                   "keyword"
@@ -4265,6 +4498,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第五百零六条",
               "retrieval": {
+                "rank": 4,
                 "score": 14.305090917462675,
                 "matched_by": [
                   "keyword"
@@ -4276,6 +4510,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百八十条",
               "retrieval": {
+                "rank": 5,
                 "score": 12.53696375486185,
                 "matched_by": [
                   "keyword"
@@ -4316,13 +4551,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0027874999213963747,
+          "query_seconds": 0.0027573000406846404,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千一百八十三条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百八十三条",
               "retrieval": {
+                "rank": 1,
                 "score": 57.80124765526319,
                 "matched_by": [
                   "keyword"
@@ -4334,6 +4570,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第九百九十六条",
               "retrieval": {
+                "rank": 2,
                 "score": 36.23501441046186,
                 "matched_by": [
                   "keyword"
@@ -4345,6 +4582,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第二百三十八条",
               "retrieval": {
+                "rank": 3,
                 "score": 19.472035448003655,
                 "matched_by": [
                   "keyword"
@@ -4356,6 +4594,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一百八十六条",
               "retrieval": {
+                "rank": 4,
                 "score": 17.193701603916807,
                 "matched_by": [
                   "keyword"
@@ -4367,6 +4606,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百七十九条",
               "retrieval": {
+                "rank": 5,
                 "score": 17.090194566590473,
                 "matched_by": [
                   "keyword"
@@ -4408,13 +4648,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0030493000522255898,
+          "query_seconds": 0.0028723999857902527,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千二百一十三条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十三条",
               "retrieval": {
+                "rank": 1,
                 "score": 29.179458668903088,
                 "matched_by": [
                   "keyword"
@@ -4426,6 +4667,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百零九条",
               "retrieval": {
+                "rank": 2,
                 "score": 25.748188442450406,
                 "matched_by": [
                   "keyword"
@@ -4437,6 +4679,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十二条",
               "retrieval": {
+                "rank": 3,
                 "score": 25.748188442450406,
                 "matched_by": [
                   "keyword"
@@ -4448,6 +4691,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十七条",
               "retrieval": {
+                "rank": 4,
                 "score": 25.389484920254723,
                 "matched_by": [
                   "keyword"
@@ -4459,6 +4703,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十条",
               "retrieval": {
+                "rank": 5,
                 "score": 24.279511599192013,
                 "matched_by": [
                   "keyword"
@@ -4501,13 +4746,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.002709799911826849,
+          "query_seconds": 0.0023781999479979277,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第五百七十七条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第五百七十七条",
               "retrieval": {
+                "rank": 1,
                 "score": 16.708071048404012,
                 "matched_by": [
                   "keyword"
@@ -4519,6 +4765,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第五百八十二条",
               "retrieval": {
+                "rank": 2,
                 "score": 15.652394089030995,
                 "matched_by": [
                   "keyword"
@@ -4530,6 +4777,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第五百七十八条",
               "retrieval": {
+                "rank": 3,
                 "score": 14.901833391180975,
                 "matched_by": [
                   "keyword"
@@ -4541,6 +4789,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第五百九十三条",
               "retrieval": {
+                "rank": 4,
                 "score": 14.570690519386588,
                 "matched_by": [
                   "keyword"
@@ -4552,6 +4801,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第四百九十五条",
               "retrieval": {
+                "rank": 5,
                 "score": 14.34729361930913,
                 "matched_by": [
                   "keyword"
@@ -4591,13 +4841,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0031110000563785434,
+          "query_seconds": 0.0025377999991178513,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第五百零九条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第五百零九条",
               "retrieval": {
+                "rank": 1,
                 "score": 19.20762773996419,
                 "matched_by": [
                   "keyword"
@@ -4609,6 +4860,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第五百五十八条",
               "retrieval": {
+                "rank": 2,
                 "score": 17.453771441679912,
                 "matched_by": [
                   "keyword"
@@ -4620,6 +4872,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第四百九十条",
               "retrieval": {
+                "rank": 3,
                 "score": 17.115666202446363,
                 "matched_by": [
                   "keyword"
@@ -4631,6 +4884,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第五百七十七条",
               "retrieval": {
+                "rank": 4,
                 "score": 13.196801262695587,
                 "matched_by": [
                   "keyword"
@@ -4642,6 +4896,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百一十二条",
               "retrieval": {
+                "rank": 5,
                 "score": 12.281980344099367,
                 "matched_by": [
                   "keyword"
@@ -4684,13 +4939,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.002322099986486137,
+          "query_seconds": 0.0025872000260278583,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第六百八十条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百八十条",
               "retrieval": {
+                "rank": 1,
                 "score": 28.50879457982313,
                 "matched_by": [
                   "keyword"
@@ -4702,6 +4958,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百七十四条",
               "retrieval": {
+                "rank": 2,
                 "score": 24.454527314757282,
                 "matched_by": [
                   "keyword"
@@ -4713,6 +4970,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百七十六条",
               "retrieval": {
+                "rank": 3,
                 "score": 23.067753621610304,
                 "matched_by": [
                   "keyword"
@@ -4724,6 +4982,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百七十一条",
               "retrieval": {
+                "rank": 4,
                 "score": 22.57462853400369,
                 "matched_by": [
                   "keyword"
@@ -4735,6 +4994,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百六十七条",
               "retrieval": {
+                "rank": 5,
                 "score": 21.834927765189114,
                 "matched_by": [
                   "keyword"
@@ -4775,13 +5035,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0013351000379770994,
+          "query_seconds": 0.0013797000283375382,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第六百六十七条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百六十七条",
               "retrieval": {
+                "rank": 1,
                 "score": 10.88317925313275,
                 "matched_by": [
                   "keyword"
@@ -4793,6 +5054,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百七十三条",
               "retrieval": {
+                "rank": 2,
                 "score": 10.781073418861688,
                 "matched_by": [
                   "keyword"
@@ -4804,6 +5066,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百七十九条",
               "retrieval": {
+                "rank": 3,
                 "score": 10.479557090734733,
                 "matched_by": [
                   "keyword"
@@ -4815,6 +5078,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百六十八条",
               "retrieval": {
+                "rank": 4,
                 "score": 10.432778165408173,
                 "matched_by": [
                   "keyword"
@@ -4826,6 +5090,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第六百七十条",
               "retrieval": {
+                "rank": 5,
                 "score": 10.233970659483086,
                 "matched_by": [
                   "keyword"
@@ -4861,13 +5126,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0023846999974921346,
+          "query_seconds": 0.002035600016824901,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第七百零五条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百零五条",
               "retrieval": {
+                "rank": 1,
                 "score": 30.147699908688853,
                 "matched_by": [
                   "keyword"
@@ -4879,6 +5145,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百一十七条",
               "retrieval": {
+                "rank": 2,
                 "score": 17.62448181253739,
                 "matched_by": [
                   "keyword"
@@ -4890,6 +5157,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百三十四条",
               "retrieval": {
+                "rank": 3,
                 "score": 17.125737449458622,
                 "matched_by": [
                   "keyword"
@@ -4901,6 +5169,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百三十二条",
               "retrieval": {
+                "rank": 4,
                 "score": 15.412541705354935,
                 "matched_by": [
                   "keyword"
@@ -4912,6 +5181,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百二十六条",
               "retrieval": {
+                "rank": 5,
                 "score": 12.805224585959557,
                 "matched_by": [
                   "keyword"
@@ -4957,13 +5227,14 @@
             "recall@5": 0.5,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0026084999553859234,
+          "query_seconds": 0.002286100061610341,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第七百零九条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百零九条",
               "retrieval": {
+                "rank": 1,
                 "score": 34.782716564418095,
                 "matched_by": [
                   "keyword"
@@ -4975,6 +5246,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百一十条",
               "retrieval": {
+                "rank": 2,
                 "score": 29.50702740473072,
                 "matched_by": [
                   "keyword"
@@ -4986,6 +5258,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百一十一条",
               "retrieval": {
+                "rank": 3,
                 "score": 28.925753792101766,
                 "matched_by": [
                   "keyword"
@@ -4997,6 +5270,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百四十八条",
               "retrieval": {
+                "rank": 4,
                 "score": 28.245623416749616,
                 "matched_by": [
                   "keyword"
@@ -5008,6 +5282,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百三十四条",
               "retrieval": {
+                "rank": 5,
                 "score": 27.228537057130087,
                 "matched_by": [
                   "keyword"
@@ -5049,13 +5324,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.002644799998961389,
+          "query_seconds": 0.0019044000655412674,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一百八十八条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第一百八十八条",
               "retrieval": {
+                "rank": 1,
                 "score": 15.20272934174039,
                 "matched_by": [
                   "keyword"
@@ -5067,6 +5343,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第四百一十九条",
               "retrieval": {
+                "rank": 2,
                 "score": 11.597469448968097,
                 "matched_by": [
                   "keyword"
@@ -5078,6 +5355,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一百九十六条",
               "retrieval": {
+                "rank": 3,
                 "score": 10.85254275490107,
                 "matched_by": [
                   "keyword"
@@ -5089,6 +5367,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一百九十二条",
               "retrieval": {
+                "rank": 4,
                 "score": 10.605364085326986,
                 "matched_by": [
                   "keyword"
@@ -5100,6 +5379,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一百二十八条",
               "retrieval": {
+                "rank": 5,
                 "score": 10.412151047320531,
                 "matched_by": [
                   "keyword"
@@ -5139,13 +5419,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0021825000876560807,
+          "query_seconds": 0.0019057999597862363,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第六十六条",
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第六十六条",
               "retrieval": {
+                "rank": 1,
                 "score": 24.21676830636255,
                 "matched_by": [
                   "keyword"
@@ -5157,6 +5438,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第六十七条",
               "retrieval": {
+                "rank": 2,
                 "score": 12.878787166352513,
                 "matched_by": [
                   "keyword"
@@ -5168,6 +5450,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第七十二条",
               "retrieval": {
+                "rank": 3,
                 "score": 12.772281395894565,
                 "matched_by": [
                   "keyword"
@@ -5179,6 +5462,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第八十四条",
               "retrieval": {
+                "rank": 4,
                 "score": 12.594176117472312,
                 "matched_by": [
                   "keyword"
@@ -5190,6 +5474,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第七十一条",
               "retrieval": {
+                "rank": 5,
                 "score": 12.14104354578374,
                 "matched_by": [
                   "keyword"
@@ -5230,13 +5515,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0018518000142648816,
+          "query_seconds": 0.0016005999641492963,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第六十七条",
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第六十七条",
               "retrieval": {
+                "rank": 1,
                 "score": 21.657820780630527,
                 "matched_by": [
                   "keyword"
@@ -5248,6 +5534,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第六十八条",
               "retrieval": {
+                "rank": 2,
                 "score": 19.206341918142147,
                 "matched_by": [
                   "keyword"
@@ -5259,6 +5546,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百七十八条",
               "retrieval": {
+                "rank": 3,
                 "score": 9.635885810134218,
                 "matched_by": [
                   "keyword"
@@ -5270,6 +5558,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百零一条",
               "retrieval": {
+                "rank": 4,
                 "score": 9.290457946232694,
                 "matched_by": [
                   "keyword"
@@ -5281,6 +5570,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第八十二条",
               "retrieval": {
+                "rank": 5,
                 "score": 8.27918567426168,
                 "matched_by": [
                   "keyword"
@@ -5318,13 +5608,14 @@
             "recall@5": 0.0,
             "mrr@5": 0.0
           },
-          "query_seconds": 0.0021205999655649066,
+          "query_seconds": 0.0017368999542668462,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第五十八条",
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第五十八条",
               "retrieval": {
+                "rank": 1,
                 "score": 15.552908435562813,
                 "matched_by": [
                   "keyword"
@@ -5336,6 +5627,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第三十六条",
               "retrieval": {
+                "rank": 2,
                 "score": 13.299550050814833,
                 "matched_by": [
                   "keyword"
@@ -5347,6 +5639,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百八十二条",
               "retrieval": {
+                "rank": 3,
                 "score": 12.709834587632418,
                 "matched_by": [
                   "keyword"
@@ -5358,6 +5651,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百二十六条",
               "retrieval": {
+                "rank": 4,
                 "score": 12.555365970535066,
                 "matched_by": [
                   "keyword"
@@ -5369,6 +5663,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二十三条",
               "retrieval": {
+                "rank": 5,
                 "score": 12.473809608409125,
                 "matched_by": [
                   "keyword"
@@ -5407,13 +5702,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.001990900025703013,
+          "query_seconds": 0.0016333999810740352,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第一百二十四条",
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百二十四条",
               "retrieval": {
+                "rank": 1,
                 "score": 13.00513099246152,
                 "matched_by": [
                   "keyword"
@@ -5425,6 +5721,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百二十三条",
               "retrieval": {
+                "rank": 2,
                 "score": 10.126206877421408,
                 "matched_by": [
                   "keyword"
@@ -5436,6 +5733,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百八十五条",
               "retrieval": {
+                "rank": 3,
                 "score": 8.435920722086394,
                 "matched_by": [
                   "keyword"
@@ -5447,6 +5745,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千零三十四条",
               "retrieval": {
+                "rank": 4,
                 "score": 8.336874404198765,
                 "matched_by": [
                   "keyword"
@@ -5458,6 +5757,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第十六条",
               "retrieval": {
+                "rank": 5,
                 "score": 8.24983375176298,
                 "matched_by": [
                   "keyword"
@@ -5501,13 +5801,14 @@
             "recall@5": 0.0,
             "mrr@5": 0.0
           },
-          "query_seconds": 0.0019194999476894736,
+          "query_seconds": 0.0017407999839633703,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千一百五十条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百五十条",
               "retrieval": {
+                "rank": 1,
                 "score": 16.522303857085326,
                 "matched_by": [
                   "keyword"
@@ -5519,6 +5820,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百三十四条",
               "retrieval": {
+                "rank": 2,
                 "score": 16.156412306528257,
                 "matched_by": [
                   "keyword"
@@ -5530,6 +5832,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百二十三条",
               "retrieval": {
+                "rank": 3,
                 "score": 15.645769454303686,
                 "matched_by": [
                   "keyword"
@@ -5541,6 +5844,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百九十七条",
               "retrieval": {
+                "rank": 4,
                 "score": 14.62108190011465,
                 "matched_by": [
                   "keyword"
@@ -5552,6 +5856,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一百六十七条",
               "retrieval": {
+                "rank": 5,
                 "score": 13.37160283635414,
                 "matched_by": [
                   "keyword"
@@ -5577,13 +5882,14 @@
           "expected_status": "insufficient_corpus",
           "gold": [],
           "metrics": null,
-          "query_seconds": 0.002351099974475801,
+          "query_seconds": 0.002363600069656968,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第七百四十一条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百四十一条",
               "retrieval": {
+                "rank": 1,
                 "score": 18.89677974504024,
                 "matched_by": [
                   "keyword"
@@ -5595,6 +5901,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百四十三条",
               "retrieval": {
+                "rank": 2,
                 "score": 17.843292720508607,
                 "matched_by": [
                   "keyword"
@@ -5606,6 +5913,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百四十二条",
               "retrieval": {
+                "rank": 3,
                 "score": 12.31710565191001,
                 "matched_by": [
                   "keyword"
@@ -5617,6 +5925,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百六十五条",
               "retrieval": {
+                "rank": 4,
                 "score": 11.983085534974652,
                 "matched_by": [
                   "keyword"
@@ -5628,6 +5937,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百一十三条",
               "retrieval": {
+                "rank": 5,
                 "score": 8.563216775075432,
                 "matched_by": [
                   "keyword"
@@ -5655,13 +5965,14 @@
           "expected_status": "insufficient_corpus",
           "gold": [],
           "metrics": null,
-          "query_seconds": 0.0027402000268921256,
+          "query_seconds": 0.0019919000333175063,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第七百三十三条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百三十三条",
               "retrieval": {
+                "rank": 1,
                 "score": 15.237421963202861,
                 "matched_by": [
                   "keyword"
@@ -5673,6 +5984,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百六十条",
               "retrieval": {
+                "rank": 2,
                 "score": 11.71164662598275,
                 "matched_by": [
                   "keyword"
@@ -5684,6 +5996,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一百二十二条",
               "retrieval": {
+                "rank": 3,
                 "score": 10.298145955114839,
                 "matched_by": [
                   "keyword"
@@ -5695,6 +6008,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百五十八条",
               "retrieval": {
+                "rank": 4,
                 "score": 10.149257955416124,
                 "matched_by": [
                   "keyword"
@@ -5706,6 +6020,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第一百二十三条",
               "retrieval": {
+                "rank": 5,
                 "score": 10.017985521546978,
                 "matched_by": [
                   "keyword"
@@ -5732,13 +6047,14 @@
           "expected_status": "insufficient_corpus",
           "gold": [],
           "metrics": null,
-          "query_seconds": 0.003304499899968505,
+          "query_seconds": 0.002276299986988306,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第二百一十条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第二百一十条",
               "retrieval": {
+                "rank": 1,
                 "score": 11.569782998594963,
                 "matched_by": [
                   "keyword"
@@ -5750,6 +6066,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百二十一条",
               "retrieval": {
+                "rank": 2,
                 "score": 11.363362911841648,
                 "matched_by": [
                   "keyword"
@@ -5761,6 +6078,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百三十四条",
               "retrieval": {
+                "rank": 3,
                 "score": 11.046818738238464,
                 "matched_by": [
                   "keyword"
@@ -5772,6 +6090,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百零五条",
               "retrieval": {
+                "rank": 4,
                 "score": 10.854693542707182,
                 "matched_by": [
                   "keyword"
@@ -5783,6 +6102,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七百三十六条",
               "retrieval": {
+                "rank": 5,
                 "score": 10.828248640148093,
                 "matched_by": [
                   "keyword"
@@ -5825,13 +6145,14 @@
             "recall@5": 0.0,
             "mrr@5": 0.0
           },
-          "query_seconds": 0.0014264000346884131,
+          "query_seconds": 0.0011763999937102199,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第四百七十五条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第四百七十五条",
               "retrieval": {
+                "rank": 1,
                 "score": 8.772847324393416,
                 "matched_by": [
                   "keyword"
@@ -5843,6 +6164,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第四百八十五条",
               "retrieval": {
+                "rank": 2,
                 "score": 8.772847324393416,
                 "matched_by": [
                   "keyword"
@@ -5854,6 +6176,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百六十三条",
               "retrieval": {
+                "rank": 3,
                 "score": 8.507473222597191,
                 "matched_by": [
                   "keyword"
@@ -5865,6 +6188,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百零四条",
               "retrieval": {
+                "rank": 4,
                 "score": 7.373602065854618,
                 "matched_by": [
                   "keyword"
@@ -5876,6 +6200,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第三百三十八条",
               "retrieval": {
+                "rank": 5,
                 "score": 6.922526311744597,
                 "matched_by": [
                   "keyword"
@@ -5911,13 +6236,14 @@
             "recall@5": 1.0,
             "mrr@5": 0.2
           },
-          "query_seconds": 0.0014549000188708305,
+          "query_seconds": 0.001171399955637753,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第二十四条",
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第二十四条",
               "retrieval": {
+                "rank": 1,
                 "score": 13.99994648419117,
                 "matched_by": [
                   "keyword"
@@ -5929,6 +6255,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第一百零一条",
               "retrieval": {
+                "rank": 2,
                 "score": 13.457119661225079,
                 "matched_by": [
                   "keyword"
@@ -5940,6 +6267,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第九十九条",
               "retrieval": {
+                "rank": 3,
                 "score": 11.885464663142812,
                 "matched_by": [
                   "keyword"
@@ -5951,6 +6279,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第一百一十三条",
               "retrieval": {
+                "rank": 4,
                 "score": 9.178301795675193,
                 "matched_by": [
                   "keyword"
@@ -5962,6 +6291,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第十九条",
               "retrieval": {
+                "rank": 5,
                 "score": 8.913909068123065,
                 "matched_by": [
                   "keyword"
@@ -5997,13 +6327,14 @@
             "recall@5": 0.0,
             "mrr@5": 0.0
           },
-          "query_seconds": 0.0012917000567540526,
+          "query_seconds": 0.0010873000137507915,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千一百一十一条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百一十一条",
               "retrieval": {
+                "rank": 1,
                 "score": 6.289588246922737,
                 "matched_by": [
                   "keyword"
@@ -6015,6 +6346,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千零二十一条",
               "retrieval": {
+                "rank": 2,
                 "score": 5.934549080893894,
                 "matched_by": [
                   "keyword"
@@ -6026,6 +6358,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第九十条",
               "retrieval": {
+                "rank": 3,
                 "score": 5.6007575440800235,
                 "matched_by": [
                   "keyword"
@@ -6037,6 +6370,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第八十九条",
               "retrieval": {
+                "rank": 4,
                 "score": 5.3025150614237475,
                 "matched_by": [
                   "keyword"
@@ -6048,6 +6382,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百一十三条",
               "retrieval": {
+                "rank": 5,
                 "score": 5.232852215644217,
                 "matched_by": [
                   "keyword"
@@ -6082,13 +6417,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0015720000956207514,
+          "query_seconds": 0.00133500003721565,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第七十六条",
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十六条",
               "retrieval": {
+                "rank": 1,
                 "score": 11.031632814170298,
                 "matched_by": [
                   "keyword"
@@ -6100,6 +6436,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百零八条",
               "retrieval": {
+                "rank": 2,
                 "score": 10.84129486925033,
                 "matched_by": [
                   "keyword"
@@ -6111,6 +6448,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十二条",
               "retrieval": {
+                "rank": 3,
                 "score": 9.996685096996298,
                 "matched_by": [
                   "keyword"
@@ -6122,6 +6460,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十三条",
               "retrieval": {
+                "rank": 4,
                 "score": 9.672499898471086,
                 "matched_by": [
                   "keyword"
@@ -6133,6 +6472,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百零九条",
               "retrieval": {
+                "rank": 5,
                 "score": 9.486459672367513,
                 "matched_by": [
                   "keyword"
@@ -6168,13 +6508,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0026389000704512,
+          "query_seconds": 0.0020186000037938356,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千一百八十六条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百八十六条",
               "retrieval": {
+                "rank": 1,
                 "score": 36.40645113189175,
                 "matched_by": [
                   "keyword"
@@ -6186,6 +6527,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百九十条",
               "retrieval": {
+                "rank": 2,
                 "score": 16.896682938109908,
                 "matched_by": [
                   "keyword"
@@ -6197,6 +6539,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百六十五条",
               "retrieval": {
+                "rank": 3,
                 "score": 16.8415987575865,
                 "matched_by": [
                   "keyword"
@@ -6208,6 +6551,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十六条",
               "retrieval": {
+                "rank": 4,
                 "score": 16.17899404197968,
                 "matched_by": [
                   "keyword"
@@ -6219,6 +6563,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百七十四条",
               "retrieval": {
+                "rank": 5,
                 "score": 15.250849728733268,
                 "matched_by": [
                   "keyword"
@@ -6259,13 +6604,14 @@
             "recall@5": 0.0,
             "mrr@5": 0.0
           },
-          "query_seconds": 0.0029829000122845173,
+          "query_seconds": 0.0019093999871984124,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第三十条",
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第三十条",
               "retrieval": {
+                "rank": 1,
                 "score": 8.90080787815477,
                 "matched_by": [
                   "keyword"
@@ -6277,6 +6623,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百零七条",
               "retrieval": {
+                "rank": 2,
                 "score": 8.169828756264458,
                 "matched_by": [
                   "keyword"
@@ -6288,6 +6635,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十七条",
               "retrieval": {
+                "rank": 3,
                 "score": 7.515723722285028,
                 "matched_by": [
                   "keyword"
@@ -6299,6 +6647,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百五十五条",
               "retrieval": {
+                "rank": 4,
                 "score": 6.746870680206746,
                 "matched_by": [
                   "keyword"
@@ -6310,6 +6659,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一百七十八条",
               "retrieval": {
+                "rank": 5,
                 "score": 6.650982073135367,
                 "matched_by": [
                   "keyword"
@@ -6347,13 +6697,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0017654000548645854,
+          "query_seconds": 0.0014526000013574958,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第二十一条",
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二十一条",
               "retrieval": {
+                "rank": 1,
                 "score": 18.158438244492388,
                 "matched_by": [
                   "keyword"
@@ -6365,6 +6716,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第十九条",
               "retrieval": {
+                "rank": 2,
                 "score": 17.885452867746118,
                 "matched_by": [
                   "keyword"
@@ -6376,6 +6728,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第三十九条",
               "retrieval": {
+                "rank": 3,
                 "score": 13.620822268709315,
                 "matched_by": [
                   "keyword"
@@ -6387,6 +6740,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二十条",
               "retrieval": {
+                "rank": 4,
                 "score": 12.455002134258901,
                 "matched_by": [
                   "keyword"
@@ -6398,6 +6752,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第十八条",
               "retrieval": {
+                "rank": 5,
                 "score": 12.131652486171436,
                 "matched_by": [
                   "keyword"
@@ -6434,13 +6789,14 @@
             "recall@5": 1.0,
             "mrr@5": 0.5
           },
-          "query_seconds": 0.002377100056037307,
+          "query_seconds": 0.001768199959769845,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第一百零一条",
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百零一条",
               "retrieval": {
+                "rank": 1,
                 "score": 21.52609713421788,
                 "matched_by": [
                   "keyword"
@@ -6452,6 +6808,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百条",
               "retrieval": {
+                "rank": 2,
                 "score": 20.994043291599592,
                 "matched_by": [
                   "keyword"
@@ -6463,6 +6820,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百四十五条",
               "retrieval": {
+                "rank": 3,
                 "score": 16.089976113337556,
                 "matched_by": [
                   "keyword"
@@ -6474,6 +6832,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百零九条",
               "retrieval": {
+                "rank": 4,
                 "score": 12.70169272643572,
                 "matched_by": [
                   "keyword"
@@ -6485,6 +6844,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百二十三条",
               "retrieval": {
+                "rank": 5,
                 "score": 12.390202081313124,
                 "matched_by": [
                   "keyword"
@@ -6523,13 +6883,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0027109000366181135,
+          "query_seconds": 0.0017428999999538064,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第一百五十四条",
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百五十四条",
               "retrieval": {
+                "rank": 1,
                 "score": 26.186526480822536,
                 "matched_by": [
                   "keyword"
@@ -6541,6 +6902,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百五十二条",
               "retrieval": {
+                "rank": 2,
                 "score": 16.788447426998562,
                 "matched_by": [
                   "keyword"
@@ -6552,6 +6914,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百五十条",
               "retrieval": {
+                "rank": 3,
                 "score": 16.11342576805591,
                 "matched_by": [
                   "keyword"
@@ -6563,6 +6926,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百二十一条",
               "retrieval": {
+                "rank": 4,
                 "score": 14.906491445545544,
                 "matched_by": [
                   "keyword"
@@ -6574,6 +6938,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一百二十七条",
               "retrieval": {
+                "rank": 5,
                 "score": 14.601060902745557,
                 "matched_by": [
                   "keyword"
@@ -6612,13 +6977,14 @@
             "recall@5": 1.0,
             "mrr@5": 0.3333333333333333
           },
-          "query_seconds": 0.003234699950553477,
+          "query_seconds": 0.0023244000039994717,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第五十一条",
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第五十一条",
               "retrieval": {
+                "rank": 1,
                 "score": 25.64223578865274,
                 "matched_by": [
                   "keyword"
@@ -6630,6 +6996,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第八十九条",
               "retrieval": {
+                "rank": 2,
                 "score": 22.53226341782415,
                 "matched_by": [
                   "keyword"
@@ -6641,6 +7008,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第九十条",
               "retrieval": {
+                "rank": 3,
                 "score": 22.392854571137704,
                 "matched_by": [
                   "keyword"
@@ -6652,6 +7020,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第六十六条",
               "retrieval": {
+                "rank": 4,
                 "score": 16.003655602060505,
                 "matched_by": [
                   "keyword"
@@ -6663,6 +7032,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第四十五条",
               "retrieval": {
+                "rank": 5,
                 "score": 15.870045146141386,
                 "matched_by": [
                   "keyword"
@@ -6703,13 +7073,14 @@
             "recall@5": 0.0,
             "mrr@5": 0.0
           },
-          "query_seconds": 0.0018233999144285917,
+          "query_seconds": 0.001158999977633357,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第四十一条",
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第四十一条",
               "retrieval": {
+                "rank": 1,
                 "score": 12.406584376209429,
                 "matched_by": [
                   "keyword"
@@ -6721,6 +7092,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第九十条",
               "retrieval": {
+                "rank": 2,
                 "score": 9.520958446559078,
                 "matched_by": [
                   "keyword"
@@ -6732,6 +7104,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第八十九条",
               "retrieval": {
+                "rank": 3,
                 "score": 9.013963765568036,
                 "matched_by": [
                   "keyword"
@@ -6743,6 +7116,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百七十条",
               "retrieval": {
+                "rank": 4,
                 "score": 7.440895925918166,
                 "matched_by": [
                   "keyword"
@@ -6754,6 +7128,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第二十四条",
               "retrieval": {
+                "rank": 5,
                 "score": 7.11528053877315,
                 "matched_by": [
                   "keyword"
@@ -6789,13 +7164,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0023532999912276864,
+          "query_seconds": 0.0014769999543204904,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第十九条",
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第十九条",
               "retrieval": {
+                "rank": 1,
                 "score": 13.72791139983654,
                 "matched_by": [
                   "keyword"
@@ -6807,6 +7183,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第二十四条",
               "retrieval": {
+                "rank": 2,
                 "score": 12.514395066166214,
                 "matched_by": [
                   "keyword"
@@ -6818,6 +7195,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第一百一十三条",
               "retrieval": {
+                "rank": 3,
                 "score": 9.69445202522902,
                 "matched_by": [
                   "keyword"
@@ -6829,6 +7207,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第九十一条",
               "retrieval": {
+                "rank": 4,
                 "score": 8.798700959155632,
                 "matched_by": [
                   "keyword"
@@ -6840,6 +7219,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第一百零一条",
               "retrieval": {
+                "rank": 5,
                 "score": 8.795863182803966,
                 "matched_by": [
                   "keyword"
@@ -6877,13 +7257,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.004586600000038743,
+          "query_seconds": 0.0022409999510273337,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第二百一十条",
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百一十条",
               "retrieval": {
+                "rank": 1,
                 "score": 32.587250284285716,
                 "matched_by": [
                   "keyword"
@@ -6895,6 +7276,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百零九条",
               "retrieval": {
+                "rank": 2,
                 "score": 24.139196042602226,
                 "matched_by": [
                   "keyword"
@@ -6906,6 +7288,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百二十条",
               "retrieval": {
+                "rank": 3,
                 "score": 23.992466025394968,
                 "matched_by": [
                   "keyword"
@@ -6917,6 +7300,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百一十八条",
               "retrieval": {
+                "rank": 4,
                 "score": 23.572961801134134,
                 "matched_by": [
                   "keyword"
@@ -6928,6 +7312,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第二百一十五条",
               "retrieval": {
+                "rank": 5,
                 "score": 19.37371909969739,
                 "matched_by": [
                   "keyword"
@@ -6969,13 +7354,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.004608100047335029,
+          "query_seconds": 0.0033793000038713217,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千二百五十四条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百五十四条",
               "retrieval": {
+                "rank": 1,
                 "score": 29.12898433988061,
                 "matched_by": [
                   "keyword"
@@ -6987,6 +7373,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百零六条",
               "retrieval": {
+                "rank": 2,
                 "score": 19.202035956150688,
                 "matched_by": [
                   "keyword"
@@ -6998,6 +7385,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百七十七条",
               "retrieval": {
+                "rank": 3,
                 "score": 19.019944667573238,
                 "matched_by": [
                   "keyword"
@@ -7009,6 +7397,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千一百九十八条",
               "retrieval": {
+                "rank": 4,
                 "score": 18.87995434051409,
                 "matched_by": [
                   "keyword"
@@ -7020,6 +7409,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第九百四十二条",
               "retrieval": {
+                "rank": 5,
                 "score": 17.90113198759215,
                 "matched_by": [
                   "keyword"
@@ -7050,13 +7440,14 @@
           "expected_status": "insufficient_corpus",
           "gold": [],
           "metrics": null,
-          "query_seconds": 0.0026996999513357878,
+          "query_seconds": 0.0019931000424548984,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第七十一条",
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十一条",
               "retrieval": {
+                "rank": 1,
                 "score": 12.1614256266296,
                 "matched_by": [
                   "keyword"
@@ -7068,6 +7459,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第一百零一条",
               "retrieval": {
+                "rank": 2,
                 "score": 11.51512465086687,
                 "matched_by": [
                   "keyword"
@@ -7079,6 +7471,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第一千二百一十六条",
               "retrieval": {
+                "rank": 3,
                 "score": 11.058539482638535,
                 "matched_by": [
                   "keyword"
@@ -7090,6 +7483,7 @@
               "law_title": "中华人民共和国道路交通安全法",
               "article_no": "第七十五条",
               "retrieval": {
+                "rank": 4,
                 "score": 10.734242882570818,
                 "matched_by": [
                   "keyword"
@@ -7101,6 +7495,7 @@
               "law_title": "中华人民共和国民事诉讼法",
               "article_no": "第一条",
               "retrieval": {
+                "rank": 5,
                 "score": 8.911228060682149,
                 "matched_by": [
                   "keyword"
@@ -7140,13 +7535,14 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0021652000723406672,
+          "query_seconds": 0.0013455000007525086,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第六十七条",
               "law_title": "中华人民共和国民法典",
               "article_no": "第六十七条",
               "retrieval": {
+                "rank": 1,
                 "score": 19.807083258239352,
                 "matched_by": [
                   "keyword"
@@ -7158,6 +7554,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第八十三条",
               "retrieval": {
+                "rank": 2,
                 "score": 11.636807132030661,
                 "matched_by": [
                   "keyword"
@@ -7169,6 +7566,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第六十九条",
               "retrieval": {
+                "rank": 3,
                 "score": 10.70170579460374,
                 "matched_by": [
                   "keyword"
@@ -7180,6 +7578,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七十五条",
               "retrieval": {
+                "rank": 4,
                 "score": 10.372101376423762,
                 "matched_by": [
                   "keyword"
@@ -7191,6 +7590,7 @@
               "law_title": "中华人民共和国民法典",
               "article_no": "第七十条",
               "retrieval": {
+                "rank": 5,
                 "score": 9.996741863312831,
                 "matched_by": [
                   "keyword"
@@ -7278,7 +7678,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.00041009997949004173,
+          "query_seconds": 1.379998866468668e-05,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第七十六条",
@@ -7329,7 +7729,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.005123300012201071,
+          "query_seconds": 0.0020420000655576587,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第七十六条",
@@ -7424,7 +7824,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.004205600009299815,
+          "query_seconds": 0.001868200022727251,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第七十条",
@@ -7519,7 +7919,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0032712999964132905,
+          "query_seconds": 0.00170369993429631,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第七十三条",
@@ -7613,7 +8013,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.004116800031624734,
+          "query_seconds": 0.0021526000928133726,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第七十六条",
@@ -7715,7 +8115,7 @@
             "recall@5": 0.5,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0041859999764710665,
+          "query_seconds": 0.0027311999583616853,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第七十六条",
@@ -7813,7 +8213,7 @@
             "recall@5": 1.0,
             "mrr@5": 0.3333333333333333
           },
-          "query_seconds": 0.003146299975924194,
+          "query_seconds": 0.0020893000764772296,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千一百八十三条",
@@ -7909,7 +8309,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.003383600036613643,
+          "query_seconds": 0.002487099962309003,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千一百八十三条",
@@ -8006,7 +8406,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.00466259999666363,
+          "query_seconds": 0.0024485000176355243,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千二百一十三条",
@@ -8104,7 +8504,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.003537400043569505,
+          "query_seconds": 0.0018501000013202429,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第五百七十七条",
@@ -8199,7 +8599,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.004451199900358915,
+          "query_seconds": 0.002419800031930208,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第五百零九条",
@@ -8297,7 +8697,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.003542299964465201,
+          "query_seconds": 0.0019603000255301595,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第六百八十条",
@@ -8393,7 +8793,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0017852999735623598,
+          "query_seconds": 0.0012898000422865152,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第六百六十七条",
@@ -8484,7 +8884,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0028464000206440687,
+          "query_seconds": 0.002242300077341497,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第七百零五条",
@@ -8585,7 +8985,7 @@
             "recall@5": 0.5,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0030840999679639935,
+          "query_seconds": 0.0026014000177383423,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第七百零九条",
@@ -8682,7 +9082,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0025677999947220087,
+          "query_seconds": 0.00200159999076277,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一百八十八条",
@@ -8777,7 +9177,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0024144999915733933,
+          "query_seconds": 0.0020276999566704035,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第六十六条",
@@ -8873,7 +9273,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0024858000688254833,
+          "query_seconds": 0.0016388000221922994,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第六十七条",
@@ -8966,7 +9366,7 @@
             "recall@5": 0.0,
             "mrr@5": 0.0
           },
-          "query_seconds": 0.00237360002938658,
+          "query_seconds": 0.0018081999151036143,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第五十八条",
@@ -9060,7 +9460,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0022196000209078193,
+          "query_seconds": 0.001842699944972992,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第一百二十四条",
@@ -9159,7 +9559,7 @@
             "recall@5": 0.0,
             "mrr@5": 0.0
           },
-          "query_seconds": 0.0020890000741928816,
+          "query_seconds": 0.001893299981020391,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千一百五十条",
@@ -9240,7 +9640,7 @@
           "expected_status": "insufficient_corpus",
           "gold": [],
           "metrics": null,
-          "query_seconds": 0.002409399952739477,
+          "query_seconds": 0.002516999957151711,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第七百四十一条",
@@ -9323,7 +9723,7 @@
           "expected_status": "insufficient_corpus",
           "gold": [],
           "metrics": null,
-          "query_seconds": 0.0022510000271722674,
+          "query_seconds": 0.0021351000759750605,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第七百三十三条",
@@ -9405,7 +9805,7 @@
           "expected_status": "insufficient_corpus",
           "gold": [],
           "metrics": null,
-          "query_seconds": 0.002979799988679588,
+          "query_seconds": 0.0025130000431090593,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第二百一十条",
@@ -9503,7 +9903,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 6.019999273121357e-05,
+          "query_seconds": 1.2199976481497288e-05,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一百四十三条",
@@ -9553,7 +9953,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.00026869995053857565,
+          "query_seconds": 5.900044925510883e-06,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第十九条",
@@ -9603,7 +10003,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 9.380001574754715e-05,
+          "query_seconds": 4.700035788118839e-06,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第二十九条",
@@ -9652,7 +10052,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0024923000019043684,
+          "query_seconds": 0.0013212000485509634,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第七十六条",
@@ -9743,7 +10143,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0033955000108107924,
+          "query_seconds": 0.0022415000712499022,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千一百八十六条",
@@ -9839,7 +10239,7 @@
             "recall@5": 0.0,
             "mrr@5": 0.0
           },
-          "query_seconds": 0.0022550999419763684,
+          "query_seconds": 0.001666199997998774,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第三十条",
@@ -9932,7 +10332,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.002022900036536157,
+          "query_seconds": 0.0016245999140664935,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第二十一条",
@@ -10024,7 +10424,7 @@
             "recall@5": 1.0,
             "mrr@5": 0.5
           },
-          "query_seconds": 0.002898600068874657,
+          "query_seconds": 0.0018234000308439136,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第一百零一条",
@@ -10118,7 +10518,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0027622999623417854,
+          "query_seconds": 0.001699600019492209,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第一百五十四条",
@@ -10212,7 +10612,7 @@
             "recall@5": 1.0,
             "mrr@5": 0.3333333333333333
           },
-          "query_seconds": 0.0028979999478906393,
+          "query_seconds": 0.0021976999705657363,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第五十一条",
@@ -10308,7 +10708,7 @@
             "recall@5": 0.0,
             "mrr@5": 0.0
           },
-          "query_seconds": 0.0014799999771639705,
+          "query_seconds": 0.0011186999035999179,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第四十一条",
@@ -10399,7 +10799,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.001778600038960576,
+          "query_seconds": 0.0014531000051647425,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第十九条",
@@ -10492,7 +10892,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.003005300066433847,
+          "query_seconds": 0.002122499980032444,
           "results": [
             {
               "provision_id": "中华人民共和国民事诉讼法::2023-09-01::第二百一十条",
@@ -10589,7 +10989,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0034825000911951065,
+          "query_seconds": 0.0025961999781429768,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第一千二百五十四条",
@@ -10675,7 +11075,7 @@
           "expected_status": "insufficient_corpus",
           "gold": [],
           "metrics": null,
-          "query_seconds": 0.002117200056090951,
+          "query_seconds": 0.0018948999932035804,
           "results": [
             {
               "provision_id": "中华人民共和国道路交通安全法::2021-04-29::第七十一条",
@@ -10770,7 +11170,7 @@
             "recall@5": 1.0,
             "mrr@5": 1.0
           },
-          "query_seconds": 0.0014480999670922756,
+          "query_seconds": 0.0012885000323876739,
           "results": [
             {
               "provision_id": "中华人民共和国民法典::2020-05-28::第六十七条",
@@ -10850,15 +11250,18 @@
     "data/processed/civil_procedure_law.jsonl": "6b17d0ef19043a138273b96e5b6caf31385deb2944fb0f9cea7014d3ce209817",
     "data/processed/road_traffic_safety_law.jsonl": "f4f5c6c4ed0734f4998db32d74b84dbe6e00aa99b661bad774cafb154dbbef5f",
     "evaluation/rag/rag_retrieval_dev.jsonl": "c6fc672a8b2b593b3ce7fffc63e21c5c6fe17d5e132741a677ce58d660ccf153",
-    "scripts/rag/evaluate_retrieval.py": "e95c10a6491a462200c50f7c98022da3aacb9eeba3ff584b8234fdbddbbee7da",
+    "scripts/rag/evaluate_retrieval.py": "1b1b8b5bf4509c495614b6ecf2419a291381532a2adfaaf32d0516b548c76259",
     "backend/knowledge/keyword/legal_terms.txt": "13610aff2ee6a1cd8000650c8469114048a8180127a387de60d37eaafdf7c7da",
+    "backend/knowledge/config.py": "4dacd2bbb819f3454424a5bead3895f2cdf1098aaf81d0d68e09cada24639806",
     "backend/knowledge/corpus.py": "7b8d004f69b562e05f5969b15550d1297b5cf026c27c84445f4595fd38633464",
-    "backend/knowledge/keyword/bm25_index.py": "2f6137f5e40e655161f8341a40f2aec9e2dcb2fe9ac95626c279c0d4cf97e5a7",
+    "backend/knowledge/exact/matcher.py": "77a2226366104175870fe021f80049adb71490b38bf99aa40276cb333677520b",
+    "backend/knowledge/exact/router.py": "8aa709b9d2f853b15fec9ddd42486801a40b75b5d14499d7c7387ab69dcc887f",
+    "backend/knowledge/keyword/bm25_index.py": "ceca198c025548233a9a8eab2bf9517c1df0ee17c47f30a6bb475163e343ec2a",
     "backend/knowledge/keyword/tokenizer.py": "0f14b49234c1bdb4a406e5434f66930bd1c148af2c9b16307966d877c8194458",
-    "backend/knowledge/retrieval/exact_match.py": "66b68ab627286ce5dc325a76600d692dfa7e4cb27567a66defc6b01d0972c2ff",
-    "backend/knowledge/retrieval/hybrid_search.py": "722f0f6a518fa80e788505d1dc471c3d3117c74a9012ab8bb39af8e0949e39d9",
-    "backend/knowledge/retrieval/search.py": "a2348e7c7ef70cdec3b0347bf10dc0132590abccdc2e4b8de9df1089e42cb38e",
-    "backend/knowledge/vector/embedding.py": "2a5faf7d53dc5566aa99e99711302a5de87b411f9ef9420a69eab22f92ac1e0a",
-    "backend/knowledge/vector/vector_index.py": "3c08b40748adf18c01700815bb0d00d08eaaea75daafaa07a47e1e91a7f96fd2"
+    "backend/knowledge/retrieval/hybrid_search.py": "45df49f3bd3b22fa6f8a0266e25f97c5307a378ec9d1315231ec261274cc43f7",
+    "backend/knowledge/retrieval/results.py": "81b7b230a1a37f73c81fc75dad10cc00268d3b1e0aef9d83a0f2b68fec50a6f8",
+    "backend/knowledge/retrieval/search.py": "5be53c1e77280aca93b60c62971275ea16610e4d8401e5faf1d9e36e61347833",
+    "backend/knowledge/vector/embedding.py": "68a1d05b410f6abc1b97a3e664015c69aa6f012e0668ab86584c9325edbedfbc",
+    "backend/knowledge/vector/vector_index.py": "10854b08519132ac6961efc9db570f38f65a140154e01169cc2ee534709291a6"
   }
 }

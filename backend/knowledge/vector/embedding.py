@@ -11,7 +11,7 @@ from urllib.request import Request, urlopen
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parents[3]
+from ..config import ROOT, INDEX_DIR
 
 
 def load_local_env():
@@ -32,7 +32,7 @@ class EmbeddingClient:
         if not self.base_url.startswith("https://"):
             raise ValueError("Embedding endpoint must use HTTPS")
         self.api_key = os.getenv("SILICONFLOW_API_KEY", "")
-        self.cache_path = Path(cache_path or ROOT / "data/index/embedding_cache.sqlite3")
+        self.cache_path = Path(cache_path or INDEX_DIR / "embedding_cache.sqlite3")
         self.cache_path.parent.mkdir(parents=True, exist_ok=True)
         with sqlite3.connect(self.cache_path) as db:
             db.execute("CREATE TABLE IF NOT EXISTS embeddings (key TEXT PRIMARY KEY, vector TEXT NOT NULL)")

@@ -10,27 +10,28 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from backend.knowledge.keyword.bm25_index import build_index, save_index  # noqa: E402
+from backend.knowledge.config import CORPUS_DIR, DEFAULT_VARIANT, INPUT_VARIANTS, keyword_index_path
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("jsonl", type=Path, nargs="*", default=[Path("data/processed")])
-    parser.add_argument("--output", type=Path, default=Path("data/index/bm25.pkl"))
-    parser.add_argument("--no-metadata", dest="include_metadata", action="store_false", help="Index article text only, without law title and hierarchy path (text-only baseline; see docs/rag/rag_technical_roadmap.md for the comparison)")
-    parser.set_defaults(include_metadata=True)
+    parser.add_argument("jsonl", type=Path, nargs="*", default=[CORPUS_DIR])
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--variant", choices=INPUT_VARIANTS, default=DEFAULT_VARIANT)
     args = parser.parse_args()
 
     paths = []
     for jsonl in args.jsonl:
         paths.extend(sorted(jsonl.glob("*.jsonl")) if jsonl.is_dir() else [jsonl])
 
-    index = build_index(paths, include_metadata=args.include_metadata)
-    save_index(index, args.output)
+    index = build_index(paths, variant=args.variant)
+    output = args.output or keyword_index_path(args.variant)
+    save_index(index, output)
     print(json.dumps({
         "provisions": len(index.provisions),
-        "include_metadata": args.include_metadata,
+        "include_metadata": index.include_metadata,
         "tokenizer_version": index.tokenizer_version,
-        "output": str(args.output),
+        "output": str(output),
     }, ensure_ascii=False))
 
 

@@ -1,8 +1,9 @@
-"""BM25 + dense retrieval with reciprocal rank fusion and exact-article routing."""
-from .search import _to_result, exact_result
+"""BM25 + dense candidate fusion; routing is owned by RetrievalService."""
+from ..config import DEFAULT_TOP_K, DEFAULT_CANDIDATE_K, DEFAULT_RRF_K
+from .results import to_result
 
 
-def reciprocal_rank_fusion(channels, top_k=8, rrf_k=60):
+def reciprocal_rank_fusion(channels, top_k=DEFAULT_TOP_K, rrf_k=DEFAULT_RRF_K):
     """Fuse ranked (provision, raw_score) lists; count each ID once per channel."""
     if top_k < 1 or rrf_k < 1:
         raise ValueError("top_k and rrf_k must be positive")
@@ -24,46 +25,18 @@ def reciprocal_rank_fusion(channels, top_k=8, rrf_k=60):
     ))
     results = []
     for rank, item in enumerate(ranked[:top_k], 1):
-        result = _to_result(item["provision"], rank, item["score"], sorted(item["channels"]))
+        result = to_result(item["provision"], rank, item["score"], sorted(item["channels"]))
         result["retrieval"].update({"score_type": "rrf", "rrf_k": rrf_k, "channels": item["channels"]})
         results.append(result)
     return results
 
 
-class HybridRetriever:
-    def __init__(self, keyword_index, vector_index, client, candidate_k=50, rrf_k=60):
-        if candidate_k < 1 or rrf_k < 1:
-            raise ValueError("candidate_k and rrf_k must be positive")
-        keyword = {p["provision_id"]: p for p in keyword_index.provisions}
-        dense = {p["provision_id"]: p for p in vector_index.provisions}
-        if len(keyword) != len(keyword_index.provisions) or len(dense) != len(vector_index.provisions) or keyword != dense:
-            raise ValueError("BM25 and vector indexes must contain identical provisions and versions; rebuild indexes")
-        if (client.model, client.base_url) != (vector_index.config["model"], vector_index.config["base_url"]):
-            raise ValueError("Query embedding model/endpoint differs from the vector index")
-        self.keyword_index = keyword_index
-        self.vector_index = vector_index
-        self.client = client
-        self.candidate_k = candidate_k
-        self.rrf_k = rrf_k
-
-    def search(self, query, top_k=8, use_exact=True, query_vector=None):
-        """An optional precomputed query vector allows evaluation without extra API calls."""
-        if top_k < 1:
-            raise ValueError("top_k must be positive")
-        if not query or not query.strip():
-            return {"status": "no_results", "query": query, "results": [], "warnings": ["empty query"]}
-        if use_exact:
-            hit = exact_result(query, self.keyword_index.provisions)
-            if hit:
-                return {"status": "ok", "query": query, "results": [hit], "warnings": []}
-        if query_vector is None:
-            query_vector = self.client.embed([query])[0]
-        depth = max(top_k, self.candidate_k)
-        channels = {
-            "keyword": self.keyword_index.search(query, depth),
-            "vector": self.vector_index.search_vector(query_vector, depth),
-        }
-        results = reciprocal_rank_fusion(channels, top_k, self.rrf_k)
-        for result in results:
-            result["retrieval"]["candidate_k"] = depth
-        return {"status": "ok" if results else "no_results", "query": query, "results": results, "warnings": []}
+def search_hybrid(query, keyword_index, vector_index, query_vector, top_k=DEFAULT_TOP_K,
+                  candidate_k=DEFAULT_CANDIDATE_K, rrf_k=DEFAULT_RRF_K):
+    depth = max(top_k, candidate_k)
+    channels = {"keyword": keyword_index.search(query, depth),
+                "vector": vector_index.search_vector(query_vector, depth)}
+    results = reciprocal_rank_fusion(channels, top_k, rrf_k)
+    for result in results:
+        result["retrieval"]["candidate_k"] = depth
+    return results

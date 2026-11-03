@@ -1,4 +1,4 @@
-"""Regex-based exact lookup for "<law name> + <article number>" style queries."""
+"""Recognize existing law aliases and article tokens without rewriting queries."""
 
 from __future__ import annotations
 

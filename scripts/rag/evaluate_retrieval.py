@@ -11,7 +11,9 @@ from time import perf_counter
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from backend.knowledge.keyword.bm25_index import build_index
-from backend.knowledge.retrieval.search import search_keyword
+from backend.knowledge.retrieval.search import RetrievalService
+from backend.knowledge.config import (ROOT, CORPUS_DIR, DATASET_PATH, INDEX_DIR, INPUT_VARIANTS,
+    DEFAULT_CANDIDATE_K, DEFAULT_RRF_K, evaluation_specs, includes_metadata, vector_index_path)
 from backend.knowledge.keyword.tokenizer import TOKENIZER_VERSION, tokenize
 
 
@@ -65,19 +67,19 @@ def load_queries(path, provisions):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=("keyword", "all"), default="keyword")
-    parser.add_argument("--corpus-dir", type=Path, default=Path("data/processed"))
-    parser.add_argument("--dataset", type=Path, default=Path("evaluation/rag/rag_retrieval_dev.jsonl"))
-    parser.add_argument("--index-dir", type=Path, default=Path("data/index"))
+    parser.add_argument("--corpus-dir", type=Path, default=CORPUS_DIR)
+    parser.add_argument("--dataset", type=Path, default=DATASET_PATH)
+    parser.add_argument("--index-dir", type=Path, default=INDEX_DIR)
     parser.add_argument("--output", type=Path)
-    parser.add_argument("--candidate-k", type=int, default=50)
-    parser.add_argument("--rrf-k", type=int, default=60)
+    parser.add_argument("--candidate-k", type=int, default=DEFAULT_CANDIDATE_K)
+    parser.add_argument("--rrf-k", type=int, default=DEFAULT_RRF_K)
     args = parser.parse_args()
     if min(args.candidate_k, args.rrf_k) < 1:
         parser.error("candidate-k and rrf-k must be positive")
     paths = sorted(args.corpus_dir.glob("*.jsonl"))
     bm25 = {"metadata": build_index(paths)}
     queries = load_queries(args.dataset, bm25["metadata"].provisions)
-    vectors, indexes, hybrids = [None] * len(queries), {}, {}
+    vectors, indexes, client = [None] * len(queries), {}, None
     report = {
         "schema_version": "1.0", "created_at": datetime.now(timezone(timedelta(hours=8))).isoformat(),
         "python": platform.python_version(),
@@ -87,46 +89,34 @@ def main():
         "metric_notes": "Macro averages on supported queries. Hit: any gold found; Recall: fraction of distinct gold found. Negative empty rate is diagnostic only. All modes share query metrics and actual retrieval code; timings include cache effects.",
         "runs": [],
     }
-    # Each tuple names the result, channel, document input, and exact-route flag.
-    specs = [("bm25_metadata", "keyword", "metadata", False),
-             ("exact_bm25_metadata", "keyword", "metadata", True)]
+    specs = evaluation_specs(args.mode, args.candidate_k, args.rrf_k)
     if args.mode == "keyword":
-        bm25["text"] = build_index(paths, include_metadata=False)
-        specs.insert(0, ("bm25_text", "keyword", "text", False))
+        bm25["text"] = build_index(paths, variant="text")
     else:
         from backend.knowledge.vector.embedding import EmbeddingClient
-        from backend.knowledge.retrieval.hybrid_search import HybridRetriever
-        from backend.knowledge.vector.vector_index import load_vector_index, search_vector
+        from backend.knowledge.vector.vector_index import load_vector_index
 
         client = EmbeddingClient()
         corpus_hash = hashlib.sha256(json.dumps(bm25["metadata"].provisions, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
-        for variant in ("text", "metadata"):
-            index = load_vector_index(args.index_dir / f"vector_{variant}.npz")
-            if index.config["corpus_sha256"] != corpus_hash or index.config["include_metadata"] != (variant == "metadata"):
+        for variant in INPUT_VARIANTS:
+            index = load_vector_index(vector_index_path(variant, args.index_dir))
+            if index.config["corpus_sha256"] != corpus_hash or index.config["include_metadata"] != includes_metadata(variant):
                 parser.error(f"{variant} index corpus/input differs; rebuild it")
             indexes[variant] = index
-            hybrids[variant] = HybridRetriever(bm25["metadata"], index, client, args.candidate_k, args.rrf_k)
         started = perf_counter()
         vectors = client.embed([q["query"] for q in queries])
         report.update({"model": client.model, "base_url": client.base_url, "dimensions": vectors.shape[1],
                        "query_embedding_seconds_with_cache": perf_counter() - started})
-        for channel, prefix, exact in (("vector", "vector", False), ("vector", "exact_vector", True),
-                                       ("hybrid", "rrf", False), ("hybrid", "exact_rrf", True)):
-            specs.extend((f"{prefix}_{variant}", channel, variant, exact) for variant in ("text", "metadata"))
-    inputs = paths + [args.dataset, Path(__file__).resolve(), Path("backend/knowledge/keyword/legal_terms.txt")] + sorted(Path("backend/knowledge").rglob("*.py"))
-    report["sha256"] = {p.resolve().relative_to(Path.cwd()).as_posix() if p.resolve().is_relative_to(Path.cwd()) else p.as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
-    for name, channel, variant, exact in specs:
+    inputs = paths + [args.dataset, Path(__file__).resolve(), ROOT / "backend/knowledge/keyword/legal_terms.txt"] + sorted((ROOT / "backend/knowledge").rglob("*.py"))
+    report["sha256"] = {p.resolve().relative_to(ROOT).as_posix() if p.resolve().is_relative_to(ROOT) else p.as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
+    for name, settings in specs:
+        channel, variant, exact = settings.channel, settings.variant, settings.exact_match
+        service = RetrievalService(settings, keyword_index=bm25.get("metadata" if channel == "hybrid" else variant),
+                                   vector_index=indexes.get(variant), client=client)
         details = []
         for q, vector in zip(queries, vectors):
             started = perf_counter()
-            if channel == "keyword":
-                index = bm25[variant]
-                hits = search_keyword(q["query"], index, 5)["results"] if exact else [
-                    dict(p, retrieval={"score": score, "matched_by": ["keyword"]}) for p, score in index.search(q["query"], 5)]
-            elif channel == "vector":
-                hits = search_vector(q["query"], indexes[variant], client, 5, use_exact=exact, query_vector=vector)["results"]
-            else:
-                hits = hybrids[variant].search(q["query"], 5, use_exact=exact, query_vector=vector)["results"]
+            hits = service.search(q["query"], query_vector=vector)["results"]
             seconds = perf_counter() - started
             metrics = retrieval_metrics({key(g) for g in q["gold"]}, [key(p) for p in hits]) if q["gold"] else None
             details.append({"id": q["id"], "query": q["query"], "expected_status": q["expected_status"],
@@ -137,9 +127,9 @@ def main():
         if channel == "keyword":
             index = bm25[variant]
             config = {"include_metadata": index.include_metadata, "exact_match": exact, "tokenizer_version": TOKENIZER_VERSION,
-                      "top_k": 5, "k1": index.bm25.k1, "b": index.bm25.b, "epsilon": index.bm25.epsilon}
+                      "top_k": settings.top_k, "k1": index.bm25.k1, "b": index.bm25.b, "epsilon": index.bm25.epsilon}
         else:
-            config = {"vector": indexes[variant].config, "exact_match": exact, "top_k": 5}
+            config = {"vector": indexes[variant].config, "exact_match": exact, "top_k": settings.top_k}
             if channel == "hybrid":
                 config.update({"keyword_include_metadata": True, "tokenizer_version": TOKENIZER_VERSION,
                                "candidate_k": args.candidate_k, "rrf_k": args.rrf_k, "channel_weights": {"keyword": 1, "vector": 1}})
@@ -150,7 +140,7 @@ def main():
                                "groups": grouped_metrics(details, queries), "negative_empty_results": empty,
                                "negative_empty_rate": empty / len(negative) if negative else None, "queries": details})
         print(name, json.dumps(summary), flush=True)
-    output = args.output or Path("evaluation/rag") / ("rag_keyword_baseline.json" if args.mode == "keyword" else "rag_vector_baseline.json")
+    output = args.output or ROOT / "evaluation/rag" / ("rag_keyword_baseline.json" if args.mode == "keyword" else "rag_vector_baseline.json")
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"Report: {output}")

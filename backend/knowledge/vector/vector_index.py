@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 
 from ..corpus import load_provisions, provision_text
+from ..config import DEFAULT_TOP_K, DEFAULT_VARIANT, includes_metadata
 
 
 @dataclass
@@ -15,7 +16,7 @@ class VectorIndex:
     vectors: np.ndarray
     config: dict
 
-    def search_vector(self, vector, top_k=8):
+    def search_vector(self, vector, top_k=DEFAULT_TOP_K):
         if top_k < 1:
             raise ValueError("top_k must be positive")
         vector = np.asarray(vector, dtype=np.float32)
@@ -26,7 +27,8 @@ class VectorIndex:
         return [(self.provisions[i], float(scores[i])) for i in ranked]
 
 
-def build_vector_index(paths, client, include_metadata=False, batch_size=16):
+def build_vector_index(paths, client, variant=DEFAULT_VARIANT, batch_size=16):
+    include_metadata = includes_metadata(variant)
     provisions = load_provisions(paths)
     texts = [provision_text(p, include_metadata) for p in provisions]
     vectors = client.embed(texts, batch_size=batch_size)
@@ -60,25 +62,3 @@ def load_vector_index(path):
     if not np.isfinite(vectors).all() or not np.allclose(np.linalg.norm(vectors, axis=1), 1, atol=1e-5):
         raise ValueError("Vector index is not normalized")
     return VectorIndex(provisions, vectors, config)
-
-
-def search_vector(query, index, client, top_k=8, use_exact=False, query_vector=None):
-    """Precomputed query vectors let evaluation exercise the same search path."""
-    from ..retrieval.search import _to_result, exact_result
-
-    if top_k < 1:
-        raise ValueError("top_k must be positive")
-    if not query or not query.strip():
-        return {"status": "no_results", "query": query, "results": [], "warnings": ["empty query"]}
-    if (client.model, client.base_url) != (index.config["model"], index.config["base_url"]):
-        raise ValueError("Query embedding model/endpoint differs from the index")
-    if use_exact:
-        hit = exact_result(query, index.provisions)
-        if hit:
-            return {"status": "ok", "query": query, "results": [hit], "warnings": []}
-    if query_vector is None:
-        query_vector = client.embed([query])[0]
-    ranked = index.search_vector(query_vector, top_k)
-    return {"status": "ok", "query": query, "results": [
-        _to_result(p, rank, score, ["vector"]) for rank, (p, score) in enumerate(ranked, 1)
-    ], "warnings": []}

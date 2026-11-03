@@ -9,14 +9,18 @@
 - **BM25保留原始jieba基线**：已按用户决定撤回失败题驱动的词片、问句清理、角色词及别名归一等预处理实验，删除实验模式。8条法律名称词典、原停用词与单字过滤保持基线行为，metadata默认拼入法律名称和路径。原始query与返回正文不做改写。36题上精确路由＋BM25 Hit@1/3/5为80.6%/88.9%/88.9%，Recall@5为86.1%。
 - **向量检索已完成两种输入对照**：SiliconFlow `BAAI/bge-m3` dense embedding，1024维，本地向量文件＋SQLite缓存，无需Milvus。精确路由＋metadata向量Hit@1/3/5为94.4%/97.2%/97.2%，Recall@5为95.8%；31道非条号题Hit@1为93.5%，Recall@5为95.2%。
 - **RRF已实现并评测**：原始BM25与向量每通道50条、等权、rrf_k=60，按法条ID去重并保留通道诊断。精确路由＋metadata RRF Hit@1/5为88.9%/97.2%、Recall@5为93.1%，未超过精确路由＋metadata向量，故保留为可切换实验，不作为默认。10种配置结果见 [向量与融合报告](rag_vector_baseline.md)。
-- **代码已整理**：统一查询CLI为 `scripts/rag/search.py`，默认exact-vector＋metadata向量，可切换keyword、vector、hybrid；评测统一为 `scripts/rag/evaluate_retrieval.py`，默认关键词、`--mode all` 为全部十种配置。三种检索共用精确路由和来源结果格式，语料读取与拼接共用 `corpus.py`；纯向量不依赖jieba。运行模块按下方职责分组，旧重复脚本与预处理实验已删除；迁移后BM25已重新构建，向量与缓存继续复用。
+- **代码已整理**：`retrieval/search.py` 的 `RetrievalService.search()` 是统一Python入口，CLI和评测共用；索引与客户端初始化一次后复用。`config.py` 集中模式预设、输入类型、默认参数、路径与评测组合，查询与构建统一使用 `--variant text|metadata`。精确识别与查找拆入 `exact/`，公共结果放 `retrieval/results.py`，向量/BM25/RRF只承担各自算法。默认exact-vector＋metadata不变；纯向量不加载jieba，关键词不实例化embedding客户端，现有本地索引与缓存可继续复用。
 - 当前仍在阶段2：元数据/时间过滤、可靠空结果规则、接口协同确认和独立测试未完成。RAG脚本、题库、文档分别位于 `scripts/rag/`、`evaluation/rag/`、`docs/rag/`；本地 `.env` 与 `data/index/`不入库。
 
 ### 代码目录
 
 ```text
 backend/knowledge/
+├── config.py                   # 默认参数、模式预设、输入类型、路径与评测组合
 ├── corpus.py                   # 共用语料读取与输入拼接
+├── exact/
+│   ├── matcher.py              # 法律名称＋条号识别
+│   └── router.py               # 精确查找及命中/缺失返回
 ├── keyword/
 │   ├── bm25_index.py           # BM25构建、存取和排序
 │   ├── tokenizer.py            # 原始jieba分词基线
@@ -25,12 +29,12 @@ backend/knowledge/
 │   ├── embedding.py            # API、配置、缓存和重试
 │   └── vector_index.py         # 向量索引和余弦检索
 └── retrieval/
-    ├── exact_match.py          # 法律＋条号识别
-    ├── search.py               # 关键词入口、共用精确路由和结果格式
+    ├── search.py               # RetrievalService统一入口与流程编排
+    ├── results.py              # 输入检查、空结果原因与来源结果格式
     └── hybrid_search.py        # RRF融合
 ```
 
-离线解析、校验、两类索引构建，以及统一查询/评测CLI仍放在 `scripts/rag/`。分组只整理职责与导入，不改变分词、embedding输入、检索参数或排序规则。
+离线解析、校验、两类索引构建，以及统一查询/评测CLI仍放在 `scripts/rag/`。CLI负责参数与输出，后续Agent适配层可直接调用同一Python服务，不需要启动命令行进程。分组不改变分词、embedding输入、检索参数或排序规则；初始化校验所选输入类型是否匹配索引。调用示例见[向量报告](rag_vector_baseline.md#统一python入口与配置)。
 
 ### 当前保留的基线选择
 
@@ -40,7 +44,7 @@ backend/knowledge/
 - **融合收益依实测判断**：当前等权RRF有补回和退步案例，不因接入融合便切为默认；先保留可比较的简单基线，再依据独立失败证据考虑重排等增强。
 - **先冻结、后独立验证**：撤回预处理调优不等于当前题库成为独立测试集。后续新题需在评分前隔离，不继续针对同一批题选最优参数。当前仅可作为原型输入和开发对照，不能声明总体法律准确率。
 
-下一步按阶段2完成元数据/案件日期过滤、合理的空结果状态与模块验证；再按阶段3升级门槛决定是否引入重排、改写或多争点检索。多版本增量管理与Agent工具集成仍按阶段4、5推进。
+阶段2已补充确定性空结果原因：空白/仅符号输入、关键词无可用词或无正分候选、现有精确路由识别的指定法条未找到；未实现语义依据充分性判断或可靠拒答。行为与边界见[向量报告](rag_vector_baseline.md#确定性空结果)。根据当前三部法律均登记有效且仅单版本的情况，法律范围、效力状态及案件日期过滤暂时延期，不作为阶段2已完成项。后续按阶段3升级门槛决定是否引入重排、改写或多争点检索。多版本增量管理与Agent工具集成仍按阶段4、5推进。
 
 ## 1. 目标与范围
 

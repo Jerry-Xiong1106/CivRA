@@ -9,6 +9,7 @@ from pathlib import Path
 from rank_bm25 import BM25Okapi
 
 from ..corpus import load_provisions, provision_text
+from ..config import DEFAULT_TOP_K, DEFAULT_VARIANT, includes_metadata
 from .tokenizer import TOKENIZER_VERSION, tokenize
 
 INDEX_VERSION = "3.0.0"
@@ -19,10 +20,10 @@ class BM25Index:
     bm25: BM25Okapi
     provisions: list[dict]
     index_version: str = INDEX_VERSION
-    include_metadata: bool = True
+    include_metadata: bool = includes_metadata(DEFAULT_VARIANT)
     tokenizer_version: str = TOKENIZER_VERSION
 
-    def search(self, query: str, top_k: int = 8) -> list[tuple[dict, float]]:
+    def search(self, query: str, top_k: int = DEFAULT_TOP_K) -> list[tuple[dict, float]]:
         if top_k < 1:
             raise ValueError("top_k must be positive")
         tokens = tokenize(query)
@@ -33,11 +34,9 @@ class BM25Index:
         return [(self.provisions[i], float(scores[i])) for i in ranked[:top_k] if scores[i] > 0]
 
 
-def build_index(jsonl_paths: list[Path], include_metadata: bool = True) -> BM25Index:
-    """Build a BM25 index over provision text. ``include_metadata`` adds law
-    title and hierarchy path to the indexed tokens; on by default since it
-    outperforms the text-only baseline on the retrieval dev set (see
-    docs/rag/rag_technical_roadmap.md). Set to False to reproduce that baseline."""
+def build_index(jsonl_paths: list[Path], variant: str = DEFAULT_VARIANT) -> BM25Index:
+    """Build text or metadata input; preserve the artifact's boolean field."""
+    include_metadata = includes_metadata(variant)
     provisions = load_provisions(jsonl_paths)
     corpus = [tokenize(provision_text(p, include_metadata)) for p in provisions]
     return BM25Index(bm25=BM25Okapi(corpus), provisions=provisions,

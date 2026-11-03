@@ -15,9 +15,9 @@ $ragPython = "C:\Users\Miller\AppData\Local\Programs\Python\Python312\python.exe
 
 评测统一使用 `scripts/rag/evaluate_retrieval.py`，默认keyword模式评三组关键词配置，不调用embedding；加 `--mode all` 评十组关键词、向量及融合配置。题库校验、指标、分组和结果记录共用一套代码，避免两个脚本维护不同口径。
 
-默认索引文本为“法律名称＋层级路径＋正文”；加 `--no-metadata` 复现仅正文。条号、日期和来源不拼入检索文本，原文与来源另存。精确条号路由独立保留，关键词、向量和混合方案共用同一实现。BM25参数为rank-bm25默认值。
+默认索引文本为“法律名称＋层级路径＋正文”；构建和查询均使用 `--variant text` 复现仅正文，原 `--no-metadata` 开关已统一替换。默认metadata文件仍为 `data/index/bm25.pkl`，仅正文构建默认输出 `data/index/bm25_text.pkl`，避免覆盖基线；仅正文文件按需构建，不是默认查询必需。条号、日期和来源不拼入检索文本，原文与来源另存。精确条号路由在 `exact/` 中独立实现，由统一 `RetrievalService` 调用；BM25模块只负责索引和排序，参数为rank-bm25默认值。
 
-索引格式版本3.0记录metadata开关和 `jieba_baseline_v1` 分词标识，防止误加载此前实验索引；已按基线重建。schema版本升级不代表采用新预处理。评测从JSONL独立构建三组内存索引，不读取磁盘索引，结果输出 `evaluation/rag/rag_keyword_baseline.json`。
+索引格式版本3.0记录metadata开关和 `jieba_baseline_v1` 分词标识，防止误加载此前实验索引；已按基线重建。schema版本升级不代表采用新预处理。评测从JSONL独立构建两种输入的内存索引，执行三组关键词配置，不读取磁盘索引，结果输出 `evaluation/rag/rag_keyword_baseline.json`。所有配置均经过统一Python检索入口，纯BM25结果现在也记录显式rank；评测排名、评分和指标不变。
 
 ## 指标与结果
 
