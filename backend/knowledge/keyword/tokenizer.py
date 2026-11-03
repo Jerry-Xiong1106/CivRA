@@ -14,6 +14,8 @@ _TOKEN_RE = re.compile(r"[㐀-鿿]+|[A-Za-z0-9]+")
 _jieba = jieba.Tokenizer()
 _jieba.load_userdict(str(LEGAL_TERMS_PATH))
 
+TOKENIZER_VERSION = "jieba_baseline_v1"
+
 
 def tokenize(text: str) -> list[str]:
     """Segment Chinese legal text into tokens, dropping punctuation and stopwords."""

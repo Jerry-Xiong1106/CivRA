@@ -219,5 +219,5 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# CivRA: rebuildable retrieval indexes (see scripts/build_bm25_index.py)
+# CivRA: rebuildable retrieval indexes (see scripts/rag/build_bm25_index.py)
 data/index/

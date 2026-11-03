@@ -7,16 +7,17 @@ import json
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from backend.knowledge.bm25_index import build_index, save_index  # noqa: E402
+from backend.knowledge.keyword.bm25_index import build_index, save_index  # noqa: E402
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("jsonl", type=Path, nargs="+", default=[Path("data/processed")])
+    parser.add_argument("jsonl", type=Path, nargs="*", default=[Path("data/processed")])
     parser.add_argument("--output", type=Path, default=Path("data/index/bm25.pkl"))
-    parser.add_argument("--include-metadata", action="store_true", help="Index law title and hierarchy path alongside article text")
+    parser.add_argument("--no-metadata", dest="include_metadata", action="store_false", help="Index article text only, without law title and hierarchy path (text-only baseline; see docs/rag/rag_technical_roadmap.md for the comparison)")
+    parser.set_defaults(include_metadata=True)
     args = parser.parse_args()
 
     paths = []
@@ -28,6 +29,7 @@ def main():
     print(json.dumps({
         "provisions": len(index.provisions),
         "include_metadata": args.include_metadata,
+        "tokenizer_version": index.tokenizer_version,
         "output": str(args.output),
     }, ensure_ascii=False))
 

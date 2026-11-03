@@ -4,7 +4,7 @@
 
 解析器版本：0.2.0；PyMuPDF：2.0。
 
-本报告保留阶段 1 已完成的检查结果。整理仓库时已移除一次性审计脚本和可重建的辅助 JSON；当前保留解析、基础校验及回归测试，文末命令仅复现数据构建和基础校验。
+本报告保留阶段 1 已完成的检查结果。整理仓库时已移除一次性审计脚本、可重建的辅助 JSON 和历史测试文件；当前保留解析与基础校验脚本，文末命令仅复现数据构建和基础校验。
 
 ## 自动检查
 
@@ -61,7 +61,7 @@
 
 ## 检索开发样例
 
-evaluation/rag_retrieval_dev.jsonl 共 24 题，21 题有依据，3 题超出当前语料。共核验 23 个参考条文与引用片段。
+阶段 1 检查时，evaluation/rag/rag_retrieval_dev.jsonl 共 24 题（21 题有依据、3 题超出语料），核验了 23 个参考条文与引用片段。阶段 2 已扩充到 40 题（36 题有依据、4 题标注为 insufficient_corpus；经本轮四题复核修订），当前脚本会检查全部 gold 引用片段。结果见 [关键词基线评测报告](rag_keyword_baseline.md)。
 
 覆盖交通赔偿、合同、借贷、租赁、程序、证据、多争点、精确条号和自然语言查询。gold 表示应召回的核心依据，不是所有相关法条的穷尽列表；多争点按集合召回率计算。insufficient_corpus 表示缺少直接适用依据，不要求检索器没有任何相似候选。该数据仅用于开发与回归，标注是助手草稿，须团队复核，不可作为独立最终测试集或宣称检索效果的依据。
 
@@ -70,20 +70,35 @@ evaluation/rag_retrieval_dev.jsonl 共 24 题，21 题有依据，3 题超出当
 - 三份资料仅含登记的单一版本；效力/日期字段沿用已有元数据，本轮未联网重新核验，也不根据末条原始施行日期覆盖修订版本的生效日期。
 - source_url 仍是数据库首页，需要后续补充可定位具体法律版本的官方详情链接。
 - 规则适用于当前三份完整、连续编号、带文本层的 PDF；不保证直接适用于扫描件、修法决定或其他排版。遇到异常应复核，不强行补条。
-- 尚无 embedding、BM25、向量库或检索成绩。是否将父路径加入 embedding 留作阶段 2 的对照配置。
+- 阶段1检查时尚无检索基线；当前BM25、精确匹配及BGE-M3向量检索已完成，现状与后续工作以 [技术路线图](rag_technical_roadmap.md) 为准。
 - 阶段 1 的自动质量检查与数据重建已完成；团队人工验收和检索开发题标注复核仍待完成。
 
 ## 数据构建与基础校验命令
 
-在 CivRA 目录执行（python 指向已安装 PyMuPDF 的解释器）：
+在 CivRA 目录执行（python 表示已安装依赖的解释器；当前 Windows 环境需使用完整解释器路径，示例见关键词基线评测报告）：
 
 ```powershell
-python -m pip install -r scripts/requirements-rag.txt
-python scripts/parse_legal_pdf.py "data/中华人民共和国道路交通安全法_20210429.pdf" --output data/processed/road_traffic_safety_law.jsonl
-python scripts/parse_legal_pdf.py "data/中华人民共和国民法典_20200528.pdf" --output data/processed/civil_code.jsonl
-python scripts/parse_legal_pdf.py "data/中华人民共和国民事诉讼法_20230901.pdf" --output data/processed/civil_procedure_law.jsonl
-python scripts/validate_provisions.py data/processed/road_traffic_safety_law.jsonl
-python scripts/validate_provisions.py data/processed/civil_code.jsonl
-python scripts/validate_provisions.py data/processed/civil_procedure_law.jsonl
-python -m unittest discover -s tests -p 'test_legal_parser.py' -v
+python -m pip install -r requirements.txt
+python scripts/rag/parse_legal_pdf.py "data/中华人民共和国道路交通安全法_20210429.pdf" --output data/processed/road_traffic_safety_law.jsonl
+python scripts/rag/parse_legal_pdf.py "data/中华人民共和国民法典_20200528.pdf" --output data/processed/civil_code.jsonl
+python scripts/rag/parse_legal_pdf.py "data/中华人民共和国民事诉讼法_20230901.pdf" --output data/processed/civil_procedure_law.jsonl
+python scripts/rag/validate_provisions.py data/processed/road_traffic_safety_law.jsonl
+python scripts/rag/validate_provisions.py data/processed/civil_code.jsonl
+python scripts/rag/validate_provisions.py data/processed/civil_procedure_law.jsonl
 ```
+
+## PDF视觉抽样范围
+
+阶段1除阅读24条完整样本、进行全量PDF文本层连续匹配外，还渲染查看了10个原PDF页面。检查范围如下，未发现修复后仍存在的明显正文截断、章节错配或版式噪声。此记录由助手完成，不等同于团队签收，也不代表逐页人工比对全部PDF。
+
+| 来源PDF | PDF文件页码（从1开始） | 重点 |
+|---|---|---|
+| 民法典 | 8、34、73、176 | 分散标题字符、物权分编、第505条正文引用不改变层级、末尾附则 |
+| 道路交通安全法 | 1、8、14 | 目录与正文同页、双栏顺序、第70/76条、第121条交叉引用及末条 |
+| 民事诉讼法 | 7、20、29 | 第66条证据分类、多行长节标题、第283条长条文 |
+
+跨页条文续文另由全量文本层匹配覆盖。临时渲染图不作为语料保存；样本原文与text_raw在三份法条JSONL中，原PDF为引用回查依据。
+
+## 当前维护范围
+
+本报告保留阶段1的历史质量证据；当前进度见技术路线图。当前工作区没有可运行的解析测试文件，原8项测试是阶段1当时的验证记录；日常检查使用上方三条validate_provisions命令，不将历史测试数当成本轮测试结果。BM25预处理实验已撤回，法条JSONL与原始PDF未因回滚改变。

@@ -1,0 +1,94 @@
+"""SiliconFlow dense embeddings with a persistent model-specific cache."""
+import hashlib
+import json
+import os
+from pathlib import Path
+import sqlite3
+import sys
+import time
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
+
+import numpy as np
+
+ROOT = Path(__file__).resolve().parents[3]
+
+
+def load_local_env():
+    path = ROOT / ".env"
+    if path.exists():
+        for line in path.read_text(encoding="utf-8-sig").splitlines():
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                name, value = line.split("=", 1)
+                os.environ.setdefault(name.strip(), value.strip().strip("\"'"))
+
+
+class EmbeddingClient:
+    def __init__(self, cache_path=None):
+        load_local_env()
+        self.model = os.getenv("RAG_EMBEDDING_MODEL", "BAAI/bge-m3")
+        self.base_url = os.getenv("RAG_EMBEDDING_BASE_URL", "https://api.siliconflow.cn/v1").rstrip("/")
+        if not self.base_url.startswith("https://"):
+            raise ValueError("Embedding endpoint must use HTTPS")
+        self.api_key = os.getenv("SILICONFLOW_API_KEY", "")
+        self.cache_path = Path(cache_path or ROOT / "data/index/embedding_cache.sqlite3")
+        self.cache_path.parent.mkdir(parents=True, exist_ok=True)
+        with sqlite3.connect(self.cache_path) as db:
+            db.execute("CREATE TABLE IF NOT EXISTS embeddings (key TEXT PRIMARY KEY, vector TEXT NOT NULL)")
+
+    def _key(self, text):
+        return hashlib.sha256(json.dumps([self.base_url, self.model, text], ensure_ascii=False).encode()).hexdigest()
+
+    def _request(self, texts):
+        if not self.api_key:
+            raise ValueError("Set SILICONFLOW_API_KEY in the environment or local .env")
+        payload = json.dumps({"model": self.model, "input": texts}).encode("utf-8")
+        for attempt in range(4):
+            request = Request(self.base_url + "/embeddings", data=payload, headers={
+                "Authorization": "Bearer " + self.api_key, "Content-Type": "application/json",
+            })
+            try:
+                with urlopen(request, timeout=90) as response:
+                    body = json.load(response)
+                items = sorted(body["data"], key=lambda item: item["index"])
+                if [item["index"] for item in items] != list(range(len(texts))):
+                    raise ValueError("Embedding response has missing/duplicate indices")
+                vectors = np.asarray([item["embedding"] for item in items], dtype=np.float32)
+                if vectors.ndim != 2 or vectors.shape[1] == 0 or not np.isfinite(vectors).all() or (np.linalg.norm(vectors, axis=1) == 0).any():
+                    raise ValueError("Embedding response contains invalid vectors")
+                return vectors
+            except HTTPError as exc:
+                status = exc.code
+                exc.close()
+                if status not in (429, 500, 502, 503, 504) or attempt == 3:
+                    raise RuntimeError(f"Embedding API returned HTTP {status}; check model, quota and credentials") from None
+            except (URLError, TimeoutError):
+                if attempt == 3:
+                    raise RuntimeError("Embedding API connection failed after retries") from None
+            time.sleep(2 ** attempt)
+
+    def embed(self, texts, batch_size=16):
+        if batch_size < 1 or not texts or any(not isinstance(t, str) or not t.strip() for t in texts):
+            raise ValueError("Inputs must be nonempty strings and batch_size positive")
+        keys = [self._key(text) for text in texts]
+        cached = {}
+        with sqlite3.connect(self.cache_path) as db:
+            for key in set(keys):
+                row = db.execute("SELECT vector FROM embeddings WHERE key=?", (key,)).fetchone()
+                if row:
+                    cached[key] = json.loads(row[0])
+            pending = list(dict.fromkeys(key for key in keys if key not in cached))
+            by_key = dict(zip(keys, texts))
+            for start in range(0, len(pending), batch_size):
+                batch = pending[start:start + batch_size]
+                vectors = self._request([by_key[key] for key in batch])
+                for key, vector in zip(batch, vectors):
+                    cached[key] = vector.tolist()
+                    db.execute("INSERT OR REPLACE INTO embeddings VALUES (?, ?)", (key, json.dumps(cached[key])))
+                db.commit()
+                print(f"Embedding: {min(start + batch_size, len(pending))}/{len(pending)} new inputs", file=sys.stderr, flush=True)
+        vectors = np.asarray([cached[key] for key in keys], dtype=np.float32)
+        if vectors.ndim != 2 or not np.isfinite(vectors).all() or (np.linalg.norm(vectors, axis=1) == 0).any():
+            raise ValueError("Invalid cached vectors; rebuild embedding cache")
+        return vectors
