@@ -26,6 +26,15 @@ python3 -m venv .venv
 
 测试和演示使用 mock 工具和 `ScriptedLLM`，不需要 API Key。
 
+接入真实法条检索（模型仍是脚本，其他工具仍是 mock）：
+
+```bash
+.venv/bin/python scripts/rag/build_bm25_index.py
+.venv/bin/python scripts/demo_mock_run.py --real-statutes
+```
+
+没有构建索引时，`tests/test_knowledge_tools.py` 中依赖真实索引的测试会跳过。
+
 ## 当前状态
 
 已完成：工具注册与参数校验、按阶段开放工具、超时与重试、主循环、追问暂停与恢复、路线选择、步数/工具调用/token/时间上限、检索—核验 3 轮上限、上下文压缩、最终结果过期标记、取消、执行记录、事件、检查点（换一个 Runner 实例也能继续）。
@@ -34,6 +43,6 @@ python3 -m venv .venv
 
 尚未完成：
 - 接入真实模型并调试提示词（`OpenAICompatibleClient` 已写好，未用真实 API 测试）
-- 接入成员2、3的真实工具
+- 接入成员3的真实工具、成员2的 `search_cases`（`search_statutes` 已接入，见 `backend/tools/knowledge_tools.py`，默认关键词通道）
 - 每份业务输出各自的过期标记（需要成员3的输出存储记录 `case_version`）
 - 用模型生成摘要来压缩上下文（目前是规则压缩：缩减旧工具结果、省略最早几轮）

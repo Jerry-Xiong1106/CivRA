@@ -4,6 +4,11 @@
 
 Uses mock tools and a scripted model, so no API key is needed. Records are
 written to var/runs/<run_id>/ (trace.jsonl, events.jsonl, checkpoint.json).
+
+    .venv/bin/python scripts/demo_mock_run.py --real-statutes
+
+Replaces the mock search_statutes with the real retrieval service. Build the
+index first: .venv/bin/python scripts/rag/build_bm25_index.py
 """
 
 from __future__ import annotations
@@ -18,6 +23,7 @@ from backend.agent.llm import ScriptedLLM, tool_call  # noqa: E402
 from backend.agent.runner import AgentRunner  # noqa: E402
 from backend.agent.store import RunStore  # noqa: E402
 from backend.common.schemas import UserReply  # noqa: E402
+from backend.tools.knowledge_tools import register_knowledge_tools  # noqa: E402
 from backend.tools.mock_tools import build_mock_registry  # noqa: E402
 
 CASE = "case_demo"
@@ -34,11 +40,15 @@ def main() -> None:
         ]),
         tool_call("update_case", facts={"liability_finding": "对方全责", "insurance": "交强险+商业三者险100万"}),
         tool_call("check_evidence"),
-        tool_call("search_statutes", query="机动车交通事故 交强险 赔偿顺序"),
+        tool_call("search_statutes", query="机动车交通事故 交强险 赔偿顺序", top_k=3),
         tool_call("finish", answer="可先向对方交强险保险人主张赔偿，不足部分再由商业险和侵权人承担。",
                   open_issues=["维修费发票尚未上传"]),
     ])
-    runner = AgentRunner(llm, build_mock_registry(cases), cases, RunStore())
+    registry = build_mock_registry(cases)
+    if "--real-statutes" in sys.argv:
+        registry.unregister("search_statutes")
+        register_knowledge_tools(registry)
+    runner = AgentRunner(llm, registry, cases, RunStore())
 
     info = runner.start_run(CASE, "我的车被追尾了，想要对方赔偿维修费。")
     print(f"[{info.status}] {info.run_id}")

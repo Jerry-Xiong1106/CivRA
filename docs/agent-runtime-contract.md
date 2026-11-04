@@ -1,4 +1,4 @@
-# Agent Runtime 接口约定（草案 v0.5）
+# Agent Runtime 接口约定（草案 v0.6）
 
 维护人：成员4（Agent 执行层）  
 状态：**草案，待全组确认**。确认后，第 2–5 节的数据结构会落到 `backend/common/` 中的代码定义，以代码为准。
@@ -157,7 +157,6 @@ class SourceRef(BaseModel):
   "tool_name": "search_statutes",
   "arguments": {
     "query": "机动车交通事故 交强险 赔偿顺序",
-    "dispute_type": "traffic_accident",
     "incident_date": "2026-05-12",
     "top_k": 5
   }
@@ -189,6 +188,8 @@ class SourceRef(BaseModel):
 ### 2.6 计划中的工具清单
 
 工具名称沿用 Proposal 附录 A，具体参数由负责人在注册时给出。
+
+`search_statutes` 已在 `backend/tools/knowledge_tools.py` 接入成员2的 `RetrievalService`，默认使用关键词模式（精确条号 + BM25，不需要 embedding API Key），可用环境变量 `CIVRA_RETRIEVAL_MODE` 切换为 `vector`、`exact-vector` 或 `hybrid`。检索服务的 `no_results` 对应工具的 `empty`，原因写在 `data.reason`。目前检索不支持按纠纷类型过滤，所以参数里没有 `dispute_type`（传入会被拒绝）。`incident_date` 不参与检索，只用来标记事件发生时尚未生效或已失效的条文（`data.hits[].version_warning`）；是否适用过渡规则仍由 Agent 判断并核验。
 
 | 工具 | 负责人 | `side_effects` | 开放阶段 |
 |---|---|---|---|
@@ -618,3 +619,4 @@ manifest = runner.get_runtime_manifest()
 | v0.3 | 2026-11-01 | 与骨架代码对齐：新增错误码 `NOT_ALLOWED`、事件 `run.resumed` 和 `run.budget_exhausted`；运行接口返回 `RunInfo` 且为同步调用；`chat` 去掉 `run_id` 参数；补充模型环境变量和 `CaseStatePort` |
 | v0.4 | 2026-11-01 | 新增 token 上限、检索—核验 3 轮上限（`ToolSpec.feedback_loop`）、上下文压缩和 `RunInfo.stale`（6.2、6.4） |
 | v0.5 | 2026-11-03 | 按成员5的评测接口需求修改：`resume_run` 需要 `wait_id`，支持 `expected_case_version` 和 `request_id` 防重复；`pending` 改为 `Wait`（含 `material_request`）；新增 `export_trace`、`get_step_result`、`get_runtime_manifest`；执行记录增加 `event_id`、`parent_step_id`、`finished_at` 和完整结果文件；模型接口支持 `model`、`seed`、`tool_choice`，返回 `finish_reason`、请求 ID，用量未知时为 `null`，费用带币种和价格版本；`RunInfo` 增加 `case_version`、`experiment_run_id`；提前结束时保留已完成部分；`finish` 支持 `citations`；新增执行时间上限；新增与评测文档的名称对照（7.1）和待确认问题 11–14 |
+| v0.6 | 2026-11-04 | `search_statutes` 接入真实检索（2.6）；去掉示例中的 `dispute_type` |

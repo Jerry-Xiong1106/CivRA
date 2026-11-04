@@ -31,6 +31,10 @@ class ToolRegistry:
         jsonschema.Draft202012Validator.check_schema(spec.parameters)
         self._tools[spec.name] = (spec, handler)
 
+    def unregister(self, name: str) -> None:
+        """Remove a tool, e.g. to swap a mock for the real implementation."""
+        del self._tools[name]
+
     def tool(self, spec: ToolSpec) -> Callable[[ToolHandler], ToolHandler]:
         """Decorator form of register()."""
         def wrap(handler: ToolHandler) -> ToolHandler:

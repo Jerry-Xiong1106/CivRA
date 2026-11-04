@@ -54,7 +54,7 @@ def test_tool_feedback_leads_to_question_then_resume_after_restart(cases, tmp_pa
         # --- user answers; resumed in a fresh runner below
         record_answers,
         tool_call("check_evidence"),
-        tool_call("search_statutes", query="机动车交通事故 交强险 赔偿顺序", dispute_type="traffic_accident"),
+        tool_call("search_statutes", query="机动车交通事故 交强险 赔偿顺序"),
         tool_call("finish", answer="可先向对方交强险保险人主张赔偿……", open_issues=["医疗费票据尚未上传"]),
     ]
     llm = ScriptedLLM(script)

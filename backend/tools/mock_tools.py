@@ -34,7 +34,6 @@ SEARCH_STATUTES = ToolSpec(
         "type": "object",
         "properties": {
             "query": {"type": "string", "minLength": 1},
-            "dispute_type": {"type": "string"},
             "incident_date": {"type": "string"},
             "top_k": {"type": "integer", "minimum": 1, "maximum": 20},
         },
