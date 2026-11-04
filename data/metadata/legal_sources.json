@@ -1,0 +1,38 @@
+﻿[
+    {
+        "title":  "中华人民共和国道路交通安全法",
+        "status":  "有效",
+        "category":  "法律",
+        "issuing_authority":  "全国人民代表大会常务委员会",
+        "publication_date":  "2021-04-29",
+        "effective_date":  "2021-04-29",
+        "expiry_date":  null,
+        "source_url":  "https://flk.npc.gov.cn/",
+        "retrieved_at":  "2026-10-30",
+        "local_filename":  "中华人民共和国道路交通安全法_20210429.pdf"
+    },
+    {
+        "title":  "中华人民共和国民法典",
+        "status":  "有效",
+        "category":  "法律",
+        "issuing_authority":  "全国人民代表大会",
+        "publication_date":  "2020-05-28",
+        "effective_date":  "2021-01-01",
+        "expiry_date":  null,
+        "source_url":  "https://flk.npc.gov.cn/",
+        "retrieved_at":  "2026-10-30",
+        "local_filename":  "中华人民共和国民法典_20200528.pdf"
+    },
+    {
+        "title":  "中华人民共和国民事诉讼法",
+        "status":  "有效",
+        "category":  "法律",
+        "issuing_authority":  "全国人民代表大会",
+        "publication_date":  "2023-09-01",
+        "effective_date":  "2024-01-01",
+        "expiry_date":  null,
+        "source_url":  "https://flk.npc.gov.cn/",
+        "retrieved_at":  "2026-10-30",
+        "local_filename":  "中华人民共和国民事诉讼法_20230901.pdf"
+    }
+]
