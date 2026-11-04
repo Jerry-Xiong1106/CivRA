@@ -1,5 +1,6 @@
 """SiliconFlow dense embeddings with a persistent model-specific cache."""
 import hashlib
+from contextlib import closing
 import json
 import os
 from pathlib import Path
@@ -10,6 +11,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 import numpy as np
+from langchain_core.embeddings import Embeddings
 
 from ..config import ROOT, INDEX_DIR
 
@@ -24,7 +26,7 @@ def load_local_env():
                 os.environ.setdefault(name.strip(), value.strip().strip("\"'"))
 
 
-class EmbeddingClient:
+class EmbeddingClient(Embeddings):
     def __init__(self, cache_path=None):
         load_local_env()
         self.model = os.getenv("RAG_EMBEDDING_MODEL", "BAAI/bge-m3")
@@ -34,11 +36,18 @@ class EmbeddingClient:
         self.api_key = os.getenv("SILICONFLOW_API_KEY", "")
         self.cache_path = Path(cache_path or INDEX_DIR / "embedding_cache.sqlite3")
         self.cache_path.parent.mkdir(parents=True, exist_ok=True)
-        with sqlite3.connect(self.cache_path) as db:
+        with closing(sqlite3.connect(self.cache_path)) as db, db:
             db.execute("CREATE TABLE IF NOT EXISTS embeddings (key TEXT PRIMARY KEY, vector TEXT NOT NULL)")
 
     def _key(self, text):
         return hashlib.sha256(json.dumps([self.base_url, self.model, text], ensure_ascii=False).encode()).hexdigest()
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        """LangChain interface; share the existing model-specific SQLite cache."""
+        return self.embed(texts).tolist()
+
+    def embed_query(self, text: str) -> list[float]:
+        return self.embed([text])[0].tolist()
 
     def _request(self, texts):
         if not self.api_key:
@@ -73,7 +82,7 @@ class EmbeddingClient:
             raise ValueError("Inputs must be nonempty strings and batch_size positive")
         keys = [self._key(text) for text in texts]
         cached = {}
-        with sqlite3.connect(self.cache_path) as db:
+        with closing(sqlite3.connect(self.cache_path)) as db, db:
             for key in set(keys):
                 row = db.execute("SELECT vector FROM embeddings WHERE key=?", (key,)).fetchone()
                 if row:

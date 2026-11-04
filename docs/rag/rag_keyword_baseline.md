@@ -2,10 +2,14 @@
 
 当前语料为三部法律的单一登记版本，共1690条。题库40题：36题有参考依据、4题为反例；有参考题中31题不直接询问条号，5题出现条号。题库为助手编写并复核的开发草稿，尚未经团队签收，也不是独立测试集。
 
+2026-11-04更新：当前BM25使用community的 `BM25Retriever`，原始tokenize注入该组件，派生类仅附评分与正分过滤。沿用旧索引载体和参数，组件默认平局顺序与原稳定排序不同，已测量并记录于[LangChain迁移验证](../../evaluation/rag/langchain_migration/report.md)。下方保留原基线指标，旧JSON不被迁移结果覆盖。
+
 ## 当前实现与运行
 
+隔离环境安装步骤见[向量报告](rag_vector_baseline.md#配置构建与查询)，依赖统一读取根目录 `requirements.txt`。
+
 ```powershell
-$ragPython = "C:\Users\Miller\AppData\Local\Programs\Python\Python312\python.exe"
+$ragPython = ".\.venv-rag\Scripts\python.exe"
 & $ragPython scripts/rag/build_bm25_index.py
 & $ragPython scripts/rag/evaluate_retrieval.py
 & $ragPython scripts/rag/search.py "把车借给朋友开，结果出了事故，车主要不要承担责任？" --mode keyword

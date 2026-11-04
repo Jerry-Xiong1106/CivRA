@@ -1,5 +1,7 @@
 """Public Python retrieval service shared by CLI, evaluation and future tools."""
-from ..config import INDEX_DIR, RetrievalConfig, includes_metadata, keyword_index_path, vector_index_path
+from ..config import (
+    INDEX_DIR, RetrievalConfig, includes_metadata, keyword_index_path, vector_index_path,
+)
 from ..exact.router import ExactRouter
 from .results import no_results, query_preflight, to_result
 
@@ -33,6 +35,14 @@ class RetrievalService:
                 raise ValueError("BM25 and vector indexes must contain identical provisions and versions; rebuild indexes")
         self.provisions = vector_index.provisions if needs_vector else keyword_index.provisions
         self.exact_router = ExactRouter(self.provisions) if self.config.exact_match else None
+        self.keyword_retriever = None
+        if needs_keyword:
+            from ..keyword.bm25_retriever import create_bm25_retriever
+            self.keyword_retriever = create_bm25_retriever(keyword_index)
+        self.vector_retriever = None
+        if needs_vector:
+            from ..vector.vector_retriever import create_vector_retriever
+            self.vector_retriever = create_vector_retriever(vector_index, client, self.config.top_k)
 
     @classmethod
     def from_config(cls, config: RetrievalConfig | None = None, *, index_dir=INDEX_DIR,
@@ -70,19 +80,21 @@ class RetrievalService:
             from ..keyword.tokenizer import tokenize
             if not tokenize(query):
                 return no_results(query, "no_keyword_tokens", "按当前原始分词规则未产生可检索词；可补充具体表述或尝试向量检索。")
-            ranked = self.keyword_index.search(query, top_k)
-            if not ranked:
+            documents = self.keyword_retriever.invoke(query, top_k=top_k)
+            if not documents:
                 return no_results(query, "no_keyword_matches", "当前关键词索引没有正分候选；这不表示语料中没有相关法律依据。")
-            results = [to_result(p, rank, score, ["keyword"]) for rank, (p, score) in enumerate(ranked, 1)]
+            results = [to_result(doc.metadata, rank, doc.metadata["retrieval"]["score"], ["keyword"])
+                       for rank, doc in enumerate(documents, 1)]
         else:
             if query_vector is None:
-                query_vector = self.client.embed([query])[0]
+                query_vector = self.client.embed_query(query)
             if self.config.channel == "vector":
-                ranked = self.vector_index.search_vector(query_vector, top_k)
-                results = [to_result(p, rank, score, ["vector"]) for rank, (p, score) in enumerate(ranked, 1)]
+                documents = self.vector_retriever.invoke(query, top_k=top_k, query_vector=query_vector)
+                results = [to_result(doc.metadata, rank, doc.metadata["retrieval"]["score"], ["vector"])
+                           for rank, doc in enumerate(documents, 1)]
             else:
-                from .hybrid_search import search_hybrid
-                results = search_hybrid(query, self.keyword_index, self.vector_index, query_vector,
+                from .fusion import search_hybrid
+                results = search_hybrid(query, self.keyword_retriever, self.vector_retriever, query_vector,
                                         top_k, self.config.candidate_k, self.config.rrf_k)
         if not results:
             return no_results(query, "no_candidates", "当前检索通道没有返回候选。")

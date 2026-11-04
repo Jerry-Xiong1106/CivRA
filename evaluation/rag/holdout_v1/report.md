@@ -66,3 +66,17 @@
 - 当前新题已被查看和评分。若后续据此改进，它应转作回归证据，不能再次称为未参与调优的独立测试。团队/外部标注复核、真实问题分布及下游答案与引用验证仍未完成。
 
 完整排名、分数和代码哈希见[results.json](results.json)；冻结版本、助手复核状态与本次请求记录见[freeze_manifest.json](freeze_manifest.json)。
+
+## 复核与复现说明
+
+每题的助手复核人员、时间和理由已保存在queries.jsonl，团队/外部复核仍未完成。评分前题库快照及代码、语料、索引哈希保存在freeze_manifest.json；复核仅增加记录，没有根据检索输出修改问题或gold。重复的review.md流程说明已合并至本报告。
+
+复跑时显式指定输入和新输出路径，避免覆盖本次首次评分：
+
+```powershell
+& .\.venv-rag\Scripts\python.exe scripts/rag/evaluate_retrieval.py --mode all `
+  --dataset evaluation/rag/holdout_v1/queries.jsonl `
+  --output "$env:TEMP/civra_holdout_rerun.json"
+```
+
+当前代码已迁移到LangChain；上述命令复现的是当前实现，首次评测的原代码提交与输入仍以冻结清单为准。

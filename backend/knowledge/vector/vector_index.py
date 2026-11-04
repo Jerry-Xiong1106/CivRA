@@ -1,4 +1,4 @@
-"""Dense article retrieval using normalized vectors and exact cosine search."""
+"""Build, validate and persist normalized article vectors and corpus metadata."""
 from dataclasses import dataclass
 import hashlib
 import json
@@ -6,8 +6,8 @@ from pathlib import Path
 
 import numpy as np
 
-from ..corpus import load_provisions, provision_text
-from ..config import DEFAULT_TOP_K, DEFAULT_VARIANT, includes_metadata
+from ..corpus import load_provisions, provision_document
+from ..config import DEFAULT_VARIANT, includes_metadata
 
 
 @dataclass
@@ -16,22 +16,15 @@ class VectorIndex:
     vectors: np.ndarray
     config: dict
 
-    def search_vector(self, vector, top_k=DEFAULT_TOP_K):
-        if top_k < 1:
-            raise ValueError("top_k must be positive")
-        vector = np.asarray(vector, dtype=np.float32)
-        if vector.shape != (self.vectors.shape[1],) or not np.isfinite(vector).all() or np.linalg.norm(vector) == 0:
-            raise ValueError("Query vector has invalid values or wrong dimensions")
-        scores = self.vectors @ (vector / np.linalg.norm(vector))
-        ranked = np.argsort(-scores, kind="stable")[:top_k]
-        return [(self.provisions[i], float(scores[i])) for i in ranked]
-
 
 def build_vector_index(paths, client, variant=DEFAULT_VARIANT, batch_size=16):
     include_metadata = includes_metadata(variant)
     provisions = load_provisions(paths)
-    texts = [provision_text(p, include_metadata) for p in provisions]
-    vectors = client.embed(texts, batch_size=batch_size)
+    texts = [provision_document(p, include_metadata).page_content for p in provisions]
+    if batch_size < 1:
+        raise ValueError("batch_size must be positive")
+    vectors = np.asarray([vector for start in range(0, len(texts), batch_size)
+                          for vector in client.embed_documents(texts[start:start + batch_size])], dtype=np.float32)
     config = {
         "index_version": "1.0", "model": client.model, "base_url": client.base_url,
         "include_metadata": include_metadata, "dimensions": vectors.shape[1],

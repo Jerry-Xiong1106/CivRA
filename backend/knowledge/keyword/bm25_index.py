@@ -8,8 +8,8 @@ from pathlib import Path
 
 from rank_bm25 import BM25Okapi
 
-from ..corpus import load_provisions, provision_text
-from ..config import DEFAULT_TOP_K, DEFAULT_VARIANT, includes_metadata
+from ..corpus import load_provisions, provision_document
+from ..config import DEFAULT_VARIANT, includes_metadata
 from .tokenizer import TOKENIZER_VERSION, tokenize
 
 INDEX_VERSION = "3.0.0"
@@ -23,23 +23,16 @@ class BM25Index:
     include_metadata: bool = includes_metadata(DEFAULT_VARIANT)
     tokenizer_version: str = TOKENIZER_VERSION
 
-    def search(self, query: str, top_k: int = DEFAULT_TOP_K) -> list[tuple[dict, float]]:
-        if top_k < 1:
-            raise ValueError("top_k must be positive")
-        tokens = tokenize(query)
-        if not tokens:
-            return []
-        scores = self.bm25.get_scores(tokens)
-        ranked = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)
-        return [(self.provisions[i], float(scores[i])) for i in ranked[:top_k] if scores[i] > 0]
-
 
 def build_index(jsonl_paths: list[Path], variant: str = DEFAULT_VARIANT) -> BM25Index:
     """Build text or metadata input; preserve the artifact's boolean field."""
+    from .bm25_retriever import ScoredBM25Retriever
+
     include_metadata = includes_metadata(variant)
     provisions = load_provisions(jsonl_paths)
-    corpus = [tokenize(provision_text(p, include_metadata)) for p in provisions]
-    return BM25Index(bm25=BM25Okapi(corpus), provisions=provisions,
+    retriever = ScoredBM25Retriever.from_documents(
+        [provision_document(p, include_metadata) for p in provisions], preprocess_func=tokenize)
+    return BM25Index(bm25=retriever.vectorizer, provisions=provisions,
                      include_metadata=include_metadata)
 
 

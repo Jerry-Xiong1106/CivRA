@@ -11,7 +11,7 @@ from time import perf_counter
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from backend.knowledge.keyword.bm25_index import build_index
-from backend.knowledge.retrieval.search import RetrievalService
+from backend.knowledge.retrieval.service import RetrievalService
 from backend.knowledge.config import (ROOT, CORPUS_DIR, DATASET_PATH, INDEX_DIR, INPUT_VARIANTS,
     DEFAULT_CANDIDATE_K, DEFAULT_RRF_K, evaluation_specs, includes_metadata, vector_index_path)
 from backend.knowledge.keyword.tokenizer import TOKENIZER_VERSION, tokenize
@@ -83,7 +83,9 @@ def main():
     report = {
         "schema_version": "1.0", "created_at": datetime.now(timezone(timedelta(hours=8))).isoformat(),
         "python": platform.python_version(),
-        "dependencies": {n: version(n) for n in ("rank-bm25", "jieba", "numpy")},
+        "dependencies": {n: version(n) for n in ("rank-bm25", "jieba", "numpy",
+                                               "langchain-core", "langchain-community", "pydantic")},
+        "retrieval_backend": "langchain",
         "supported_queries": sum(bool(q["gold"]) for q in queries),
         "insufficient_corpus_queries": sum(not q["gold"] for q in queries),
         "metric_notes": "Macro averages on supported queries. Hit: any gold found; Recall: fraction of distinct gold found. Negative empty rate is diagnostic only. All modes share query metrics and actual retrieval code; timings include cache effects.",

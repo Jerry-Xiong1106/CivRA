@@ -2,6 +2,8 @@
 import json
 from pathlib import Path
 
+from langchain_core.documents import Document
+
 PROVISION_FIELDS = (
     "provision_id", "law_id", "law_title", "article_no", "hierarchy_path",
     "text", "source_file", "source_url", "page_start", "page_end",
@@ -25,3 +27,10 @@ def provision_text(provision: dict, include_metadata: bool) -> str:
     if include_metadata:
         return f"{provision['law_title']} {' '.join(provision['hierarchy_path'] or [])} {provision['text']}"
     return provision["text"]
+
+
+def provision_document(provision: dict, include_metadata: bool = False) -> Document:
+    """Index text is explicit; retain original text separately for legal quotes."""
+    return Document(id=provision["provision_id"],
+                    page_content=provision_text(provision, include_metadata),
+                    metadata=dict(provision))

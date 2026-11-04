@@ -221,3 +221,4 @@ __marimo__/
 
 # CivRA: rebuildable retrieval indexes (see scripts/rag/build_bm25_index.py)
 data/index/
+.venv-rag/

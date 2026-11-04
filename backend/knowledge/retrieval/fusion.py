@@ -1,4 +1,6 @@
-"""BM25 + dense candidate fusion; routing is owned by RetrievalService."""
+"""Parallel keyword/vector candidate retrieval and diagnostic RRF fusion."""
+from langchain_core.runnables import RunnableLambda, RunnableParallel
+
 from ..config import DEFAULT_TOP_K, DEFAULT_CANDIDATE_K, DEFAULT_RRF_K
 from .results import to_result
 
@@ -31,11 +33,17 @@ def reciprocal_rank_fusion(channels, top_k=DEFAULT_TOP_K, rrf_k=DEFAULT_RRF_K):
     return results
 
 
-def search_hybrid(query, keyword_index, vector_index, query_vector, top_k=DEFAULT_TOP_K,
+def search_hybrid(query, keyword_retriever, vector_retriever, query_vector, top_k=DEFAULT_TOP_K,
                   candidate_k=DEFAULT_CANDIDATE_K, rrf_k=DEFAULT_RRF_K):
     depth = max(top_k, candidate_k)
-    channels = {"keyword": keyword_index.search(query, depth),
-                "vector": vector_index.search_vector(query_vector, depth)}
+    # Embedding is computed once by the service; parallel branches only rank.
+    pipeline = RunnableParallel(
+        keyword=RunnableLambda(lambda q: keyword_retriever.invoke(q, top_k=depth)),
+        vector=RunnableLambda(lambda q: vector_retriever.invoke(q, top_k=depth, query_vector=query_vector)),
+    )
+    documents = pipeline.invoke(query)
+    channels = {name: [(doc.metadata, doc.metadata["retrieval"]["score"]) for doc in docs]
+                for name, docs in documents.items()}
     results = reciprocal_rank_fusion(channels, top_k, rrf_k)
     for result in results:
         result["retrieval"]["candidate_k"] = depth

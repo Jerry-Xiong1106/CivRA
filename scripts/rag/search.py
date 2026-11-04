@@ -7,7 +7,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from backend.knowledge.config import (DEFAULT_MODE, DEFAULT_VARIANT, DEFAULT_TOP_K,
     DEFAULT_CANDIDATE_K, DEFAULT_RRF_K, MODES, INPUT_VARIANTS, RetrievalConfig)
-from backend.knowledge.retrieval.search import RetrievalService
+from backend.knowledge.retrieval.service import RetrievalService
 from backend.knowledge.retrieval.results import query_preflight
 
 
