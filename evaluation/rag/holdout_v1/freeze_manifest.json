@@ -1,0 +1,116 @@
+{
+  "schema_version": "1.0",
+  "prepared_on": "2026-11-03",
+  "timezone": "Asia/Shanghai",
+  "status": "assistant_reviewed_team_review_pending",
+  "code_commit": "aa735328ec40f1f3a4efbd39227f6ed69a2d946e",
+  "retrieval_code_changed_since_commit": false,
+  "dataset": "evaluation/rag/holdout_v1/queries.jsonl",
+  "draft_sha256": "4294c98927eaeeb3f61164166091a25169bba0c1eb94ed176dacf10e0b081022",
+  "annotations_frozen": true,
+  "review_completed_at": "2026-11-03T23:14:15.326106+08:00",
+  "reviewed_dataset_sha256": "0657b670bb84262a1e1465ff54d241d40e8c0a6a0f2a67e57fe003bc4c037dfd",
+  "scoring_status": "completed",
+  "query_embeddings_requested_for_this_preparation": false,
+  "primary_run": "exact_vector_metadata",
+  "primary_config": {
+    "vector": {
+      "index_version": "1.0",
+      "model": "BAAI/bge-m3",
+      "base_url": "https://api.siliconflow.cn/v1",
+      "include_metadata": true,
+      "dimensions": 1024,
+      "query_prefix": "",
+      "similarity": "cosine",
+      "corpus_sha256": "aa2f60f87e09da5d5b0509864cbcd901dceaab249496ad5de54bfb449a03494d",
+      "input_sha256": "64bb8e7e3d2cf46f99edbda9e9ec95cf777911ac38bd7558d2c33663e56061c2"
+    },
+    "exact_match": true,
+    "top_k": 5
+  },
+  "auxiliary_runs": [
+    "bm25_metadata",
+    "exact_bm25_metadata",
+    "vector_text",
+    "vector_metadata",
+    "exact_vector_text",
+    "rrf_text",
+    "rrf_metadata",
+    "exact_rrf_text",
+    "exact_rrf_metadata"
+  ],
+  "counts": {
+    "total": 24,
+    "supported": 20,
+    "article_lookup": 4,
+    "ordinary_query": 10,
+    "multi_issue": 6,
+    "insufficient_corpus": 4,
+    "gold_references": 26,
+    "distinct_gold_provisions": 25,
+    "exact_query_overlap_with_dev": 0,
+    "gold_provision_overlap_with_dev": 0
+  },
+  "code_sha256": {
+    "backend/knowledge/config.py": "4dacd2bbb819f3454424a5bead3895f2cdf1098aaf81d0d68e09cada24639806",
+    "backend/knowledge/corpus.py": "7b8d004f69b562e05f5969b15550d1297b5cf026c27c84445f4595fd38633464",
+    "backend/knowledge/exact/matcher.py": "77a2226366104175870fe021f80049adb71490b38bf99aa40276cb333677520b",
+    "backend/knowledge/exact/router.py": "8aa709b9d2f853b15fec9ddd42486801a40b75b5d14499d7c7387ab69dcc887f",
+    "backend/knowledge/keyword/bm25_index.py": "ceca198c025548233a9a8eab2bf9517c1df0ee17c47f30a6bb475163e343ec2a",
+    "backend/knowledge/keyword/tokenizer.py": "0f14b49234c1bdb4a406e5434f66930bd1c148af2c9b16307966d877c8194458",
+    "backend/knowledge/retrieval/hybrid_search.py": "45df49f3bd3b22fa6f8a0266e25f97c5307a378ec9d1315231ec261274cc43f7",
+    "backend/knowledge/retrieval/results.py": "81b7b230a1a37f73c81fc75dad10cc00268d3b1e0aef9d83a0f2b68fec50a6f8",
+    "backend/knowledge/retrieval/search.py": "5be53c1e77280aca93b60c62971275ea16610e4d8401e5faf1d9e36e61347833",
+    "backend/knowledge/vector/embedding.py": "68a1d05b410f6abc1b97a3e664015c69aa6f012e0668ab86584c9325edbedfbc",
+    "backend/knowledge/vector/vector_index.py": "10854b08519132ac6961efc9db570f38f65a140154e01169cc2ee534709291a6",
+    "scripts/rag/build_bm25_index.py": "b34f7a031c810732715e0717d0207ceaf736538002a3726310c5939cf2d44256",
+    "scripts/rag/build_vector_index.py": "5692ccfbdc1cdb76b2259f950f60dc0a5e06f174724bdcde8e70e52819a5357e",
+    "scripts/rag/evaluate_retrieval.py": "1b1b8b5bf4509c495614b6ecf2419a291381532a2adfaaf32d0516b548c76259",
+    "scripts/rag/parse_legal_pdf.py": "7810e153b57e95fb1da0737156a504ff43a919f3ce353ea6ebd8b87685f87506",
+    "scripts/rag/search.py": "f2cde1d1ccca36383720282f1c0fecc52ac40bcf3f442b9230e37e131a2d6868",
+    "scripts/rag/validate_provisions.py": "3d3630aec126e948203a7523e28b574687382cf6f3e32c23574f163750b2222b",
+    "requirements.txt": "27d7416e58b82592530d7d4ddb9be841205a07b755782b32cce4ed8892557dfe"
+  },
+  "corpus_and_sources_sha256": {
+    "data/processed/civil_code.jsonl": "3e75b02e6290756818b07e4fb0c94745852df5cb4fb95c3373497e2fe72ce48b",
+    "data/processed/civil_procedure_law.jsonl": "6b17d0ef19043a138273b96e5b6caf31385deb2944fb0f9cea7014d3ce209817",
+    "data/processed/road_traffic_safety_law.jsonl": "f4f5c6c4ed0734f4998db32d74b84dbe6e00aa99b661bad774cafb154dbbef5f",
+    "data/中华人民共和国民事诉讼法_20230901.pdf": "dc46ad25f6910b35894360bfe5393675fd7c50c3c72dbec8ba553f80d9d1da5c",
+    "data/中华人民共和国民法典_20200528.pdf": "27d3e78e67d3dca4bee729fd20d4ec5aad959b561d3c4d9e5efde721916fb93b",
+    "data/中华人民共和国道路交通安全法_20210429.pdf": "282b418e9741336ce33442f588068976f0a7cdf0229d61c0910a712fdbace914",
+    "data/metadata/legal_sources.json": "6cb10776a648978cb8cb33ffab77c5788c6240539f70722d25104a02388db2ef"
+  },
+  "index_sha256": {
+    "data/index/bm25.pkl": "6dead26958e8fc912386bf7a82a2fff6dbb31693e9d55a731f1346cc318bd6a2",
+    "data/index/vector_text.npz": "6c1a5153818ea99b37855735b10bcd51040896bf269a2ee97132b47021b21dcd",
+    "data/index/vector_metadata.npz": "80aeda83083b661eb83261b23e9e03aee982ccbebca67f9d8fdced823f958836"
+  },
+  "dev_dataset_sha256": "c6fc672a8b2b593b3ce7fffc63e21c5c6fe17d5e132741a677ce58d660ccf153",
+  "excluded_from_freeze": [
+    ".env",
+    "data/index/embedding_cache.sqlite3"
+  ],
+  "limitations": [
+    "Assistant-authored source-directed candidates, not external blinded test data.",
+    "Assistant review completed; team/external validation pending. This is not an external blinded test.",
+    "Registration dates/status have not been reverified online.",
+    "Insufficient-corpus cases do not require semantic rejection by the retriever."
+  ],
+  "annotation_freeze_scope": "assistant-reviewed snapshot authorized for scoring by user; no team or external validation",
+  "team_review_completed": false,
+  "review_authority": "assistant",
+  "review_policy": "User authorized assistant self-review and scoring without prior human review. No questions or gold targets changed before scoring.",
+  "scoring_completed_at": "2026-11-03T23:16:16.587875+08:00",
+  "query_embeddings_requested_for_scoring": true,
+  "embedding_run": {
+    "successful_batches": 2,
+    "new_query_inputs": 24,
+    "attempted_batches": 2
+  },
+  "sandbox_initial_connection_failed": true,
+  "results_file": "evaluation/rag/holdout_v1/results.json",
+  "results_sha256": "2e65f9f65f10f0c793f16b6997e39aba1d76028d32e7b5aef8056aa891a1f932",
+  "frozen_artifacts_unchanged_after_scoring": true,
+  "questions_and_gold_changed_before_scoring": false,
+  "evaluation_interpretation": "First scored assistant-reviewed new-question evaluation; not external blinded or team-validated. Future tuning on these results makes this a regression set."
+}
