@@ -222,3 +222,10 @@ __marimo__/
 # CivRA: rebuildable retrieval indexes (see scripts/rag/build_bm25_index.py)
 data/index/
 .venv-rag/
+
+# Evaluation controller/scorer data and generated run outputs
+evaluation/private/
+evaluation/results/
+.DS_Store
+.venv-evaluation/
+docs/evaluation/.~*
