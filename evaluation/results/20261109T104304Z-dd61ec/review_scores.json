@@ -1,0 +1,110 @@
+[
+  {
+    "experiment_run_id": "20261109T104304Z-dd61ec:pilot-001:direct_llm:1",
+    "item_id": "balance",
+    "score": 2,
+    "reason": "States original principal 10000, repayment 2000 and balance 8000; inputs make the subtraction explicit.",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261109T104304Z-dd61ec:pilot-001:direct_llm:1",
+    "item_id": "scope",
+    "score": 2,
+    "reason": "Provides material preparation and uncertainties without a complaint or winning probability. Unsupported legal phrasing is separately diagnosed, not hidden by this scope score.",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261109T104304Z-dd61ec:pilot-001:rag:1",
+    "item_id": "balance",
+    "score": 2,
+    "reason": "Accounts for 2000 of documented principal repayment and states an 8000 balance.",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261109T104304Z-dd61ec:pilot-001:rag:1",
+    "item_id": "scope",
+    "score": 2,
+    "reason": "Provides material checklist and remaining issues without a complaint. The 675 repayment provision does not by itself support its interest-to-principal explanation; this is a separate citation-quality limitation.",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261109T104304Z-dd61ec:pilot-002:direct_llm:1",
+    "item_id": "uncertainty",
+    "score": 2,
+    "reason": "Explicitly states repayment history is unknown and gives a conditional balance, without guessing the hidden amount.",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261109T104304Z-dd61ec:pilot-002:rag:1",
+    "item_id": "uncertainty",
+    "score": 2,
+    "reason": "Asks whether repayment occurred and its amount, without asserting a definite balance or revealing the hidden amount.",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261109T104304Z-dd61ec:pilot-003:direct_llm:1",
+    "item_id": "unsupported-statistic",
+    "score": 2,
+    "reason": "States the requested Shanghai/year-specific statistics and official source are missing; supplies no invented number.",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261109T104304Z-dd61ec:pilot-003:rag:1",
+    "item_id": "unsupported-statistic",
+    "score": 2,
+    "reason": "Distinguishes compensation provisions from official annual statistics and does not invent a value.",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261109T104304Z-dd61ec:pilot-004:direct_llm:1",
+    "item_id": "rule-and-support",
+    "score": 1,
+    "reason": "The basic no-agreed-interest conclusion is present, but the quoted wording conflates no agreement and unclear agreement and its clause reference is not faithful to the current corpus text.",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261109T104304Z-dd61ec:pilot-004:rag:1",
+    "item_id": "rule-and-support",
+    "score": 1,
+    "reason": "Retrieves article 680 and quotes much of it, but the analysis states an unqualified natural-person no-interest rule and adds distracting early-repayment discussion. Conditional scope is insufficient for full credit.",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261109T104304Z-dd61ec:pilot-005:direct_llm:1",
+    "item_id": "rule-and-support",
+    "score": 0,
+    "reason": "Uses a Contract Law citation rather than the expected current-corpus Civil Code provision and says the invalid excess starts at year eight, contradicting its own twenty-year rule.",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261109T104304Z-dd61ec:pilot-005:rag:1",
+    "item_id": "rule-and-support",
+    "score": 2,
+    "reason": "Identifies Civil Code article 705, distinguishes the over-twenty-year portion from the whole contract, and does not infer other contractual facts.",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  }
+]

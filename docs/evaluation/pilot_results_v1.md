@@ -94,7 +94,7 @@ configured, so neither model nor embedding cost is reported as zero.
 
 窄检查项下，Direct通过3/5，RAG通过4/5，不能称为整份回答的法律正确率。分组结果为：静态任务Direct 2/4、RAG 3/4；交互设计题的条件性回答项两者均1/1。
 
-pilot-002中两个基线都没有收到控制器补充回复，因此未测真实多轮信息获取。非必需的流程指导分数保留在本地记录，不改变成功数量。
+pilot-002中两个基线都没有收到控制器补充回复，因此未测真实多轮信息获取。非必需的流程指导分数保留在本批评分记录，不改变成功数量。
 
 **English**
 
@@ -120,7 +120,7 @@ checklist. These are not whole-answer legal-correctness rates. By task type:
 
 Neither baseline received a controller reply on pilot-002. These results do not
 measure actual multi-turn fact acquisition. Non-required guidance items are
-retained in the local review records; they do not alter task-success counts.
+retained in the batch review records; they do not alter task-success counts.
 
 ## Failures and diagnostic limits
 
@@ -158,7 +158,7 @@ retained in the local review records; they do not alter task-success counts.
 
 **中文**
 
-本地原始证据位于`evaluation/results/20261109T104304Z-dd61ec/`：
+原始试点证据位于`evaluation/results/20261109T104304Z-dd61ec/`：
 
 - `manifest.json`：配置、代码版本、脏工作区标记、实现/提示词/公开数据/语料/索引哈希。
 - `pilot-*-*.json`、`records.json`：实际请求、回答、候选原文、模型标识、结束原因、请求ID、用量及时间。
@@ -166,13 +166,13 @@ retained in the local review records; they do not alter task-success counts.
 - `score_summary.json`：按模式和任务类型汇总。
 - `dependencies.txt`：隔离环境的依赖版本。
 
-原始运行和受控标注只在本地。全新克隆需重建索引并取得受控标注才能评分；复现命令见[模块说明](../../evaluation/README.md)。每次新运行单独建目录，本批未被覆盖，也未挑选最佳结果。
+本批原始运行和限定字段的评分清单获准公开供组员查看；完整受控标注仍留在本地。查看结果无需密钥；重新生成仍需重建索引，当前完整评分命令仍需受控gold。复现命令见[模块说明](../../evaluation/README.md)。每次新运行单独建目录，本批未被覆盖，也未挑选最佳结果。
 
 调用采用供应商的[聊天接口](https://docs.siliconflow.cn/docs/api/chat-completions-post)和[嵌入接口](https://docs.siliconflow.cn/docs/api/embeddings-post)。
 
 **English**
 
-Local evidence is under:
+Published development evidence is under:
 `evaluation/results/20261109T104304Z-dd61ec/`.
 
 - `manifest.json`: configuration, code revision, dirty-state flag, implementation,
@@ -183,8 +183,10 @@ Local evidence is under:
 - `score_summary.json`: aggregation by setting and task type.
 - `dependencies.txt`: packages in the isolated execution environment.
 
-Raw runs and controlled annotations are local-only. A fresh checkout requires
-index construction and access to controlled annotations for scoring. Use the
+This selected batch and a limited scoring checklist are approved for publication.
+Complete controlled annotations remain private. Reading results needs no key;
+regeneration needs index construction, and the current full scoring command
+still needs controlled gold records. Use the
 commands in the [module README](../../evaluation/README.md). Each new run gets
 a new output directory; the first batch was not overwritten or best-of selected.
 
@@ -195,7 +197,7 @@ and [embedding](https://docs.siliconflow.cn/docs/api/embeddings-post) endpoints.
 
 **中文**
 
-最终本地测试为64项测试及4项子测试通过，`pip check`通过。5题三层数据有效，索引与当前语料哈希一致；源文件和运行JSON中未发现密钥。私有标注、原始结果、索引和隔离环境均被Git忽略；本轮未提交或推送。
+最终本地测试为64项测试及4项子测试通过，`pip check`通过。5题三层数据有效，索引与当前语料哈希一致；源文件和运行JSON中未发现密钥。初次运行时私有标注、原始结果、索引和隔离环境均被Git忽略。后续根据用户授权仅发布本批结果和评分清单；私有标注、索引及环境继续忽略。
 
 现已加入旧索引拦截：语料变化后要求先重建索引。首次批次早于此检查，但清单保留实际语料和索引哈希；后续源码变化没有改写首次回答或评分。
 
@@ -204,8 +206,10 @@ and [embedding](https://docs.siliconflow.cn/docs/api/embeddings-post) endpoints.
 The final local suite passed 64 tests and 4 subtests. The installed environment
 passed pip check. Five public/hidden/gold task records validated, and the index
 matched the current corpus hash. Credential-pattern scans found no keys in source
-or run JSON. Private annotations, raw runs, indexes, and the isolated environment
-are ignored by Git. No commit or push was performed in this iteration.
+or run JSON. At initial execution, private annotations, raw runs, indexes, and the environment
+were ignored by Git. A later user authorization publishes this batch and its
+limited scoring checklist only; private annotations, indexes, and the environment
+remain ignored.
 
 A stale-index guard now refuses execution after corpus changes until the index
 is rebuilt. The first batch predates that guard; its manifest still records the

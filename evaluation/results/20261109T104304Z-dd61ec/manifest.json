@@ -1,0 +1,69 @@
+{
+  "batch_id": "20261109T104304Z-dd61ec",
+  "created_at": "2026-11-09T10:43:04.796100+00:00",
+  "git_revision": "c553e3e3b542bdac794efbaf19bfcd4697df1697",
+  "working_tree_dirty": true,
+  "config": {
+    "protocol_version": "pilot-v0.3",
+    "dataset_version": "pilot-v0.2",
+    "status": "development",
+    "first_execution_modes": [
+      "direct_llm",
+      "rag"
+    ],
+    "later_modes": [
+      "fixed_workflow",
+      "agent"
+    ],
+    "provider": "siliconflow",
+    "model": "Qwen/Qwen2.5-7B-Instruct",
+    "model_selection_status": "available_in_authenticated_model_list_tool_calling_not_yet_verified",
+    "temperature": 0.0,
+    "seed": null,
+    "repetitions": 1,
+    "max_output_tokens": 2000,
+    "retrieval": {
+      "mode": "exact-vector",
+      "variant": "metadata",
+      "top_k": 5,
+      "rag_queries_per_task": 1,
+      "query_source": "initial_input"
+    },
+    "budgets": {
+      "max_model_calls": 12,
+      "max_tool_calls": 8,
+      "max_total_tokens": 24000,
+      "max_active_seconds": 300,
+      "max_interaction_turns": 3,
+      "model_retries": 0,
+      "tool_retries": 1
+    },
+    "disclosure_policy": "manual_semantic_review_logged",
+    "unmatched_reply": "No additional information is available for this question.",
+    "cost_policy": "unknown_until_price_version_configured",
+    "paid_execution_enabled": true
+  },
+  "public_sha256": "415397bb72001787e97950b87b146a9eb1a6ea61f993ea4dfb9500d3ac9d67e4",
+  "system_prompt_sha256": "43d44f5a8615255853cdda033b7b63bf19e204b747861d441522c3c7f8399bfc",
+  "corpus_sha256": {
+    "civil_code.jsonl": "1de20cdd37cc303f79e7d6633dd268c13a7a3a52e5b7431341e1df7ff48b0521",
+    "civil_procedure_law.jsonl": "151e05cdf3b9b4f552c98f444688b2c6a91df023ac731ea13c9464e024f2fe34",
+    "road_traffic_safety_law.jsonl": "771f4ca4d15439a139bd624933e7306dfc1d0345882e72dbbc7c9f68a27359e9"
+  },
+  "index_sha256": "30612c9347dcd039f8ae86fc3b7c08475184baa9b0e4dc9e218b4e497886e106",
+  "python": "3.12.14",
+  "implementation_sha256": {
+    "evaluation/__init__.py": "3240fd4f692fc0f8df2fde0bd2f6c14fb77e01b740af9b3f3df5e67a32075daa",
+    "evaluation/adapters/__init__.py": "0c833fcf5bc2759ff7b4f24f4e1d9da9ec81a9316bc633ff514976203322cfbe",
+    "evaluation/adapters/team.py": "739a91e460f20c62e07c6b25caef7fd1544a2adf7589c45f2653195d2aaeefd7",
+    "evaluation/baselines/__init__.py": "b004a7517af6ef09c09fb8ebcc58035f610fbb6927450e6c9c969db80c15c497",
+    "evaluation/baselines/consultation.py": "5678058110096be970598949726476695e35a0f1230856fdba2ab83db8834d9b",
+    "evaluation/runners/__init__.py": "29add0cffd243041c3ab0b788242c606556dde1d0d009dcfc50e18e3b68108cb",
+    "evaluation/runners/pilot.py": "c2da07b19b0922f6779664cafd56b113ecc1ba823a39848c35b931e06a74b754",
+    "evaluation/schemas/__init__.py": "936ab5c1485ee97fdb4f75718c3c3e3f88d86ae689e58ccf083041f459817fc0",
+    "evaluation/schemas/tasks.py": "4ad38f3871a1be563bddf3744ebdb99b9a03bf96426a89f6a80cc2f61c496fb8"
+  },
+  "cost": null,
+  "embedding_cost": null,
+  "cost_note": "No versioned prices configured; index build excluded from online latency; embedding client does not expose billed usage."
+}

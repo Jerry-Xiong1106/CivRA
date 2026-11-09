@@ -160,14 +160,14 @@ Next dependencies: Member 4 confirms real model compatibility and the runtime ad
 
 **中文**
 
-首批结果见[pilot_results_v1.md](pilot_results_v1.md)；实际请求、回复、候选原文、用量和清单在本地`evaluation/results/20261109T104304Z-dd61ec/`。索引使用现有1690条、BAAI/bge-m3和metadata，不代表完整类案库或历史版本覆盖。
+首批结果见[pilot_results_v1.md](pilot_results_v1.md)；实际请求、回复、候选原文、用量和清单位于已获准共享的`evaluation/results/20261109T104304Z-dd61ec/`，并明确标为开发试点。索引使用现有1690条、BAAI/bge-m3和metadata，不代表完整类案库或历史版本覆盖。
 
 基线限制单次生成和至多一次检索。Token/时间超限在供应商调用完成后标记，不是调用中的硬取消。嵌入客户端可最多尝试4次HTTP请求，与工具重试配置独立；无法取得每请求计费用量，嵌入费用保持未知。模型不自动重试，也不重跑挑选输出。
 
 **English**
 
 The first batch is documented in [pilot_results_v1.md](pilot_results_v1.md). Raw
-requests, replies, candidate texts, usage, and manifests are local-only under
+requests, replies, candidate texts, usage, and manifests are approved for sharing as development evidence under
 evaluation/results/20261109T104304Z-dd61ec/. Index construction used all 1,690
 current provisions, BAAI/bge-m3, and metadata inputs; no complete case database
 or historical-version coverage is implied.

@@ -1,0 +1,37 @@
+{
+  "batch_id": "20261109T104304Z-dd61ec",
+  "publication_date": "2026-11-09",
+  "development_only": true,
+  "final_test": false,
+  "annotation_status": "draft",
+  "review_kind": "assistant_provisional",
+  "human_review_status": "pending",
+  "original_evidence_files": {
+    "dependencies.txt": "3a86f845d854b1e963ecb25868f972a1d0b0abc482106318e6877125bf8884f1",
+    "manifest.json": "895c785865fe40d804e308c1ba1a390263a3c031e806a09dc3b02c7f3627b071",
+    "pilot-001-direct_llm.json": "87b4965c448e4417d6bfa4cd2f9fdf17be7c44885435cf15d4c0ce3d13b05b87",
+    "pilot-001-rag.json": "297f139622bd41a592cf5934beae891524a9fc7857b7293f87b53e12d249d0c8",
+    "pilot-002-direct_llm.json": "d70845c28fbfe16eb63dd546670b1ad808a158bb1dc18da4e462a9a2b4415171",
+    "pilot-002-rag.json": "4244a22a5fbab3c2077f88ff71ee57caa2b2b07039718a74c173402018d7b180",
+    "pilot-003-direct_llm.json": "d6556019d415fcddbe09b31e0db31d5dc0dffe2cca2a4d5bcf98d44e109d6816",
+    "pilot-003-rag.json": "67a5b2632f157c0567233557727b69c37cc7d1958f0d8e39557edd8e4fd06a87",
+    "pilot-004-direct_llm.json": "da3285c10fe81e8bd3af4f4792b745cffc7b94ac2e2c7693d620fd599cbbedb3",
+    "pilot-004-rag.json": "8fa5310a76b03ef474b400fa1dfcdb8708ddebd0ed5cca11e1c26d5ae03582e9",
+    "pilot-005-direct_llm.json": "ff1b18a466dc367b4ec846dc843a76b9f9d84482a181d1e08b83173cc7386533",
+    "pilot-005-rag.json": "cde211c790bcdbcbf7ea9368264627d70fb55b3db2b6285cf91421f87d84b3c3",
+    "records.json": "71cf9dfe724684b2bfe552d93a9f7220496995bc11521d35ee322922ebfdedbb",
+    "review_scores.json": "cb7e3c617fe792b2150161420f90a6a3da864588b8194a4de97d9d0e1a6d2c57",
+    "score_summary.json": "553160ade680dbff902566e43d79f7f5b46e19967844852e544644b92514a0c1",
+    "summary.json": "02f93242910df32dcee166e05e4c95a0cc5dd37d2d90a994e59acf50c1319529"
+  },
+  "scoring_checklist_sha256": "992d6e7e99450893154a97bb9045e3ac2e41dbd5447b36d4cc8fed3109be4d8e",
+  "excluded": [
+    "API credentials",
+    "hidden fact pool",
+    "complete controlled gold records",
+    "vector indexes",
+    "local environment"
+  ],
+  "note_zh": "开发试点证据，不能作为未见最终测试或总体法律准确率。",
+  "note_en": "Development evidence, not an unseen final test or general legal-accuracy estimate."
+}

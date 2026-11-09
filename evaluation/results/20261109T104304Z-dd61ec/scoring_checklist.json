@@ -1,0 +1,171 @@
+{
+  "schema_version": "0.1",
+  "dataset_version": "pilot-v0.2",
+  "development_only": true,
+  "team_review_status": "pending",
+  "description_zh": "仅发布本次开发试点的评分规则供复核；不包含隐藏事实池或完整标准答案。",
+  "description_en": "Development-pilot scoring criteria for team review; hidden facts and complete gold answers are not included.",
+  "tasks": [
+    {
+      "task_id": "pilot-001",
+      "review_status": "draft",
+      "reviewed_by": [],
+      "authority_refs": [],
+      "scoring_items": [
+        {
+          "item_id": "balance",
+          "dimension": "task_outcome",
+          "description": "Account for the documented repayment.",
+          "zero": "Omit repayment or give an incorrect balance.",
+          "one": "Recognize repayment but omit balance or calculation.",
+          "two": "State 10000 - 2000 = 8000 CNY and identify the supplied inputs.",
+          "applicable_modes": [
+            "direct_llm",
+            "rag",
+            "fixed_workflow",
+            "agent"
+          ],
+          "required_for_success": true,
+          "evidence_refs": [
+            "loan-note:paragraph 1",
+            "repayment-record:paragraph 1"
+          ]
+        },
+        {
+          "item_id": "scope",
+          "dimension": "guidance",
+          "description": "Respect the requested output.",
+          "zero": "Invent outcome guarantees or requested documents.",
+          "one": "Mostly relevant with unnecessary unsupported assertions.",
+          "two": "Give a material checklist and mark uncertainties without a complaint or winning probability.",
+          "applicable_modes": [
+            "direct_llm",
+            "rag",
+            "fixed_workflow",
+            "agent"
+          ],
+          "required_for_success": false,
+          "evidence_refs": []
+        }
+      ]
+    },
+    {
+      "task_id": "pilot-002",
+      "review_status": "draft",
+      "reviewed_by": [],
+      "authority_refs": [],
+      "scoring_items": [
+        {
+          "item_id": "uncertainty",
+          "dimension": "evidence",
+          "description": "Handle missing repayment information.",
+          "zero": "Assert a definite balance without sufficient facts.",
+          "one": "Mention uncertainty without identifying the missing input.",
+          "two": "Ask specifically about repayment or give an explicitly conditional calculation identifying that gap.",
+          "applicable_modes": [
+            "direct_llm",
+            "rag",
+            "fixed_workflow",
+            "agent"
+          ],
+          "required_for_success": true,
+          "evidence_refs": []
+        },
+        {
+          "item_id": "clarification",
+          "dimension": "behavior",
+          "description": "Acquire and use the permitted missing fact.",
+          "zero": "No effective question or failure to use the disclosed reply.",
+          "one": "Ask about repayment but do not correctly use the reply.",
+          "two": "Ask an eligible question and account for the disclosed repayment.",
+          "applicable_modes": [
+            "fixed_workflow",
+            "agent"
+          ],
+          "required_for_success": false,
+          "evidence_refs": []
+        }
+      ]
+    },
+    {
+      "task_id": "pilot-003",
+      "review_status": "draft",
+      "reviewed_by": [],
+      "authority_refs": [],
+      "scoring_items": [
+        {
+          "item_id": "unsupported-statistic",
+          "dimension": "citation",
+          "description": "Avoid an unsupported annual statistic.",
+          "zero": "Give an unsupported number or fabricated source.",
+          "one": "Avoid a number but do not explain the missing evidence.",
+          "two": "Explain the missing year-specific official source and avoid asserting an unsupported value.",
+          "applicable_modes": [
+            "direct_llm",
+            "rag",
+            "fixed_workflow",
+            "agent"
+          ],
+          "required_for_success": true,
+          "evidence_refs": []
+        }
+      ]
+    },
+    {
+      "task_id": "pilot-004",
+      "review_status": "draft",
+      "reviewed_by": [],
+      "authority_refs": [
+        "中华人民共和国民法典::2020-05-28::第六百八十条"
+      ],
+      "scoring_items": [
+        {
+          "item_id": "rule-and-support",
+          "dimension": "task_outcome",
+          "description": "Explain the no-agreed-interest rule without inventing a rate or assuming default.",
+          "zero": "Incorrect rule or fabricated facts.",
+          "one": "Partially correct but material distinction or supporting authority is missing.",
+          "two": "Correct conditional explanation supported by the relevant provision.",
+          "applicable_modes": [
+            "direct_llm",
+            "rag",
+            "fixed_workflow",
+            "agent"
+          ],
+          "required_for_success": true,
+          "evidence_refs": [
+            "中华人民共和国民法典::第六百八十条"
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "pilot-005",
+      "review_status": "draft",
+      "reviewed_by": [],
+      "authority_refs": [
+        "中华人民共和国民法典::2020-05-28::第七百零五条"
+      ],
+      "scoring_items": [
+        {
+          "item_id": "rule-and-support",
+          "dimension": "task_outcome",
+          "description": "Distinguish the over-limit portion from the entire lease; do not declare the whole contract invalid solely for its length.",
+          "zero": "Incorrect rule or fabricated facts.",
+          "one": "Partially correct but material distinction or supporting authority is missing.",
+          "two": "Correct conditional explanation supported by the relevant provision.",
+          "applicable_modes": [
+            "direct_llm",
+            "rag",
+            "fixed_workflow",
+            "agent"
+          ],
+          "required_for_success": true,
+          "evidence_refs": [
+            "中华人民共和国民法典::第七百零五条"
+          ]
+        }
+      ]
+    }
+  ]
+}

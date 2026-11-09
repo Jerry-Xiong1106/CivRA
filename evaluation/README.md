@@ -147,6 +147,7 @@ Do not commit credentials, identifiable personal data, or materials without conf
 - [历史预检报告](../docs/evaluation/pilot_preflight.md)
 - [首次试点结果](../docs/evaluation/pilot_results_v1.md)
 - [简短进度说明](../docs/evaluation/progress_summary.md)
+- [共享开发试点结果](results/README.md)
 
 **English**
 
@@ -155,6 +156,7 @@ Do not commit credentials, identifiable personal data, or materials without conf
 - [Scoring rubric](../docs/evaluation/rubric.md)
 - [Interface requirements (draft)](../docs/evaluation/interface_requirements.md)
 - [Pilot preflight](../docs/evaluation/pilot_preflight.md)
+- [Shared development-pilot results](results/README.md)
 
 ## Run the pilot
 
