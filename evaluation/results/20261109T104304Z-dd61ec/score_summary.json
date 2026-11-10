@@ -1,0 +1,54 @@
+{
+  "annotation_status": [
+    "draft"
+  ],
+  "review_kinds": [
+    "assistant_provisional"
+  ],
+  "groups": [
+    {
+      "mode": "direct_llm",
+      "task_type": "interactive",
+      "tasks": 1,
+      "completed": 1,
+      "task_successes": 1,
+      "dimensions": {
+        "evidence": 2
+      }
+    },
+    {
+      "mode": "direct_llm",
+      "task_type": "static",
+      "tasks": 4,
+      "completed": 4,
+      "task_successes": 2,
+      "dimensions": {
+        "citation": 2,
+        "guidance": 2,
+        "task_outcome": 1
+      }
+    },
+    {
+      "mode": "rag",
+      "task_type": "interactive",
+      "tasks": 1,
+      "completed": 1,
+      "task_successes": 1,
+      "dimensions": {
+        "evidence": 2
+      }
+    },
+    {
+      "mode": "rag",
+      "task_type": "static",
+      "tasks": 4,
+      "completed": 4,
+      "task_successes": 3,
+      "dimensions": {
+        "citation": 2,
+        "guidance": 2,
+        "task_outcome": 1.6666666666666667
+      }
+    }
+  ]
+}

@@ -1,0 +1,183 @@
+{
+  "$defs": {
+    "ScoreItem": {
+      "additionalProperties": false,
+      "properties": {
+        "item_id": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*$",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "dimension": {
+          "enum": [
+            "task_outcome",
+            "evidence",
+            "citation",
+            "guidance",
+            "behavior"
+          ],
+          "title": "Dimension",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Description",
+          "type": "string"
+        },
+        "zero": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Zero",
+          "type": "string"
+        },
+        "one": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "One",
+          "type": "string"
+        },
+        "two": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Two",
+          "type": "string"
+        },
+        "applicable_modes": {
+          "items": {
+            "enum": [
+              "direct_llm",
+              "rag",
+              "fixed_workflow",
+              "agent"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Applicable Modes",
+          "type": "array"
+        },
+        "required_for_success": {
+          "title": "Required For Success",
+          "type": "boolean"
+        },
+        "evidence_refs": {
+          "items": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "title": "Evidence Refs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "item_id",
+        "dimension",
+        "description",
+        "zero",
+        "one",
+        "two",
+        "applicable_modes",
+        "required_for_success"
+      ],
+      "title": "ScoreItem",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "0.1",
+      "default": "0.1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "task_id": {
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*$",
+      "title": "Task Id",
+      "type": "string"
+    },
+    "dataset_version": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Dataset Version",
+      "type": "string"
+    },
+    "review_status": {
+      "enum": [
+        "draft",
+        "reviewed"
+      ],
+      "title": "Review Status",
+      "type": "string"
+    },
+    "reviewed_by": {
+      "items": {
+        "minLength": 1,
+        "pattern": "\\S",
+        "type": "string"
+      },
+      "title": "Reviewed By",
+      "type": "array"
+    },
+    "key_facts": {
+      "items": {
+        "minLength": 1,
+        "pattern": "\\S",
+        "type": "string"
+      },
+      "title": "Key Facts",
+      "type": "array"
+    },
+    "acceptable_outputs": {
+      "items": {
+        "minLength": 1,
+        "pattern": "\\S",
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Acceptable Outputs",
+      "type": "array"
+    },
+    "prohibited_inventions": {
+      "items": {
+        "minLength": 1,
+        "pattern": "\\S",
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Prohibited Inventions",
+      "type": "array"
+    },
+    "authority_refs": {
+      "items": {
+        "minLength": 1,
+        "pattern": "\\S",
+        "type": "string"
+      },
+      "title": "Authority Refs",
+      "type": "array"
+    },
+    "scoring_items": {
+      "items": {
+        "$ref": "#/$defs/ScoreItem"
+      },
+      "minItems": 1,
+      "title": "Scoring Items",
+      "type": "array"
+    }
+  },
+  "required": [
+    "task_id",
+    "dataset_version",
+    "review_status",
+    "key_facts",
+    "acceptable_outputs",
+    "prohibited_inventions",
+    "scoring_items"
+  ],
+  "title": "GoldTask",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}
