@@ -1,0 +1,3 @@
+# Tested version selection for local CPU inference; install in a dedicated environment.
+paddleocr==3.7.0
+paddlepaddle==3.3.1

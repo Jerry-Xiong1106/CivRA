@@ -1,0 +1,488 @@
+{
+  "review_date": "2026-11-09",
+  "reference_url": "https://www.acla.org.cn/upload/media/2024-04-25/8de31284e766dd100a19f1d88d462402.pdf",
+  "downloaded_size_bytes": 2348066,
+  "sha256": "f9fc415b2d4e96567eecc4a8864a9407a67554cd2432d18cb2199790388a1ff5",
+  "review_scope": "Text reviewed for the listed PDF pages; first page of each form visually inspected. Field-group adaptation, not exhaustive cell mapping or replica.",
+  "original_2026_attachments": "HTTP 403; contents not verified",
+  "profiles": [
+    {
+      "template_id": "cn_complaint_traffic_accident",
+      "template_version": "civra-fields-v2",
+      "metadata": {
+        "review_date": "2026-11-09",
+        "reference_sha256": "f9fc415b2d4e96567eecc4a8864a9407a67554cd2432d18cb2199790388a1ff5",
+        "pdf_pages_1_based": [
+          86,
+          87,
+          88
+        ],
+        "review_scope": "field_groups",
+        "official_form_replica": false,
+        "current_court_acceptance_verified": false
+      },
+      "adapted_fields": [
+        {
+          "field": "claimant_name",
+          "label": "原告姓名或名称",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "claimant_identity",
+          "label": "原告身份与主体信息",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "claimant_contact",
+          "label": "原告住所及联系方式",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "defendant_name",
+          "label": "被告姓名或名称",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "defendant_identity",
+          "label": "被告身份与主体信息",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "defendant_contact",
+          "label": "被告住所及联系方式",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "representative",
+          "label": "诉讼代理信息（无代理人时需明确确认）",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "mediation_preference",
+          "label": "对先行调解的意愿",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "additional_parties",
+          "label": "第三人及其他当事人（如无，请明确确认）",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "service_address",
+          "label": "送达地址、收件人及联系方式",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "electronic_service",
+          "label": "是否同意电子送达及具体渠道（需本人明确选择）",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "accident_date",
+          "label": "事故日期",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "accident_location",
+          "label": "事故地点",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "vehicles",
+          "label": "涉事车辆及人员信息",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "liability_finding",
+          "label": "责任认定记载及认定书信息",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "insurance",
+          "label": "保险投保情况",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "loss_details",
+          "label": "损失项目、金额及计算说明",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "accident_details",
+          "label": "事故经过",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "other_losses",
+          "label": "其他损失及请求（如无，请明确确认）",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "court_name",
+          "label": "拟提交法院（需核实管辖）",
+          "section": "致送与签署"
+        },
+        {
+          "field": "signature",
+          "label": "具状人签名或盖章（本人核对后完成）",
+          "section": "致送与签署"
+        },
+        {
+          "field": "signature_date",
+          "label": "签署日期（本人核对后填写）",
+          "section": "致送与签署"
+        }
+      ],
+      "gaps": [
+        "natural person and organization identity subfields",
+        "individual checkbox and security subfields",
+        "original form layout",
+        "current receiving court acceptance and applicable version",
+        "substantive legal reasoning and complex damages"
+      ]
+    },
+    {
+      "template_id": "cn_complaint_private_lending",
+      "template_version": "civra-fields-v2",
+      "metadata": {
+        "review_date": "2026-11-09",
+        "reference_sha256": "f9fc415b2d4e96567eecc4a8864a9407a67554cd2432d18cb2199790388a1ff5",
+        "pdf_pages_1_based": [
+          3,
+          4,
+          5,
+          6
+        ],
+        "review_scope": "field_groups",
+        "official_form_replica": false,
+        "current_court_acceptance_verified": false
+      },
+      "adapted_fields": [
+        {
+          "field": "claimant_name",
+          "label": "原告姓名或名称",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "claimant_identity",
+          "label": "原告身份与主体信息",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "claimant_contact",
+          "label": "原告住所及联系方式",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "defendant_name",
+          "label": "被告姓名或名称",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "defendant_identity",
+          "label": "被告身份与主体信息",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "defendant_contact",
+          "label": "被告住所及联系方式",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "representative",
+          "label": "诉讼代理信息（无代理人时需明确确认）",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "mediation_preference",
+          "label": "对先行调解的意愿",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "additional_parties",
+          "label": "第三人及其他当事人（如无，请明确确认）",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "service_address",
+          "label": "送达地址、收件人及联系方式",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "electronic_service",
+          "label": "是否同意电子送达及具体渠道（需本人明确选择）",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "loan_agreement",
+          "label": "借贷约定及合同/借据情况",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "loan_principal",
+          "label": "主张本金",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "loan_delivery",
+          "label": "款项交付时间、方式及凭证",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "repayment_agreement",
+          "label": "还款期限及约定",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "repayment_history",
+          "label": "已还本金、利息及明细",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "interest_agreement",
+          "label": "利息、违约金约定及计算请求",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "guarantee",
+          "label": "担保情况（无担保时需明确确认）",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "jurisdiction_agreement",
+          "label": "仲裁或管辖约定",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "loan_roles",
+          "label": "出借人、借款人角色",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "loan_term",
+          "label": "借款期间及到期日",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "overdue_details",
+          "label": "逾期或提前到期情况",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "preservation",
+          "label": "保全情况及申请意愿（尚待核实，不自动申请）",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "security_details",
+          "label": "抵押、质押、保证等具体情况及范围（不适用时需确认）",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "collection_costs",
+          "label": "主张的实现债权费用及依据",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "court_name",
+          "label": "拟提交法院（需核实管辖）",
+          "section": "致送与签署"
+        },
+        {
+          "field": "signature",
+          "label": "具状人签名或盖章（本人核对后完成）",
+          "section": "致送与签署"
+        },
+        {
+          "field": "signature_date",
+          "label": "签署日期（本人核对后填写）",
+          "section": "致送与签署"
+        }
+      ],
+      "gaps": [
+        "natural person and organization identity subfields",
+        "individual checkbox and security subfields",
+        "original form layout",
+        "current receiving court acceptance and applicable version",
+        "substantive legal reasoning and complex damages"
+      ]
+    },
+    {
+      "template_id": "cn_complaint_sales_contract",
+      "template_version": "civra-fields-v2",
+      "metadata": {
+        "review_date": "2026-11-09",
+        "reference_sha256": "f9fc415b2d4e96567eecc4a8864a9407a67554cd2432d18cb2199790388a1ff5",
+        "pdf_pages_1_based": [
+          27,
+          28,
+          29,
+          30,
+          31
+        ],
+        "review_scope": "field_groups",
+        "official_form_replica": false,
+        "current_court_acceptance_verified": false
+      },
+      "adapted_fields": [
+        {
+          "field": "claimant_name",
+          "label": "原告姓名或名称",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "claimant_identity",
+          "label": "原告身份与主体信息",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "claimant_contact",
+          "label": "原告住所及联系方式",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "defendant_name",
+          "label": "被告姓名或名称",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "defendant_identity",
+          "label": "被告身份与主体信息",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "defendant_contact",
+          "label": "被告住所及联系方式",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "representative",
+          "label": "诉讼代理信息（无代理人时需明确确认）",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "mediation_preference",
+          "label": "对先行调解的意愿",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "additional_parties",
+          "label": "第三人及其他当事人（如无，请明确确认）",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "service_address",
+          "label": "送达地址、收件人及联系方式",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "electronic_service",
+          "label": "是否同意电子送达及具体渠道（需本人明确选择）",
+          "section": "当事人与送达信息"
+        },
+        {
+          "field": "contract_details",
+          "label": "买卖合同名称、签订情况及当事人角色",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "subject_matter",
+          "label": "标的物、规格及数量",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "price_agreement",
+          "label": "价款和付款约定",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "delivery_history",
+          "label": "交付、收货及验收情况",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "payment_history",
+          "label": "已付款、欠款及明细",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "breach_details",
+          "label": "违约、质量或履行争议",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "performance_demands",
+          "label": "催告或协商情况",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "jurisdiction_agreement",
+          "label": "仲裁或管辖约定",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "contract_roles",
+          "label": "买方、卖方角色",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "delivery_agreement",
+          "label": "交付、风险转移、安装、调试及验收约定",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "quality_agreement",
+          "label": "质量标准、检验及异议期限约定",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "penalty_agreement",
+          "label": "违约金、定金等约定",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "loss_calculation",
+          "label": "利息、违约金或损失的计算说明",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "preservation",
+          "label": "保全情况及申请意愿（尚待核实，不自动申请）",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "security_details",
+          "label": "抵押、质押、保证等情况及范围（不适用时需确认）",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "collection_costs",
+          "label": "主张的实现债权费用及依据",
+          "section": "事实与材料信息"
+        },
+        {
+          "field": "court_name",
+          "label": "拟提交法院（需核实管辖）",
+          "section": "致送与签署"
+        },
+        {
+          "field": "signature",
+          "label": "具状人签名或盖章（本人核对后完成）",
+          "section": "致送与签署"
+        },
+        {
+          "field": "signature_date",
+          "label": "签署日期（本人核对后填写）",
+          "section": "致送与签署"
+        }
+      ],
+      "gaps": [
+        "natural person and organization identity subfields",
+        "individual checkbox and security subfields",
+        "original form layout",
+        "current receiving court acceptance and applicable version",
+        "substantive legal reasoning and complex damages"
+      ]
+    }
+  ]
+}
