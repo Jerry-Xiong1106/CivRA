@@ -1,0 +1,96 @@
+{
+  "$defs": {
+    "HiddenFact": {
+      "additionalProperties": false,
+      "properties": {
+        "fact_id": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*$",
+          "title": "Fact Id",
+          "type": "string"
+        },
+        "disclosure_condition": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Disclosure Condition",
+          "type": "string"
+        },
+        "accepted_question_examples": {
+          "items": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Accepted Question Examples",
+          "type": "array"
+        },
+        "response": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Response",
+          "type": "string"
+        }
+      },
+      "required": [
+        "fact_id",
+        "disclosure_condition",
+        "accepted_question_examples",
+        "response"
+      ],
+      "title": "HiddenFact",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "0.1",
+      "default": "0.1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "task_id": {
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*$",
+      "title": "Task Id",
+      "type": "string"
+    },
+    "dataset_version": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Dataset Version",
+      "type": "string"
+    },
+    "facts": {
+      "items": {
+        "$ref": "#/$defs/HiddenFact"
+      },
+      "title": "Facts",
+      "type": "array"
+    },
+    "route_choice": {
+      "anyOf": [
+        {
+          "enum": [
+            "negotiation",
+            "mediation",
+            "litigation"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Route Choice"
+    }
+  },
+  "required": [
+    "task_id",
+    "dataset_version",
+    "facts"
+  ],
+  "title": "HiddenTask",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

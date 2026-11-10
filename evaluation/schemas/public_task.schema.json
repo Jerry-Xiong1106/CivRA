@@ -1,0 +1,194 @@
+{
+  "$defs": {
+    "Material": {
+      "additionalProperties": false,
+      "properties": {
+        "material_id": {
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*$",
+          "title": "Material Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Title",
+          "type": "string"
+        },
+        "text": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Text",
+          "type": "string"
+        },
+        "locator": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Locator",
+          "type": "string"
+        }
+      },
+      "required": [
+        "material_id",
+        "title",
+        "text",
+        "locator"
+      ],
+      "title": "Material",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "0.1",
+      "default": "0.1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "task_id": {
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*$",
+      "title": "Task Id",
+      "type": "string"
+    },
+    "source_case_id": {
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*$",
+      "title": "Source Case Id",
+      "type": "string"
+    },
+    "dataset_version": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Dataset Version",
+      "type": "string"
+    },
+    "split": {
+      "enum": [
+        "development",
+        "final_test"
+      ],
+      "title": "Split",
+      "type": "string"
+    },
+    "phase": {
+      "enum": [
+        "pilot",
+        "formal"
+      ],
+      "title": "Phase",
+      "type": "string"
+    },
+    "task_type": {
+      "enum": [
+        "static",
+        "interactive"
+      ],
+      "title": "Task Type",
+      "type": "string"
+    },
+    "domain": {
+      "enum": [
+        "lending",
+        "leasing",
+        "contract",
+        "tort",
+        "coverage"
+      ],
+      "title": "Domain",
+      "type": "string"
+    },
+    "tags": {
+      "items": {
+        "minLength": 1,
+        "pattern": "\\S",
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Tags",
+      "type": "array"
+    },
+    "language": {
+      "const": "zh-CN",
+      "default": "zh-CN",
+      "title": "Language",
+      "type": "string"
+    },
+    "initial_input": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Initial Input",
+      "type": "string"
+    },
+    "user_goal": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "User Goal",
+      "type": "string"
+    },
+    "selected_route": {
+      "anyOf": [
+        {
+          "enum": [
+            "negotiation",
+            "mediation",
+            "litigation"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Selected Route"
+    },
+    "materials": {
+      "items": {
+        "$ref": "#/$defs/Material"
+      },
+      "title": "Materials",
+      "type": "array"
+    },
+    "output_requirements": {
+      "items": {
+        "minLength": 1,
+        "pattern": "\\S",
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Output Requirements",
+      "type": "array"
+    },
+    "provenance": {
+      "enum": [
+        "synthetic",
+        "deidentified_public_case"
+      ],
+      "title": "Provenance",
+      "type": "string"
+    },
+    "source_reference": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Source Reference",
+      "type": "string"
+    }
+  },
+  "required": [
+    "task_id",
+    "source_case_id",
+    "dataset_version",
+    "split",
+    "phase",
+    "task_type",
+    "domain",
+    "tags",
+    "initial_input",
+    "user_goal",
+    "output_requirements",
+    "provenance",
+    "source_reference"
+  ],
+  "title": "PublicTask",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}
