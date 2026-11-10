@@ -7,3 +7,4 @@ langchain-community==0.4.2
 pydantic>=2.7
 jsonschema>=4.21
 pytest>=8
+langchain-openai==1.7.3

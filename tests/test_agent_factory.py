@@ -48,14 +48,25 @@ def test_load_dotenv_sets_only_missing_names(tmp_path, monkeypatch):
     assert load_dotenv(tmp_path / "missing.env") == []
 
 
-def test_llm_from_env_defaults_to_siliconflow(monkeypatch):
+def test_llm_from_env_defaults_to_langchain_on_siliconflow(monkeypatch):
+    from backend.agent.lc_model import LangChainLLMClient
     monkeypatch.setenv("SILICONFLOW_API_KEY", "sk-team")
     client = llm_from_env()
-    assert (client.base_url, client.model, client.api_key) == (SILICONFLOW_BASE_URL, DEFAULT_MODEL, "sk-team")
+    assert isinstance(client, LangChainLLMClient) and client.model == DEFAULT_MODEL
+    chat = client.chat_model
+    assert (chat.openai_api_base, chat.max_retries) == (SILICONFLOW_BASE_URL, 0)
+    assert chat.openai_api_key.get_secret_value() == "sk-team"
+
+
+def test_llm_from_env_native_backend_and_overrides(monkeypatch):
     monkeypatch.setenv("CIVRA_LLM_API_KEY", "sk-own")
     monkeypatch.setenv("CIVRA_LLM_BASE_URL", "http://other/v1")
-    client = llm_from_env(model="deepseek-ai/DeepSeek-V3")
-    assert (client.base_url, client.model, client.api_key) == ("http://other/v1", "deepseek-ai/DeepSeek-V3", "sk-own")
+    monkeypatch.setenv("CIVRA_LLM_BACKEND", "native")
+    client = llm_from_env(model="deepseek-chat")
+    assert isinstance(client, OpenAICompatibleClient)
+    assert (client.base_url, client.model, client.api_key) == ("http://other/v1", "deepseek-chat", "sk-own")
+    with pytest.raises(ValueError, match="langchain or native"):
+        llm_from_env(backend="other")
 
 
 def test_missing_key_is_a_clear_error(tmp_path):

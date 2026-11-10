@@ -1,4 +1,4 @@
-# Agent Runtime 接口约定（草案 v0.7）
+# Agent Runtime 接口约定（草案 v0.8）
 
 维护人：成员4（Agent 执行层）  
 状态：**草案，待全组确认**。确认后，第 2–5 节的数据结构会落到 `backend/common/` 中的代码定义，以代码为准。
@@ -277,7 +277,12 @@ class CostInfo(BaseModel):
 ```
 
 - 采用 OpenAI 兼容的 tool calling 格式，便于切换 DeepSeek 等模型供应商。
-- 实现：`backend/agent/llm.py` 中的 `OpenAICompatibleClient`（真实模型）和 `ScriptedLLM`（按脚本回复，用于测试和演示）。
+- 实现：
+  - `backend/agent/lc_model.py` 的 `LangChainLLMClient`：用 LangChain 的 `ChatOpenAI` 调用模型，`build_runner` 默认使用它。运行时内部的消息仍是 OpenAI 兼容格式，只在调用模型时转换为 LangChain 消息，所以执行记录、检查点和评测导出都不受影响。
+  - `backend/agent/llm.py` 的 `OpenAICompatibleClient`：直接发 HTTP 请求，设置 `CIVRA_LLM_BACKEND=native` 时使用；成员5的试点脚本也直接用它。
+  - `ScriptedLLM`：按脚本回复，用于测试和演示。
+- 主循环、暂停恢复、检查点仍由本项目的 Runtime 实现，没有使用 LangChain 的 Agent 或 LangGraph（组内决定只在模型和工具层使用 LangChain）。
+- `backend/tools/lc_tools.py` 的 `to_langchain_tools(registry, cases, case_id)` 把已注册的工具包装成 LangChain `StructuredTool`，供 LangChain 链或 Fixed Workflow 基线调用；调用仍经过注册表，参数校验、阶段开放、超时和重试与 Agent 内一致。
 - `chat` 只负责调用和计算用量；在 Agent 运行中，模型调用由 Runtime 写入执行记录。基线直接调用 `chat` 时，用返回的 `usage` 和 `cost` 自行统计。
 - 客户端不自动重试，每次 `chat` 只发一次请求。调用方如需重试，可以自己重试，不会出现重复计数。
 - `seed` 会原样传给供应商，但不是所有供应商都支持；是否生效以供应商说明为准。Agent 运行中，每次模型调用的参数都写在执行记录的 `arguments` 里。
@@ -287,6 +292,7 @@ class CostInfo(BaseModel):
 |---|---|
 | `CIVRA_LLM_BASE_URL` | OpenAI 兼容接口地址，例如 `https://api.deepseek.com` |
 | `CIVRA_LLM_API_KEY` | API Key |
+| `CIVRA_LLM_BACKEND` | `langchain`（默认）或 `native` |
 | `CIVRA_LLM_MODEL` | 模型名称 |
 | `CIVRA_LLM_PRICE_IN` / `CIVRA_LLM_PRICE_OUT` | 每百万输入 / 输出 token 的价格（元），用于估算费用；不填时费用为未知 |
 | `CIVRA_LLM_PRICE_VERSION` | 价格版本，例如核对价格的日期 |
@@ -636,3 +642,4 @@ manifest = runner.get_runtime_manifest()
 | v0.5 | 2026-11-03 | 按成员5的评测接口需求修改：`resume_run` 需要 `wait_id`，支持 `expected_case_version` 和 `request_id` 防重复；`pending` 改为 `Wait`（含 `material_request`）；新增 `export_trace`、`get_step_result`、`get_runtime_manifest`；执行记录增加 `event_id`、`parent_step_id`、`finished_at` 和完整结果文件；模型接口支持 `model`、`seed`、`tool_choice`，返回 `finish_reason`、请求 ID，用量未知时为 `null`，费用带币种和价格版本；`RunInfo` 增加 `case_version`、`experiment_run_id`；提前结束时保留已完成部分；`finish` 支持 `citations`；新增执行时间上限；新增与评测文档的名称对照（7.1）和待确认问题 11–14 |
 | v0.6 | 2026-11-04 | `search_statutes` 接入真实检索（2.6）；去掉示例中的 `dispute_type` |
 | v0.7 | 2026-11-10 | 新增 `RunConfig.max_model_calls`；第 7 节补充 `build_runner`、`run_config_from_pilot` 和命令行脚本 |
+| v0.8 | 2026-11-10 | 模型层改用 LangChain（`LangChainLLMClient`，默认）；新增 `to_langchain_tools`；新增 `CIVRA_LLM_BACKEND` |

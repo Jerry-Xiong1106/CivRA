@@ -5,7 +5,9 @@
     info = setup.runner.start_run("case-1", "我的车被追尾了……")
 
 The model is configured like member 5's pilot: SILICONFLOW_API_KEY (or
-CIVRA_LLM_API_KEY) from the environment or the repo's .env file. Member 3's
+CIVRA_LLM_API_KEY) from the environment or the repo's .env file. Model calls
+go through LangChain's ChatOpenAI by default; CIVRA_LLM_BACKEND=native uses
+the plain HTTP OpenAICompatibleClient instead. Member 3's
 business tools are not delivered yet, so mock stand-ins are registered by
 default; pass mock_business_tools=False to give the model only real tools.
 """
@@ -60,8 +62,12 @@ def load_dotenv(path: Path | str = ROOT / ".env") -> list[str]:
     return loaded
 
 
-def llm_from_env(model: str | None = None) -> OpenAICompatibleClient:
-    """SiliconFlow by default; any CIVRA_LLM_* variable overrides the default."""
+def llm_from_env(model: str | None = None, backend: str | None = None) -> LLMClient:
+    """SiliconFlow by default; any CIVRA_LLM_* variable overrides the default.
+
+    backend: "langchain" (default, ChatOpenAI) or "native" (OpenAICompatibleClient);
+    falls back to CIVRA_LLM_BACKEND.
+    """
     key = os.environ.get("CIVRA_LLM_API_KEY") or os.environ.get("SILICONFLOW_API_KEY")
     if not key:
         raise MissingAPIKey(
@@ -69,11 +75,24 @@ def llm_from_env(model: str | None = None) -> OpenAICompatibleClient:
             "或设置 CIVRA_LLM_API_KEY。"
         )
     _use_certifi_bundle()
-    return OpenAICompatibleClient(
-        base_url=os.environ.get("CIVRA_LLM_BASE_URL", SILICONFLOW_BASE_URL),
-        api_key=key,
-        model=model or os.environ.get("CIVRA_LLM_MODEL", DEFAULT_MODEL),
-    )
+    base_url = os.environ.get("CIVRA_LLM_BASE_URL", SILICONFLOW_BASE_URL)
+    model = model or os.environ.get("CIVRA_LLM_MODEL", DEFAULT_MODEL)
+    prices = {
+        "price_in": os.environ.get("CIVRA_LLM_PRICE_IN"),
+        "price_out": os.environ.get("CIVRA_LLM_PRICE_OUT"),
+        "price_version": os.environ.get("CIVRA_LLM_PRICE_VERSION"),
+    }
+    backend = backend or os.environ.get("CIVRA_LLM_BACKEND", "langchain")
+    if backend == "native":
+        return OpenAICompatibleClient(base_url=base_url, api_key=key, model=model, **prices)
+    if backend != "langchain":
+        raise ValueError(f"CIVRA_LLM_BACKEND must be langchain or native, not {backend!r}")
+    from langchain_openai import ChatOpenAI
+
+    from backend.agent.lc_model import LangChainLLMClient
+    # max_retries=0: one provider attempt per call, so usage is never double-counted.
+    chat = ChatOpenAI(model=model, base_url=base_url, api_key=key, temperature=0, max_retries=0, timeout=120)
+    return LangChainLLMClient(chat, **prices)
 
 
 def _use_certifi_bundle() -> None:
