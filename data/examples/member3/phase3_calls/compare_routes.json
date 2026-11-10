@@ -1,0 +1,452 @@
+{
+  "synthetic_development_example": true,
+  "request": {
+    "schema_version": "0.1",
+    "context": {
+      "schema_version": "0.1",
+      "request_id": "phase3-demo-compare_routes",
+      "case_id": "synthetic_traffic_001",
+      "experiment_run_id": "synthetic-dev-only",
+      "deadline_at": null
+    },
+    "case_version": 4,
+    "case_snapshot": {
+      "schema_version": "0.1",
+      "case_id": "synthetic_traffic_001",
+      "case_version": 4,
+      "synthetic": true,
+      "dispute_type": "traffic_accident",
+      "jurisdiction": "CN-Mainland",
+      "stage": "litigation",
+      "selected_route": "litigation",
+      "user_goals": [
+        "先了解处理方式，再决定是否诉讼"
+      ],
+      "statements": [
+        {
+          "message_id": "msg_001",
+          "actor_id": "synthetic_user",
+          "text": "我是示例甲，我确认这个称呼。我记得事故发生在2026年5月12日，想主张维修费。",
+          "created_at": "2026-11-01T08:00:00Z"
+        },
+        {
+          "message_id": "msg_demo_reply",
+          "actor_id": "synthetic_user",
+          "text": "我确认事故日期为2026-05-12，材料里的2026-05-13记载有误，请保留原文并以我确认的日期处理。责任认定信息是示例乙全责；保险情况是已投保，具体保险材料待补充。两张维修票据是同一张，保留e_invoice，排除e_invoice_copy；维修票据金额为3000.00元。",
+          "created_at": "2026-11-04T15:00:35.860615Z"
+        }
+      ],
+      "facts": [
+        {
+          "fact_id": "f_date_user",
+          "field": "accident_date",
+          "value_type": "date",
+          "value": "2026-05-12",
+          "provenance": "user_statement",
+          "confirmation_status": "confirmed",
+          "statement_refs": [
+            "msg_001"
+          ],
+          "evidence_ids": [],
+          "material_refs": [],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": {
+            "message_id": "msg_demo_reply",
+            "confirmed_by": "synthetic_user",
+            "confirmed_at": "2026-11-04T15:00:35.867751Z"
+          },
+          "superseded_by": null
+        },
+        {
+          "fact_id": "f_date_document",
+          "field": "accident_date",
+          "value_type": "date",
+          "value": "2026-05-13",
+          "provenance": "document_record",
+          "confirmation_status": "unconfirmed",
+          "statement_refs": [],
+          "evidence_ids": [
+            "e_accident"
+          ],
+          "material_refs": [
+            {
+              "file_id": "file_accident",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 18,
+              "span_end": 33,
+              "quote": "事故日期：2026-05-13",
+              "extraction_version": null,
+              "polygon": null
+            }
+          ],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": null,
+          "superseded_by": "f_date_user"
+        },
+        {
+          "fact_id": "f_claimant",
+          "field": "claimant_name",
+          "value_type": "text",
+          "value": "示例甲",
+          "provenance": "user_statement",
+          "confirmation_status": "confirmed",
+          "statement_refs": [
+            "msg_001"
+          ],
+          "evidence_ids": [],
+          "material_refs": [],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": {
+            "message_id": "msg_001",
+            "confirmed_by": "synthetic_user",
+            "confirmed_at": "2026-11-01T08:00:00Z"
+          },
+          "superseded_by": null
+        },
+        {
+          "fact_id": "f_repair_amount",
+          "field": "repair_amount",
+          "value_type": "money",
+          "value": {
+            "amount": "3000.00",
+            "currency": "CNY"
+          },
+          "provenance": "document_record",
+          "confirmation_status": "confirmed",
+          "statement_refs": [],
+          "evidence_ids": [
+            "e_invoice"
+          ],
+          "material_refs": [
+            {
+              "file_id": "file_invoice",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 51,
+              "span_end": 64,
+              "quote": "维修金额：3000.00元",
+              "extraction_version": null,
+              "polygon": null
+            }
+          ],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": {
+            "message_id": "msg_demo_reply",
+            "confirmed_by": "synthetic_user",
+            "confirmed_at": "2026-11-04T15:00:35.867751Z"
+          },
+          "superseded_by": null
+        },
+        {
+          "fact_id": "f_repair_amount_copy",
+          "field": "repair_amount",
+          "value_type": "money",
+          "value": {
+            "amount": "3000.00",
+            "currency": "CNY"
+          },
+          "provenance": "document_record",
+          "confirmation_status": "unconfirmed",
+          "statement_refs": [],
+          "evidence_ids": [
+            "e_invoice_copy"
+          ],
+          "material_refs": [
+            {
+              "file_id": "file_invoice_copy",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 51,
+              "span_end": 64,
+              "quote": "维修金额：3000.00元",
+              "extraction_version": null,
+              "polygon": null
+            }
+          ],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": null,
+          "superseded_by": null
+        },
+        {
+          "fact_id": "f_insurance_reply",
+          "field": "insurance",
+          "value_type": "text",
+          "value": "已投保，具体保险材料待补充",
+          "provenance": "user_statement",
+          "confirmation_status": "confirmed",
+          "statement_refs": [
+            "msg_demo_reply"
+          ],
+          "evidence_ids": [],
+          "material_refs": [],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": {
+            "message_id": "msg_demo_reply",
+            "confirmed_by": "synthetic_user",
+            "confirmed_at": "2026-11-04T15:00:35.867751Z"
+          },
+          "superseded_by": null
+        },
+        {
+          "fact_id": "f_liability_reply",
+          "field": "liability_finding",
+          "value_type": "text",
+          "value": "示例乙承担全部责任（用户陈述，仍需核对材料）",
+          "provenance": "user_statement",
+          "confirmation_status": "confirmed",
+          "statement_refs": [
+            "msg_demo_reply"
+          ],
+          "evidence_ids": [],
+          "material_refs": [],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": {
+            "message_id": "msg_demo_reply",
+            "confirmed_by": "synthetic_user",
+            "confirmed_at": "2026-11-04T15:00:35.867751Z"
+          },
+          "superseded_by": null
+        }
+      ],
+      "evidence": [
+        {
+          "evidence_id": "e_accident",
+          "file_id": "file_accident",
+          "file_version": "1",
+          "file_name": "accident_record.txt",
+          "media_type": "text/plain",
+          "document_type": "accident_record",
+          "content_sha256": "c18ae66c202d5d66976f3f0345c910173acca7cfbe0a5d475d3241f85e21e939",
+          "material_refs": [
+            {
+              "file_id": "file_accident",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 18,
+              "span_end": 33,
+              "quote": "事故日期：2026-05-13",
+              "extraction_version": null,
+              "polygon": null
+            }
+          ],
+          "proves_fact_ids": [
+            "f_date_document"
+          ],
+          "status": "unreviewed",
+          "duplicate_of": null,
+          "exclusion": null,
+          "warnings": []
+        },
+        {
+          "evidence_id": "e_invoice",
+          "file_id": "file_invoice",
+          "file_version": "1",
+          "file_name": "repair_invoice.txt",
+          "media_type": "text/plain",
+          "document_type": "repair_invoice",
+          "content_sha256": "370b424620528aa34f3517245019902acb0b15a280ba29e54432163a487806f6",
+          "material_refs": [
+            {
+              "file_id": "file_invoice",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 51,
+              "span_end": 64,
+              "quote": "维修金额：3000.00元",
+              "extraction_version": null,
+              "polygon": null
+            }
+          ],
+          "proves_fact_ids": [
+            "f_repair_amount"
+          ],
+          "status": "unreviewed",
+          "duplicate_of": null,
+          "exclusion": null,
+          "warnings": []
+        },
+        {
+          "evidence_id": "e_invoice_copy",
+          "file_id": "file_invoice_copy",
+          "file_version": "1",
+          "file_name": "repair_invoice_copy.txt",
+          "media_type": "text/plain",
+          "document_type": "repair_invoice",
+          "content_sha256": "370b424620528aa34f3517245019902acb0b15a280ba29e54432163a487806f6",
+          "material_refs": [
+            {
+              "file_id": "file_invoice_copy",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 51,
+              "span_end": 64,
+              "quote": "维修金额：3000.00元",
+              "extraction_version": null,
+              "polygon": null
+            }
+          ],
+          "proves_fact_ids": [
+            "f_repair_amount_copy"
+          ],
+          "status": "excluded",
+          "duplicate_of": "e_invoice",
+          "exclusion": {
+            "message_id": "msg_demo_reply",
+            "confirmed_by": "synthetic_user",
+            "confirmed_at": "2026-11-04T15:00:35.867751Z"
+          },
+          "warnings": []
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "claim_repair",
+          "kind": "repair_cost",
+          "description": "请求维修费用赔偿",
+          "amount": {
+            "amount": "3000.00",
+            "currency": "CNY"
+          },
+          "status": "proposed",
+          "fact_ids": [
+            "f_date_user",
+            "f_date_document",
+            "f_repair_amount"
+          ],
+          "evidence_ids": [
+            "e_accident",
+            "e_invoice",
+            "e_invoice_copy"
+          ],
+          "source_refs": []
+        }
+      ],
+      "created_at": "2026-11-01T08:00:00Z",
+      "updated_at": "2026-11-04T15:00:35.870761Z"
+    },
+    "available_authorities": [],
+    "calculations": [
+      {
+        "calculation_type": "materials_total",
+        "rule_version": "arithmetic_v1",
+        "amounts": {
+          "total": {
+            "amount": "3000.00",
+            "currency": "CNY"
+          }
+        },
+        "formula": "total = sum(confirmed selected material amounts, unique by document hash and item field)",
+        "inputs": {
+          "fact_ids": [
+            "f_repair_amount"
+          ]
+        },
+        "assumptions": [
+          "此结果仅反映指定输入和规则；不自动认定法院支持金额或责任比例。"
+        ],
+        "rule_refs": [],
+        "unresolved_inputs": []
+      }
+    ],
+    "user_goals": [
+      "了解三条路线的条件"
+    ]
+  },
+  "result": {
+    "schema_version": "0.1",
+    "case_id": "synthetic_traffic_001",
+    "case_version": 4,
+    "status": "insufficient",
+    "summary": "已生成可选路线比较草稿。",
+    "data": {
+      "options": [
+        {
+          "route": "negotiation",
+          "prerequisites": [
+            "双方愿意沟通"
+          ],
+          "steps": [
+            "核对诉求和可提供的材料",
+            "提出协商方案并记录回复",
+            "核对约定、签署和履行情况"
+          ],
+          "costs": [],
+          "uncertainties": [
+            "所在地办理机构、具体入口、适用条件和期限起算需要按案件核实。",
+            "尚未根据原文核实的程序内容不得作为确定法律意见。",
+            "当前未提供可追溯的法律或程序依据。",
+            "未列出的费用和办理时长为未知，不能解释为零。"
+          ],
+          "source_refs": []
+        },
+        {
+          "route": "mediation",
+          "prerequisites": [
+            "双方自愿参与适用的调解程序"
+          ],
+          "steps": [
+            "核实调解渠道、适用条件及双方意愿",
+            "提交适用材料并参加调解",
+            "核对协议、履行及后续程序条件"
+          ],
+          "costs": [],
+          "uncertainties": [
+            "所在地办理机构、具体入口、适用条件和期限起算需要按案件核实。",
+            "尚未根据原文核实的程序内容不得作为确定法律意见。",
+            "当前未提供可追溯的法律或程序依据。",
+            "未列出的费用和办理时长为未知，不能解释为零。"
+          ],
+          "source_refs": []
+        },
+        {
+          "route": "litigation",
+          "prerequisites": [
+            "用户明确选择诉讼准备"
+          ],
+          "steps": [
+            "核实管辖、当事人及具体程序要求",
+            "生成证据目录并处理待补充项目",
+            "生成并核验起诉状草稿",
+            "按核实后的法院渠道提交材料"
+          ],
+          "costs": [],
+          "uncertainties": [
+            "所在地办理机构、具体入口、适用条件和期限起算需要按案件核实。",
+            "尚未根据原文核实的程序内容不得作为确定法律意见。",
+            "当前未提供可追溯的法律或程序依据。",
+            "未列出的费用和办理时长为未知，不能解释为零。"
+          ],
+          "source_refs": []
+        }
+      ],
+      "assumptions": [
+        "三条路线分别可选，不要求依次完成；最终选择由用户确认。",
+        "用户目标仅作为比较输入，模板不自动判断哪条路线最优。"
+      ],
+      "unresolved_items": [
+        "所在地办理机构、具体入口、适用条件和期限起算需要按案件核实。",
+        "尚未根据原文核实的程序内容不得作为确定法律意见。",
+        "当前未提供可追溯的法律或程序依据。"
+      ]
+    },
+    "source_refs": [],
+    "error": null,
+    "output_refs": [
+      "compare_routes_f66d43066117c988cf80ea46"
+    ]
+  }
+}

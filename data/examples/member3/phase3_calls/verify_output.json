@@ -1,0 +1,798 @@
+{
+  "synthetic_development_example": true,
+  "request": {
+    "schema_version": "0.1",
+    "context": {
+      "schema_version": "0.1",
+      "request_id": "phase3-demo-verify_output",
+      "case_id": "synthetic_traffic_001",
+      "experiment_run_id": "synthetic-dev-only",
+      "deadline_at": null
+    },
+    "case_version": 4,
+    "case_snapshot": {
+      "schema_version": "0.1",
+      "case_id": "synthetic_traffic_001",
+      "case_version": 4,
+      "synthetic": true,
+      "dispute_type": "traffic_accident",
+      "jurisdiction": "CN-Mainland",
+      "stage": "litigation",
+      "selected_route": "litigation",
+      "user_goals": [
+        "先了解处理方式，再决定是否诉讼"
+      ],
+      "statements": [
+        {
+          "message_id": "msg_001",
+          "actor_id": "synthetic_user",
+          "text": "我是示例甲，我确认这个称呼。我记得事故发生在2026年5月12日，想主张维修费。",
+          "created_at": "2026-11-01T08:00:00Z"
+        },
+        {
+          "message_id": "msg_demo_reply",
+          "actor_id": "synthetic_user",
+          "text": "我确认事故日期为2026-05-12，材料里的2026-05-13记载有误，请保留原文并以我确认的日期处理。责任认定信息是示例乙全责；保险情况是已投保，具体保险材料待补充。两张维修票据是同一张，保留e_invoice，排除e_invoice_copy；维修票据金额为3000.00元。",
+          "created_at": "2026-11-04T15:00:35.860615Z"
+        }
+      ],
+      "facts": [
+        {
+          "fact_id": "f_date_user",
+          "field": "accident_date",
+          "value_type": "date",
+          "value": "2026-05-12",
+          "provenance": "user_statement",
+          "confirmation_status": "confirmed",
+          "statement_refs": [
+            "msg_001"
+          ],
+          "evidence_ids": [],
+          "material_refs": [],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": {
+            "message_id": "msg_demo_reply",
+            "confirmed_by": "synthetic_user",
+            "confirmed_at": "2026-11-04T15:00:35.867751Z"
+          },
+          "superseded_by": null
+        },
+        {
+          "fact_id": "f_date_document",
+          "field": "accident_date",
+          "value_type": "date",
+          "value": "2026-05-13",
+          "provenance": "document_record",
+          "confirmation_status": "unconfirmed",
+          "statement_refs": [],
+          "evidence_ids": [
+            "e_accident"
+          ],
+          "material_refs": [
+            {
+              "file_id": "file_accident",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 18,
+              "span_end": 33,
+              "quote": "事故日期：2026-05-13",
+              "extraction_version": null,
+              "polygon": null
+            }
+          ],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": null,
+          "superseded_by": "f_date_user"
+        },
+        {
+          "fact_id": "f_claimant",
+          "field": "claimant_name",
+          "value_type": "text",
+          "value": "示例甲",
+          "provenance": "user_statement",
+          "confirmation_status": "confirmed",
+          "statement_refs": [
+            "msg_001"
+          ],
+          "evidence_ids": [],
+          "material_refs": [],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": {
+            "message_id": "msg_001",
+            "confirmed_by": "synthetic_user",
+            "confirmed_at": "2026-11-01T08:00:00Z"
+          },
+          "superseded_by": null
+        },
+        {
+          "fact_id": "f_repair_amount",
+          "field": "repair_amount",
+          "value_type": "money",
+          "value": {
+            "amount": "3000.00",
+            "currency": "CNY"
+          },
+          "provenance": "document_record",
+          "confirmation_status": "confirmed",
+          "statement_refs": [],
+          "evidence_ids": [
+            "e_invoice"
+          ],
+          "material_refs": [
+            {
+              "file_id": "file_invoice",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 51,
+              "span_end": 64,
+              "quote": "维修金额：3000.00元",
+              "extraction_version": null,
+              "polygon": null
+            }
+          ],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": {
+            "message_id": "msg_demo_reply",
+            "confirmed_by": "synthetic_user",
+            "confirmed_at": "2026-11-04T15:00:35.867751Z"
+          },
+          "superseded_by": null
+        },
+        {
+          "fact_id": "f_repair_amount_copy",
+          "field": "repair_amount",
+          "value_type": "money",
+          "value": {
+            "amount": "3000.00",
+            "currency": "CNY"
+          },
+          "provenance": "document_record",
+          "confirmation_status": "unconfirmed",
+          "statement_refs": [],
+          "evidence_ids": [
+            "e_invoice_copy"
+          ],
+          "material_refs": [
+            {
+              "file_id": "file_invoice_copy",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 51,
+              "span_end": 64,
+              "quote": "维修金额：3000.00元",
+              "extraction_version": null,
+              "polygon": null
+            }
+          ],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": null,
+          "superseded_by": null
+        },
+        {
+          "fact_id": "f_insurance_reply",
+          "field": "insurance",
+          "value_type": "text",
+          "value": "已投保，具体保险材料待补充",
+          "provenance": "user_statement",
+          "confirmation_status": "confirmed",
+          "statement_refs": [
+            "msg_demo_reply"
+          ],
+          "evidence_ids": [],
+          "material_refs": [],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": {
+            "message_id": "msg_demo_reply",
+            "confirmed_by": "synthetic_user",
+            "confirmed_at": "2026-11-04T15:00:35.867751Z"
+          },
+          "superseded_by": null
+        },
+        {
+          "fact_id": "f_liability_reply",
+          "field": "liability_finding",
+          "value_type": "text",
+          "value": "示例乙承担全部责任（用户陈述，仍需核对材料）",
+          "provenance": "user_statement",
+          "confirmation_status": "confirmed",
+          "statement_refs": [
+            "msg_demo_reply"
+          ],
+          "evidence_ids": [],
+          "material_refs": [],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": {
+            "message_id": "msg_demo_reply",
+            "confirmed_by": "synthetic_user",
+            "confirmed_at": "2026-11-04T15:00:35.867751Z"
+          },
+          "superseded_by": null
+        }
+      ],
+      "evidence": [
+        {
+          "evidence_id": "e_accident",
+          "file_id": "file_accident",
+          "file_version": "1",
+          "file_name": "accident_record.txt",
+          "media_type": "text/plain",
+          "document_type": "accident_record",
+          "content_sha256": "c18ae66c202d5d66976f3f0345c910173acca7cfbe0a5d475d3241f85e21e939",
+          "material_refs": [
+            {
+              "file_id": "file_accident",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 18,
+              "span_end": 33,
+              "quote": "事故日期：2026-05-13",
+              "extraction_version": null,
+              "polygon": null
+            }
+          ],
+          "proves_fact_ids": [
+            "f_date_document"
+          ],
+          "status": "unreviewed",
+          "duplicate_of": null,
+          "exclusion": null,
+          "warnings": []
+        },
+        {
+          "evidence_id": "e_invoice",
+          "file_id": "file_invoice",
+          "file_version": "1",
+          "file_name": "repair_invoice.txt",
+          "media_type": "text/plain",
+          "document_type": "repair_invoice",
+          "content_sha256": "370b424620528aa34f3517245019902acb0b15a280ba29e54432163a487806f6",
+          "material_refs": [
+            {
+              "file_id": "file_invoice",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 51,
+              "span_end": 64,
+              "quote": "维修金额：3000.00元",
+              "extraction_version": null,
+              "polygon": null
+            }
+          ],
+          "proves_fact_ids": [
+            "f_repair_amount"
+          ],
+          "status": "unreviewed",
+          "duplicate_of": null,
+          "exclusion": null,
+          "warnings": []
+        },
+        {
+          "evidence_id": "e_invoice_copy",
+          "file_id": "file_invoice_copy",
+          "file_version": "1",
+          "file_name": "repair_invoice_copy.txt",
+          "media_type": "text/plain",
+          "document_type": "repair_invoice",
+          "content_sha256": "370b424620528aa34f3517245019902acb0b15a280ba29e54432163a487806f6",
+          "material_refs": [
+            {
+              "file_id": "file_invoice_copy",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 51,
+              "span_end": 64,
+              "quote": "维修金额：3000.00元",
+              "extraction_version": null,
+              "polygon": null
+            }
+          ],
+          "proves_fact_ids": [
+            "f_repair_amount_copy"
+          ],
+          "status": "excluded",
+          "duplicate_of": "e_invoice",
+          "exclusion": {
+            "message_id": "msg_demo_reply",
+            "confirmed_by": "synthetic_user",
+            "confirmed_at": "2026-11-04T15:00:35.867751Z"
+          },
+          "warnings": []
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "claim_repair",
+          "kind": "repair_cost",
+          "description": "请求维修费用赔偿",
+          "amount": {
+            "amount": "3000.00",
+            "currency": "CNY"
+          },
+          "status": "proposed",
+          "fact_ids": [
+            "f_date_user",
+            "f_date_document",
+            "f_repair_amount"
+          ],
+          "evidence_ids": [
+            "e_accident",
+            "e_invoice",
+            "e_invoice_copy"
+          ],
+          "source_refs": []
+        }
+      ],
+      "created_at": "2026-11-01T08:00:00Z",
+      "updated_at": "2026-11-04T15:00:35.870761Z"
+    },
+    "candidate_output": {
+      "schema_version": "0.1",
+      "output_id": "draft_d1d2520b34adb8133faa2d60",
+      "output_version": 1,
+      "case_id": "synthetic_traffic_001",
+      "case_version": 4,
+      "output_type": "document",
+      "review_status": "needs_review",
+      "text": "# 民事起诉状填写草稿（机动车交通事故责任纠纷）\n\n> 草稿：请核对原始材料、待补充字段和法院适用格式。\n\n原告姓名或名称：示例甲\n\n原告身份与主体信息：【待补充：原告身份与主体信息】\n\n原告住所及联系方式：【待补充：原告住所及联系方式】\n\n被告姓名或名称：【待补充：被告姓名或名称】\n\n被告身份与主体信息：【待补充：被告身份与主体信息】\n\n被告住所及联系方式：【待补充：被告住所及联系方式】\n\n诉讼代理信息（无代理人时需明确确认）：【待补充：诉讼代理信息（无代理人时需明确确认）】\n\n拟提交法院（需核实管辖）：【待补充：拟提交法院（需核实管辖）】\n\n对先行调解的意愿：【待补充：对先行调解的意愿】\n\n事故日期：2026-05-12\n\n事故地点及经过：【待补充：事故地点及经过】\n\n涉事车辆及人员信息：【待补充：涉事车辆及人员信息】\n\n责任认定记载及认定书信息：示例乙承担全部责任（用户陈述，仍需核对材料）\n\n保险投保情况：已投保，具体保险材料待补充\n\n损失项目、金额及计算说明：【待补充：损失项目、金额及计算说明】\n\n## 诉讼请求\n\n【待补充：经用户确认的诉讼请求及金额】\n\n## 已确认事实摘要\n\n- accident_date：2026-05-12（事实编号：f_date_user）\n- claimant_name：示例甲（事实编号：f_claimant）\n- repair_amount：{\"amount\": \"3000.00\", \"currency\": \"CNY\"}（事实编号：f_repair_amount）\n- insurance：已投保，具体保险材料待补充（事实编号：f_insurance_reply）\n- liability_finding：示例乙承担全部责任（用户陈述，仍需核对材料）（事实编号：f_liability_reply）\n\n## 理由与法律依据\n【待补充：基于已确认事实及可定位法律原文拟写理由。】\n【待复核：事实忠实性、引用支持关系及不利材料，须经独立核验。】\n\n## 附件与核对事项\n请核对证据目录、当事人身份、管辖法院、请求与证据对应关系及所有待补充字段。\n\n本文件为 CivRA 填写草稿；尚未逐项比对法院原表字段及排版，不能作为法院原表副本。\n法院公开模板目录：https://lx.wxfy.gov.cn/article/detail/2026/01/id/9147338.shtml\n对应原表下载入口：http://img5.chinacourt.cn/mup/uploadfile/2026/01/09/14/53cab8af28e3cde6b43e6d7c7b6ae26e.docx\n未知信息保留待补充；填入正式表格前核对最新原表、全部要素和适用情况。\n",
+      "artifact_id": "artifact_a75e2c00e7e0e282a7047585d9cf19212d3599826be5ae1222743af12b599c7d",
+      "structured_data": {
+        "fields": {
+          "claimant_name": "示例甲",
+          "claimant_identity": "【待补充：原告身份与主体信息】",
+          "claimant_contact": "【待补充：原告住所及联系方式】",
+          "defendant_name": "【待补充：被告姓名或名称】",
+          "defendant_identity": "【待补充：被告身份与主体信息】",
+          "defendant_contact": "【待补充：被告住所及联系方式】",
+          "representative": "【待补充：诉讼代理信息（无代理人时需明确确认）】",
+          "court_name": "【待补充：拟提交法院（需核实管辖）】",
+          "mediation_preference": "【待补充：对先行调解的意愿】",
+          "accident_date": "2026-05-12",
+          "accident_location": "【待补充：事故地点及经过】",
+          "vehicles": "【待补充：涉事车辆及人员信息】",
+          "liability_finding": "示例乙承担全部责任（用户陈述，仍需核对材料）",
+          "insurance": "已投保，具体保险材料待补充",
+          "loss_details": "【待补充：损失项目、金额及计算说明】"
+        },
+        "claims": [],
+        "artifacts": {
+          "md": "artifact_a75e2c00e7e0e282a7047585d9cf19212d3599826be5ae1222743af12b599c7d"
+        },
+        "facts": [
+          {
+            "fact_id": "f_date_user",
+            "field": "accident_date",
+            "value_type": "date",
+            "value": "2026-05-12",
+            "provenance": "user_statement",
+            "confirmation_status": "confirmed",
+            "statement_refs": [
+              "msg_001"
+            ],
+            "evidence_ids": [],
+            "material_refs": [],
+            "source_refs": [],
+            "derivation_ref": null,
+            "confirmation": {
+              "message_id": "msg_demo_reply",
+              "confirmed_by": "synthetic_user",
+              "confirmed_at": "2026-11-04T15:00:35.867751Z"
+            },
+            "superseded_by": null
+          },
+          {
+            "fact_id": "f_claimant",
+            "field": "claimant_name",
+            "value_type": "text",
+            "value": "示例甲",
+            "provenance": "user_statement",
+            "confirmation_status": "confirmed",
+            "statement_refs": [
+              "msg_001"
+            ],
+            "evidence_ids": [],
+            "material_refs": [],
+            "source_refs": [],
+            "derivation_ref": null,
+            "confirmation": {
+              "message_id": "msg_001",
+              "confirmed_by": "synthetic_user",
+              "confirmed_at": "2026-11-01T08:00:00Z"
+            },
+            "superseded_by": null
+          },
+          {
+            "fact_id": "f_repair_amount",
+            "field": "repair_amount",
+            "value_type": "money",
+            "value": {
+              "amount": "3000.00",
+              "currency": "CNY"
+            },
+            "provenance": "document_record",
+            "confirmation_status": "confirmed",
+            "statement_refs": [],
+            "evidence_ids": [
+              "e_invoice"
+            ],
+            "material_refs": [
+              {
+                "file_id": "file_invoice",
+                "file_version": "1",
+                "page": null,
+                "paragraph": null,
+                "span_start": 51,
+                "span_end": 64,
+                "quote": "维修金额：3000.00元",
+                "extraction_version": null,
+                "polygon": null
+              }
+            ],
+            "source_refs": [],
+            "derivation_ref": null,
+            "confirmation": {
+              "message_id": "msg_demo_reply",
+              "confirmed_by": "synthetic_user",
+              "confirmed_at": "2026-11-04T15:00:35.867751Z"
+            },
+            "superseded_by": null
+          },
+          {
+            "fact_id": "f_insurance_reply",
+            "field": "insurance",
+            "value_type": "text",
+            "value": "已投保，具体保险材料待补充",
+            "provenance": "user_statement",
+            "confirmation_status": "confirmed",
+            "statement_refs": [
+              "msg_demo_reply"
+            ],
+            "evidence_ids": [],
+            "material_refs": [],
+            "source_refs": [],
+            "derivation_ref": null,
+            "confirmation": {
+              "message_id": "msg_demo_reply",
+              "confirmed_by": "synthetic_user",
+              "confirmed_at": "2026-11-04T15:00:35.867751Z"
+            },
+            "superseded_by": null
+          },
+          {
+            "fact_id": "f_liability_reply",
+            "field": "liability_finding",
+            "value_type": "text",
+            "value": "示例乙承担全部责任（用户陈述，仍需核对材料）",
+            "provenance": "user_statement",
+            "confirmation_status": "confirmed",
+            "statement_refs": [
+              "msg_demo_reply"
+            ],
+            "evidence_ids": [],
+            "material_refs": [],
+            "source_refs": [],
+            "derivation_ref": null,
+            "confirmation": {
+              "message_id": "msg_demo_reply",
+              "confirmed_by": "synthetic_user",
+              "confirmed_at": "2026-11-04T15:00:35.867751Z"
+            },
+            "superseded_by": null
+          }
+        ],
+        "request_digest": "7098450a1292604bc70249f4373b52820e9c267830189ab791529802c206a152",
+        "template_origin_kind": "official_reference_pending_form_review",
+        "reasoning_state": "not_configured",
+        "model_usage": null,
+        "template_source_url": "http://img5.chinacourt.cn/mup/uploadfile/2026/01/09/14/53cab8af28e3cde6b43e6d7c7b6ae26e.docx",
+        "template_source_version": "source-listing-2026-01-09"
+      },
+      "missing_fields": [
+        "claimant_identity",
+        "claimant_contact",
+        "defendant_name",
+        "defendant_identity",
+        "defendant_contact",
+        "representative",
+        "court_name",
+        "mediation_preference",
+        "accident_location",
+        "vehicles",
+        "loss_details",
+        "confirmed_claims",
+        "verified_legal_grounds"
+      ],
+      "findings": [],
+      "links": [
+        {
+          "output_location": "fields:claimant_name",
+          "fact_ids": [
+            "f_claimant"
+          ],
+          "evidence_ids": [],
+          "source_refs": []
+        },
+        {
+          "output_location": "fields:accident_date",
+          "fact_ids": [
+            "f_date_user"
+          ],
+          "evidence_ids": [],
+          "source_refs": []
+        },
+        {
+          "output_location": "fields:liability_finding",
+          "fact_ids": [
+            "f_liability_reply"
+          ],
+          "evidence_ids": [],
+          "source_refs": []
+        },
+        {
+          "output_location": "fields:insurance",
+          "fact_ids": [
+            "f_insurance_reply"
+          ],
+          "evidence_ids": [],
+          "source_refs": []
+        },
+        {
+          "output_location": "facts:f_date_user",
+          "fact_ids": [
+            "f_date_user"
+          ],
+          "evidence_ids": [],
+          "source_refs": []
+        },
+        {
+          "output_location": "facts:f_claimant",
+          "fact_ids": [
+            "f_claimant"
+          ],
+          "evidence_ids": [],
+          "source_refs": []
+        },
+        {
+          "output_location": "facts:f_repair_amount",
+          "fact_ids": [
+            "f_repair_amount"
+          ],
+          "evidence_ids": [
+            "e_invoice"
+          ],
+          "source_refs": []
+        },
+        {
+          "output_location": "facts:f_insurance_reply",
+          "fact_ids": [
+            "f_insurance_reply"
+          ],
+          "evidence_ids": [],
+          "source_refs": []
+        },
+        {
+          "output_location": "facts:f_liability_reply",
+          "fact_ids": [
+            "f_liability_reply"
+          ],
+          "evidence_ids": [],
+          "source_refs": []
+        }
+      ],
+      "source_refs": [],
+      "template_id": "cn_complaint_traffic_accident",
+      "template_version": "civra-fields-v1"
+    },
+    "cited_sources": []
+  },
+  "result": {
+    "schema_version": "0.1",
+    "case_id": "synthetic_traffic_001",
+    "case_version": 4,
+    "status": "insufficient",
+    "summary": "核验发现 13 项问题；3 项检查未完成。",
+    "data": {
+      "findings": [
+        {
+          "finding_id": "verify_f4453af6c2de2804",
+          "category": "required_field",
+          "severity": "warning",
+          "message": "文书字段或复核项目尚未完成：claimant_identity",
+          "affected_fields": [],
+          "fact_ids": [],
+          "evidence_ids": [],
+          "material_refs": [],
+          "output_location": "fields:claimant_identity",
+          "source_refs": [],
+          "suggested_correction": null
+        },
+        {
+          "finding_id": "verify_97acd4292cfaaf1b",
+          "category": "required_field",
+          "severity": "warning",
+          "message": "文书字段或复核项目尚未完成：claimant_contact",
+          "affected_fields": [],
+          "fact_ids": [],
+          "evidence_ids": [],
+          "material_refs": [],
+          "output_location": "fields:claimant_contact",
+          "source_refs": [],
+          "suggested_correction": null
+        },
+        {
+          "finding_id": "verify_411ab9a80b2912be",
+          "category": "required_field",
+          "severity": "warning",
+          "message": "文书字段或复核项目尚未完成：defendant_name",
+          "affected_fields": [],
+          "fact_ids": [],
+          "evidence_ids": [],
+          "material_refs": [],
+          "output_location": "fields:defendant_name",
+          "source_refs": [],
+          "suggested_correction": null
+        },
+        {
+          "finding_id": "verify_c027a6d616f62ff8",
+          "category": "required_field",
+          "severity": "warning",
+          "message": "文书字段或复核项目尚未完成：defendant_identity",
+          "affected_fields": [],
+          "fact_ids": [],
+          "evidence_ids": [],
+          "material_refs": [],
+          "output_location": "fields:defendant_identity",
+          "source_refs": [],
+          "suggested_correction": null
+        },
+        {
+          "finding_id": "verify_ec8dade01a0cde31",
+          "category": "required_field",
+          "severity": "warning",
+          "message": "文书字段或复核项目尚未完成：defendant_contact",
+          "affected_fields": [],
+          "fact_ids": [],
+          "evidence_ids": [],
+          "material_refs": [],
+          "output_location": "fields:defendant_contact",
+          "source_refs": [],
+          "suggested_correction": null
+        },
+        {
+          "finding_id": "verify_2bac78da0ffd4695",
+          "category": "required_field",
+          "severity": "warning",
+          "message": "文书字段或复核项目尚未完成：representative",
+          "affected_fields": [],
+          "fact_ids": [],
+          "evidence_ids": [],
+          "material_refs": [],
+          "output_location": "fields:representative",
+          "source_refs": [],
+          "suggested_correction": null
+        },
+        {
+          "finding_id": "verify_0d03585e0c76fe9c",
+          "category": "required_field",
+          "severity": "warning",
+          "message": "文书字段或复核项目尚未完成：court_name",
+          "affected_fields": [],
+          "fact_ids": [],
+          "evidence_ids": [],
+          "material_refs": [],
+          "output_location": "fields:court_name",
+          "source_refs": [],
+          "suggested_correction": null
+        },
+        {
+          "finding_id": "verify_71a2c811f099aef1",
+          "category": "required_field",
+          "severity": "warning",
+          "message": "文书字段或复核项目尚未完成：mediation_preference",
+          "affected_fields": [],
+          "fact_ids": [],
+          "evidence_ids": [],
+          "material_refs": [],
+          "output_location": "fields:mediation_preference",
+          "source_refs": [],
+          "suggested_correction": null
+        },
+        {
+          "finding_id": "verify_19ea4962d61e3b85",
+          "category": "required_field",
+          "severity": "warning",
+          "message": "文书字段或复核项目尚未完成：accident_location",
+          "affected_fields": [],
+          "fact_ids": [],
+          "evidence_ids": [],
+          "material_refs": [],
+          "output_location": "fields:accident_location",
+          "source_refs": [],
+          "suggested_correction": null
+        },
+        {
+          "finding_id": "verify_695aceff4c14c181",
+          "category": "required_field",
+          "severity": "warning",
+          "message": "文书字段或复核项目尚未完成：vehicles",
+          "affected_fields": [],
+          "fact_ids": [],
+          "evidence_ids": [],
+          "material_refs": [],
+          "output_location": "fields:vehicles",
+          "source_refs": [],
+          "suggested_correction": null
+        },
+        {
+          "finding_id": "verify_9316c5b665f52d24",
+          "category": "required_field",
+          "severity": "warning",
+          "message": "文书字段或复核项目尚未完成：loss_details",
+          "affected_fields": [],
+          "fact_ids": [],
+          "evidence_ids": [],
+          "material_refs": [],
+          "output_location": "fields:loss_details",
+          "source_refs": [],
+          "suggested_correction": null
+        },
+        {
+          "finding_id": "verify_26dfd67bbc7b1743",
+          "category": "required_field",
+          "severity": "warning",
+          "message": "文书字段或复核项目尚未完成：confirmed_claims",
+          "affected_fields": [],
+          "fact_ids": [],
+          "evidence_ids": [],
+          "material_refs": [],
+          "output_location": "fields:confirmed_claims",
+          "source_refs": [],
+          "suggested_correction": null
+        },
+        {
+          "finding_id": "verify_fd94c013b2899c52",
+          "category": "required_field",
+          "severity": "warning",
+          "message": "文书字段或复核项目尚未完成：verified_legal_grounds",
+          "affected_fields": [],
+          "fact_ids": [],
+          "evidence_ids": [],
+          "material_refs": [],
+          "output_location": "fields:verified_legal_grounds",
+          "source_refs": [],
+          "suggested_correction": null
+        }
+      ],
+      "checks_performed": [
+        "case_output_version",
+        "fact_evidence_links",
+        "missing_fields",
+        "source_resolution",
+        "extracted_text_locations"
+      ],
+      "checks_not_performed": [
+        "semantic_fact_faithfulness",
+        "semantic_citation_support",
+        "adverse_material_review"
+      ],
+      "model_usage": null
+    },
+    "source_refs": [],
+    "error": null,
+    "output_refs": [
+      "verify_output_2bc32d9cd359cfc2a9b082fb"
+    ]
+  }
+}

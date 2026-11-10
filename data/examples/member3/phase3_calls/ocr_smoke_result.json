@@ -1,0 +1,78 @@
+{
+  "elapsed_ms": 5953,
+  "result": {
+    "engine": "paddleocr",
+    "engine_version": "3.7.0",
+    "model_version": "PP-OCRv6:PP-OCRv6_small_det:PP-OCRv6_small_rec",
+    "lines": [
+      {
+        "text": "合成开发样例",
+        "confidence": 0.9996864199638367,
+        "polygon": [
+          [
+            46.0,
+            41.0
+          ],
+          [
+            307.0,
+            41.0
+          ],
+          [
+            307.0,
+            90.0
+          ],
+          [
+            46.0,
+            90.0
+          ]
+        ]
+      },
+      {
+        "text": "事故日期：2026-05-12",
+        "confidence": 0.9997608661651611,
+        "polygon": [
+          [
+            44.0,
+            162.0
+          ],
+          [
+            511.0,
+            162.0
+          ],
+          [
+            511.0,
+            210.0
+          ],
+          [
+            44.0,
+            210.0
+          ]
+        ]
+      },
+      {
+        "text": "维修金额：3000.00元",
+        "confidence": 0.9997819066047668,
+        "polygon": [
+          [
+            43.0,
+            280.0
+          ],
+          [
+            479.0,
+            280.0
+          ],
+          [
+            479.0,
+            331.0
+          ],
+          [
+            43.0,
+            331.0
+          ]
+        ]
+      }
+    ],
+    "warnings": []
+  },
+  "scope": "Single printed synthetic image smoke test; not a handwriting or overall accuracy evaluation."
+}

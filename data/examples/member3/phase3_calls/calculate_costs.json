@@ -1,0 +1,53 @@
+{
+  "synthetic_development_example": true,
+  "request": {
+    "schema_version": "0.1",
+    "context": {
+      "schema_version": "0.1",
+      "request_id": "phase3-demo-calculate_costs",
+      "case_id": "synthetic_traffic_001",
+      "experiment_run_id": "synthetic-dev-only",
+      "deadline_at": null
+    },
+    "case_version": 4,
+    "calculation_type": "materials_total",
+    "rule_version": "arithmetic_v1",
+    "inputs": {
+      "fact_ids": [
+        "f_repair_amount"
+      ]
+    },
+    "rule_refs": []
+  },
+  "result": {
+    "schema_version": "0.1",
+    "case_id": "synthetic_traffic_001",
+    "case_version": 4,
+    "status": "ok",
+    "summary": "已按明确输入和版本化公式计算。",
+    "data": {
+      "calculation_type": "materials_total",
+      "rule_version": "arithmetic_v1",
+      "amounts": {
+        "total": {
+          "amount": "3000.00",
+          "currency": "CNY"
+        }
+      },
+      "formula": "total = sum(confirmed selected material amounts, unique by document hash and item field)",
+      "inputs": {
+        "fact_ids": [
+          "f_repair_amount"
+        ]
+      },
+      "assumptions": [
+        "此结果仅反映指定输入和规则；不自动认定法院支持金额或责任比例。"
+      ],
+      "rule_refs": [],
+      "unresolved_inputs": []
+    },
+    "source_refs": [],
+    "error": null,
+    "output_refs": []
+  }
+}

@@ -1,0 +1,358 @@
+{
+  "synthetic_development_example": true,
+  "request": {
+    "schema_version": "0.1",
+    "context": {
+      "schema_version": "0.1",
+      "request_id": "phase3-demo-parse_documents",
+      "case_id": "synthetic_traffic_001",
+      "experiment_run_id": "synthetic-dev-only",
+      "deadline_at": null
+    },
+    "case_version": 1,
+    "file_ids": [
+      "phase3-material"
+    ],
+    "file_versions": {},
+    "ocr_mode": "auto"
+  },
+  "result": {
+    "schema_version": "0.1",
+    "case_id": "synthetic_traffic_001",
+    "case_version": 1,
+    "status": "insufficient",
+    "summary": "解析 1 个文件，提取 2 项未确认候选事实。",
+    "data": {
+      "documents": [
+        {
+          "evidence_id": "e_f6067eea83ad9f1e4923",
+          "file_id": "phase3-material",
+          "file_version": "1",
+          "file_name": "input.png",
+          "media_type": "image/png",
+          "document_type": "other",
+          "content_sha256": "e469be2634ddb6010bb8e2e3c308beed98f30b6c4eb04d829fb98790680a4aba",
+          "material_refs": [
+            {
+              "file_id": "phase3-material",
+              "file_version": "1",
+              "page": 1,
+              "paragraph": null,
+              "span_start": 0,
+              "span_end": 6,
+              "quote": "合成开发样例",
+              "extraction_version": "0dc4e0bb9222b4862977c9230af0083a9cbc71422f6492fb549c639333a4944b",
+              "polygon": [
+                [
+                  46.0,
+                  41.0
+                ],
+                [
+                  307.0,
+                  41.0
+                ],
+                [
+                  307.0,
+                  90.0
+                ],
+                [
+                  46.0,
+                  90.0
+                ]
+              ]
+            },
+            {
+              "file_id": "phase3-material",
+              "file_version": "1",
+              "page": 1,
+              "paragraph": null,
+              "span_start": 7,
+              "span_end": 22,
+              "quote": "事故日期：2026-05-12",
+              "extraction_version": "0dc4e0bb9222b4862977c9230af0083a9cbc71422f6492fb549c639333a4944b",
+              "polygon": [
+                [
+                  44.0,
+                  162.0
+                ],
+                [
+                  511.0,
+                  162.0
+                ],
+                [
+                  511.0,
+                  210.0
+                ],
+                [
+                  44.0,
+                  210.0
+                ]
+              ]
+            },
+            {
+              "file_id": "phase3-material",
+              "file_version": "1",
+              "page": 1,
+              "paragraph": null,
+              "span_start": 23,
+              "span_end": 36,
+              "quote": "维修金额：3000.00元",
+              "extraction_version": "0dc4e0bb9222b4862977c9230af0083a9cbc71422f6492fb549c639333a4944b",
+              "polygon": [
+                [
+                  43.0,
+                  280.0
+                ],
+                [
+                  479.0,
+                  280.0
+                ],
+                [
+                  479.0,
+                  331.0
+                ],
+                [
+                  43.0,
+                  331.0
+                ]
+              ]
+            }
+          ],
+          "proves_fact_ids": [
+            "f_a5ff0f02862e48b6f387",
+            "f_0e9cd3321786ec1cc0dd"
+          ],
+          "status": "unreviewed",
+          "duplicate_of": null,
+          "exclusion": null,
+          "warnings": [
+            "OCR 结果尚未确认，手写日期、姓名和金额需要核对原图。",
+            "OCR 结果尚未确认，手写日期、姓名和金额需要核对原图。",
+            "OCR 结果尚未确认，手写日期、姓名和金额需要核对原图。"
+          ]
+        }
+      ],
+      "text_segments": [
+        {
+          "material_ref": {
+            "file_id": "phase3-material",
+            "file_version": "1",
+            "page": 1,
+            "paragraph": null,
+            "span_start": 0,
+            "span_end": 6,
+            "quote": "合成开发样例",
+            "extraction_version": "0dc4e0bb9222b4862977c9230af0083a9cbc71422f6492fb549c639333a4944b",
+            "polygon": [
+              [
+                46.0,
+                41.0
+              ],
+              [
+                307.0,
+                41.0
+              ],
+              [
+                307.0,
+                90.0
+              ],
+              [
+                46.0,
+                90.0
+              ]
+            ]
+          },
+          "text": "合成开发样例",
+          "extraction_method": "ocr",
+          "warnings": [
+            "OCR 结果尚未确认，手写日期、姓名和金额需要核对原图。"
+          ],
+          "confidence": 0.9996864199638367,
+          "engine": "paddleocr",
+          "engine_version": "3.7.0:PP-OCRv6:PP-OCRv6_small_det:PP-OCRv6_small_rec"
+        },
+        {
+          "material_ref": {
+            "file_id": "phase3-material",
+            "file_version": "1",
+            "page": 1,
+            "paragraph": null,
+            "span_start": 7,
+            "span_end": 22,
+            "quote": "事故日期：2026-05-12",
+            "extraction_version": "0dc4e0bb9222b4862977c9230af0083a9cbc71422f6492fb549c639333a4944b",
+            "polygon": [
+              [
+                44.0,
+                162.0
+              ],
+              [
+                511.0,
+                162.0
+              ],
+              [
+                511.0,
+                210.0
+              ],
+              [
+                44.0,
+                210.0
+              ]
+            ]
+          },
+          "text": "事故日期：2026-05-12",
+          "extraction_method": "ocr",
+          "warnings": [
+            "OCR 结果尚未确认，手写日期、姓名和金额需要核对原图。"
+          ],
+          "confidence": 0.9997608661651611,
+          "engine": "paddleocr",
+          "engine_version": "3.7.0:PP-OCRv6:PP-OCRv6_small_det:PP-OCRv6_small_rec"
+        },
+        {
+          "material_ref": {
+            "file_id": "phase3-material",
+            "file_version": "1",
+            "page": 1,
+            "paragraph": null,
+            "span_start": 23,
+            "span_end": 36,
+            "quote": "维修金额：3000.00元",
+            "extraction_version": "0dc4e0bb9222b4862977c9230af0083a9cbc71422f6492fb549c639333a4944b",
+            "polygon": [
+              [
+                43.0,
+                280.0
+              ],
+              [
+                479.0,
+                280.0
+              ],
+              [
+                479.0,
+                331.0
+              ],
+              [
+                43.0,
+                331.0
+              ]
+            ]
+          },
+          "text": "维修金额：3000.00元",
+          "extraction_method": "ocr",
+          "warnings": [
+            "OCR 结果尚未确认，手写日期、姓名和金额需要核对原图。"
+          ],
+          "confidence": 0.9997819066047668,
+          "engine": "paddleocr",
+          "engine_version": "3.7.0:PP-OCRv6:PP-OCRv6_small_det:PP-OCRv6_small_rec"
+        }
+      ],
+      "extracted_facts": [
+        {
+          "fact_id": "f_a5ff0f02862e48b6f387",
+          "field": "accident_date",
+          "value_type": "date",
+          "value": "2026-05-12",
+          "provenance": "document_record",
+          "confirmation_status": "unconfirmed",
+          "statement_refs": [],
+          "evidence_ids": [
+            "e_f6067eea83ad9f1e4923"
+          ],
+          "material_refs": [
+            {
+              "file_id": "phase3-material",
+              "file_version": "1",
+              "page": 1,
+              "paragraph": null,
+              "span_start": 12,
+              "span_end": 22,
+              "quote": "2026-05-12",
+              "extraction_version": "0dc4e0bb9222b4862977c9230af0083a9cbc71422f6492fb549c639333a4944b",
+              "polygon": [
+                [
+                  44.0,
+                  162.0
+                ],
+                [
+                  511.0,
+                  162.0
+                ],
+                [
+                  511.0,
+                  210.0
+                ],
+                [
+                  44.0,
+                  210.0
+                ]
+              ]
+            }
+          ],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": null,
+          "superseded_by": null
+        },
+        {
+          "fact_id": "f_0e9cd3321786ec1cc0dd",
+          "field": "losses.phase3-material.repair_amount",
+          "value_type": "money",
+          "value": {
+            "amount": "3000.00",
+            "currency": "CNY"
+          },
+          "provenance": "document_record",
+          "confirmation_status": "unconfirmed",
+          "statement_refs": [],
+          "evidence_ids": [
+            "e_f6067eea83ad9f1e4923"
+          ],
+          "material_refs": [
+            {
+              "file_id": "phase3-material",
+              "file_version": "1",
+              "page": 1,
+              "paragraph": null,
+              "span_start": 28,
+              "span_end": 35,
+              "quote": "3000.00",
+              "extraction_version": "0dc4e0bb9222b4862977c9230af0083a9cbc71422f6492fb549c639333a4944b",
+              "polygon": [
+                [
+                  43.0,
+                  280.0
+                ],
+                [
+                  479.0,
+                  280.0
+                ],
+                [
+                  479.0,
+                  331.0
+                ],
+                [
+                  43.0,
+                  331.0
+                ]
+              ]
+            }
+          ],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": null,
+          "superseded_by": null
+        }
+      ],
+      "warnings": [
+        "OCR 结果尚未确认，手写日期、姓名和金额需要核对原图。",
+        "OCR 结果尚未确认，手写日期、姓名和金额需要核对原图。",
+        "OCR 结果尚未确认，手写日期、姓名和金额需要核对原图。"
+      ]
+    },
+    "source_refs": [],
+    "error": null,
+    "output_refs": []
+  }
+}

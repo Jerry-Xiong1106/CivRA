@@ -1,0 +1,552 @@
+{
+  "synthetic_development_only": true,
+  "request": {
+    "schema_version": "0.1",
+    "context": {
+      "schema_version": "0.1",
+      "request_id": "directory-example",
+      "case_id": "synthetic_traffic_001",
+      "experiment_run_id": "development-only",
+      "deadline_at": null
+    },
+    "case_version": 3,
+    "case_snapshot": {
+      "schema_version": "0.1",
+      "case_id": "synthetic_traffic_001",
+      "case_version": 3,
+      "synthetic": true,
+      "dispute_type": "traffic_accident",
+      "jurisdiction": "CN-Mainland",
+      "stage": "litigation",
+      "selected_route": "litigation",
+      "user_goals": [
+        "先了解处理方式，再决定是否诉讼"
+      ],
+      "statements": [
+        {
+          "message_id": "msg_001",
+          "actor_id": "synthetic_user",
+          "text": "我是示例甲，我确认这个称呼。我记得事故发生在2026年5月12日，想主张维修费。",
+          "created_at": "2026-11-01T08:00:00Z"
+        },
+        {
+          "message_id": "msg_example_insurance",
+          "actor_id": "synthetic_user",
+          "text": "保险信息暂时不知道。",
+          "created_at": "2026-11-02T08:00:00Z"
+        }
+      ],
+      "facts": [
+        {
+          "fact_id": "f_date_user",
+          "field": "accident_date",
+          "value_type": "date",
+          "value": "2026-05-12",
+          "provenance": "user_statement",
+          "confirmation_status": "unconfirmed",
+          "statement_refs": [
+            "msg_001"
+          ],
+          "evidence_ids": [],
+          "material_refs": [],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": null,
+          "superseded_by": null
+        },
+        {
+          "fact_id": "f_date_document",
+          "field": "accident_date",
+          "value_type": "date",
+          "value": "2026-05-13",
+          "provenance": "document_record",
+          "confirmation_status": "unconfirmed",
+          "statement_refs": [],
+          "evidence_ids": [
+            "e_accident"
+          ],
+          "material_refs": [
+            {
+              "file_id": "file_accident",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 18,
+              "span_end": 33,
+              "quote": "事故日期：2026-05-13"
+            }
+          ],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": null,
+          "superseded_by": null
+        },
+        {
+          "fact_id": "f_claimant",
+          "field": "claimant_name",
+          "value_type": "text",
+          "value": "示例甲",
+          "provenance": "user_statement",
+          "confirmation_status": "confirmed",
+          "statement_refs": [
+            "msg_001"
+          ],
+          "evidence_ids": [],
+          "material_refs": [],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": {
+            "message_id": "msg_001",
+            "confirmed_by": "synthetic_user",
+            "confirmed_at": "2026-11-01T08:00:00Z"
+          },
+          "superseded_by": null
+        },
+        {
+          "fact_id": "f_repair_amount",
+          "field": "repair_amount",
+          "value_type": "money",
+          "value": {
+            "amount": "3000.00",
+            "currency": "CNY"
+          },
+          "provenance": "document_record",
+          "confirmation_status": "unconfirmed",
+          "statement_refs": [],
+          "evidence_ids": [
+            "e_invoice"
+          ],
+          "material_refs": [
+            {
+              "file_id": "file_invoice",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 51,
+              "span_end": 64,
+              "quote": "维修金额：3000.00元"
+            }
+          ],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": null,
+          "superseded_by": null
+        },
+        {
+          "fact_id": "f_repair_amount_copy",
+          "field": "repair_amount",
+          "value_type": "money",
+          "value": {
+            "amount": "3000.00",
+            "currency": "CNY"
+          },
+          "provenance": "document_record",
+          "confirmation_status": "unconfirmed",
+          "statement_refs": [],
+          "evidence_ids": [
+            "e_invoice_copy"
+          ],
+          "material_refs": [
+            {
+              "file_id": "file_invoice_copy",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 51,
+              "span_end": 64,
+              "quote": "维修金额：3000.00元"
+            }
+          ],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": null,
+          "superseded_by": null
+        },
+        {
+          "fact_id": "f_insurance_unknown",
+          "field": "insurance",
+          "value_type": "text",
+          "value": null,
+          "provenance": "user_statement",
+          "confirmation_status": "unconfirmed",
+          "statement_refs": [
+            "msg_example_insurance"
+          ],
+          "evidence_ids": [],
+          "material_refs": [],
+          "source_refs": [],
+          "derivation_ref": null,
+          "confirmation": null,
+          "superseded_by": null
+        }
+      ],
+      "evidence": [
+        {
+          "evidence_id": "e_accident",
+          "file_id": "file_accident",
+          "file_version": "1",
+          "file_name": "accident_record.txt",
+          "media_type": "text/plain",
+          "document_type": "accident_record",
+          "content_sha256": "c18ae66c202d5d66976f3f0345c910173acca7cfbe0a5d475d3241f85e21e939",
+          "material_refs": [
+            {
+              "file_id": "file_accident",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 18,
+              "span_end": 33,
+              "quote": "事故日期：2026-05-13"
+            }
+          ],
+          "proves_fact_ids": [
+            "f_date_document"
+          ],
+          "status": "unreviewed",
+          "duplicate_of": null,
+          "exclusion": null,
+          "warnings": []
+        },
+        {
+          "evidence_id": "e_invoice",
+          "file_id": "file_invoice",
+          "file_version": "1",
+          "file_name": "repair_invoice.txt",
+          "media_type": "text/plain",
+          "document_type": "repair_invoice",
+          "content_sha256": "370b424620528aa34f3517245019902acb0b15a280ba29e54432163a487806f6",
+          "material_refs": [
+            {
+              "file_id": "file_invoice",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 51,
+              "span_end": 64,
+              "quote": "维修金额：3000.00元"
+            }
+          ],
+          "proves_fact_ids": [
+            "f_repair_amount"
+          ],
+          "status": "unreviewed",
+          "duplicate_of": null,
+          "exclusion": null,
+          "warnings": []
+        },
+        {
+          "evidence_id": "e_invoice_copy",
+          "file_id": "file_invoice_copy",
+          "file_version": "1",
+          "file_name": "repair_invoice_copy.txt",
+          "media_type": "text/plain",
+          "document_type": "repair_invoice",
+          "content_sha256": "370b424620528aa34f3517245019902acb0b15a280ba29e54432163a487806f6",
+          "material_refs": [
+            {
+              "file_id": "file_invoice_copy",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 51,
+              "span_end": 64,
+              "quote": "维修金额：3000.00元"
+            }
+          ],
+          "proves_fact_ids": [
+            "f_repair_amount_copy"
+          ],
+          "status": "unreviewed",
+          "duplicate_of": null,
+          "exclusion": null,
+          "warnings": []
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "claim_repair",
+          "kind": "repair_cost",
+          "description": "请求维修费用赔偿",
+          "amount": {
+            "amount": "3000.00",
+            "currency": "CNY"
+          },
+          "status": "proposed",
+          "fact_ids": [
+            "f_date_user",
+            "f_date_document",
+            "f_repair_amount"
+          ],
+          "evidence_ids": [
+            "e_accident",
+            "e_invoice",
+            "e_invoice_copy"
+          ],
+          "source_refs": []
+        }
+      ],
+      "created_at": "2026-11-01T08:00:00Z",
+      "updated_at": "2026-11-04T07:14:59.472709Z"
+    }
+  },
+  "result": {
+    "schema_version": "0.1",
+    "case_id": "synthetic_traffic_001",
+    "case_version": 3,
+    "status": "insufficient",
+    "summary": "已生成 3 项诉讼证据目录草稿及 4 项待办。",
+    "data": {
+      "entries": [
+        {
+          "number": 1,
+          "evidence_id": "e_accident",
+          "file_id": "file_accident",
+          "file_version": "1",
+          "file_name": "accident_record.txt",
+          "document_type": "accident_record",
+          "material_refs": [
+            {
+              "file_id": "file_accident",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 18,
+              "span_end": 33,
+              "quote": "事故日期：2026-05-13"
+            }
+          ],
+          "fact_ids": [
+            "f_date_document"
+          ],
+          "claim_ids": [
+            "claim_repair"
+          ],
+          "proof_purposes": [
+            "拟说明事故发生日期（事实 f_date_document，unconfirmed）。"
+          ],
+          "review_status": "needs_confirmation",
+          "warnings": [
+            "事故发生日期有不一致的记载，尚未明确解决。",
+            "相关事实尚有未确认内容；证明事项仅供人工复核。"
+          ]
+        },
+        {
+          "number": 2,
+          "evidence_id": "e_invoice",
+          "file_id": "file_invoice",
+          "file_version": "1",
+          "file_name": "repair_invoice.txt",
+          "document_type": "repair_invoice",
+          "material_refs": [
+            {
+              "file_id": "file_invoice",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 51,
+              "span_end": 64,
+              "quote": "维修金额：3000.00元"
+            }
+          ],
+          "fact_ids": [
+            "f_repair_amount"
+          ],
+          "claim_ids": [
+            "claim_repair"
+          ],
+          "proof_purposes": [
+            "拟说明维修金额（事实 f_repair_amount，unconfirmed）。"
+          ],
+          "review_status": "needs_confirmation",
+          "warnings": [
+            "材料登记的字节哈希相同，可能为同一文件重复上传；请确认后处理，勿重复计入金额。",
+            "相关事实尚有未确认内容；证明事项仅供人工复核。"
+          ]
+        },
+        {
+          "number": 3,
+          "evidence_id": "e_invoice_copy",
+          "file_id": "file_invoice_copy",
+          "file_version": "1",
+          "file_name": "repair_invoice_copy.txt",
+          "document_type": "repair_invoice",
+          "material_refs": [
+            {
+              "file_id": "file_invoice_copy",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 51,
+              "span_end": 64,
+              "quote": "维修金额：3000.00元"
+            }
+          ],
+          "fact_ids": [
+            "f_repair_amount_copy"
+          ],
+          "claim_ids": [
+            "claim_repair"
+          ],
+          "proof_purposes": [
+            "拟说明维修金额（事实 f_repair_amount_copy，unconfirmed）。"
+          ],
+          "review_status": "needs_confirmation",
+          "warnings": [
+            "材料登记的字节哈希相同，可能为同一文件重复上传；请确认后处理，勿重复计入金额。",
+            "相关事实尚有未确认内容；证明事项仅供人工复核。"
+          ]
+        }
+      ],
+      "excluded_evidence_ids": [],
+      "supplementary_checklist": [
+        {
+          "finding_id": "missing_750021e85c92e466",
+          "category": "missing_fact",
+          "severity": "warning",
+          "message": "缺少可用于当前分析的责任认定信息，请补充或确认。",
+          "affected_fields": [
+            "liability_finding"
+          ],
+          "fact_ids": [],
+          "evidence_ids": [],
+          "material_refs": [],
+          "output_location": null,
+          "source_refs": [],
+          "suggested_correction": "补充该字段及其来源；未知时保留未知。"
+        },
+        {
+          "finding_id": "missing_75f59e6609b6d610",
+          "category": "missing_fact",
+          "severity": "warning",
+          "message": "缺少可用于当前分析的保险关系，请补充或确认。",
+          "affected_fields": [
+            "insurance"
+          ],
+          "fact_ids": [],
+          "evidence_ids": [],
+          "material_refs": [],
+          "output_location": null,
+          "source_refs": [],
+          "suggested_correction": "补充该字段及其来源；未知时保留未知。"
+        },
+        {
+          "finding_id": "conflict_b1e8443ce8bf057c",
+          "category": "conflict",
+          "severity": "warning",
+          "message": "事故发生日期有不一致的记载，尚未明确解决。",
+          "affected_fields": [
+            "accident_date"
+          ],
+          "fact_ids": [
+            "f_date_document",
+            "f_date_user"
+          ],
+          "evidence_ids": [
+            "e_accident"
+          ],
+          "material_refs": [
+            {
+              "file_id": "file_accident",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 18,
+              "span_end": 33,
+              "quote": "事故日期：2026-05-13"
+            }
+          ],
+          "output_location": null,
+          "source_refs": [],
+          "suggested_correction": "向用户核实；保留原文，以明确确认的新事实及 superseded_by 记录解决关系。"
+        },
+        {
+          "finding_id": "duplicate_d5afdc6561c88f1a",
+          "category": "duplicate",
+          "severity": "warning",
+          "message": "材料登记的字节哈希相同，可能为同一文件重复上传；请确认后处理，勿重复计入金额。",
+          "affected_fields": [],
+          "fact_ids": [],
+          "evidence_ids": [
+            "e_invoice",
+            "e_invoice_copy"
+          ],
+          "material_refs": [
+            {
+              "file_id": "file_invoice",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 51,
+              "span_end": 64,
+              "quote": "维修金额：3000.00元"
+            },
+            {
+              "file_id": "file_invoice_copy",
+              "file_version": "1",
+              "page": null,
+              "paragraph": null,
+              "span_start": 51,
+              "span_end": 64,
+              "quote": "维修金额：3000.00元"
+            }
+          ],
+          "output_location": null,
+          "source_refs": [],
+          "suggested_correction": "确认保留哪一份；其余标为 excluded 并保存确认记录，不删除原材料。"
+        }
+      ],
+      "suggested_questions": [
+        {
+          "question_id": "q_missing_750021e85c92e466",
+          "text": "请说明责任认定信息；如果不知道，请明确说明。",
+          "field": "liability_finding",
+          "reason": "缺少可用于当前分析的责任认定信息，请补充或确认。",
+          "fact_ids": [],
+          "evidence_ids": []
+        },
+        {
+          "question_id": "q_missing_75f59e6609b6d610",
+          "text": "请说明保险关系；如果不知道，请明确说明。",
+          "field": "insurance",
+          "reason": "缺少可用于当前分析的保险关系，请补充或确认。",
+          "fact_ids": [],
+          "evidence_ids": []
+        },
+        {
+          "question_id": "q_conflict_b1e8443ce8bf057c",
+          "text": "请核实事故发生日期的不同记载，说明采用哪个值以及原因。",
+          "field": "accident_date",
+          "reason": "事故发生日期有不一致的记载，尚未明确解决。",
+          "fact_ids": [
+            "f_date_document",
+            "f_date_user"
+          ],
+          "evidence_ids": [
+            "e_accident"
+          ]
+        },
+        {
+          "question_id": "q_duplicate_070e18f3b90a0e42",
+          "text": "这些文件是否为同一材料？请确认保留哪一份。",
+          "field": "evidence.duplicate",
+          "reason": "材料登记的字节哈希相同，可能为同一文件重复上传；请确认后处理，勿重复计入金额。",
+          "fact_ids": [],
+          "evidence_ids": [
+            "e_invoice",
+            "e_invoice_copy"
+          ]
+        }
+      ],
+      "rule_profile": "traffic_accident_v1",
+      "limitations": [
+        "仅校验结构化输入；不读取 OCR/PDF 或判断材料真实性、法院采纳和法律证明力。",
+        "仅检测字节哈希相同的重复文件，不检测改图、重扫或语义近似票据。",
+        "必需字段及材料类型来自版本化开发规则，不是法定起诉条件或完整法律清单。",
+        "未知纠纷和诉求只做通用一致性检查，不宣称覆盖该领域的材料要求。"
+      ]
+    },
+    "source_refs": [],
+    "error": null
+  }
+}
