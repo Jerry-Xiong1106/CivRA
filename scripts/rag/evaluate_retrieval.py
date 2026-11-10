@@ -129,11 +129,13 @@ def main():
         if channel == "keyword":
             index = bm25[variant]
             config = {"include_metadata": index.include_metadata, "exact_match": exact, "tokenizer_version": TOKENIZER_VERSION,
+                      "tokenizer_fingerprint": index.tokenizer_fingerprint,
                       "top_k": settings.top_k, "k1": index.bm25.k1, "b": index.bm25.b, "epsilon": index.bm25.epsilon}
         else:
             config = {"vector": indexes[variant].config, "exact_match": exact, "top_k": settings.top_k}
             if channel == "hybrid":
                 config.update({"keyword_include_metadata": True, "tokenizer_version": TOKENIZER_VERSION,
+                               "tokenizer_fingerprint": bm25["metadata"].tokenizer_fingerprint,
                                "candidate_k": args.candidate_k, "rrf_k": args.rrf_k, "channel_weights": {"keyword": 1, "vector": 1}})
         negative = [q for q in details if q["metrics"] is None]
         summary = average_metrics([q["metrics"] for q in details if q["metrics"] is not None])

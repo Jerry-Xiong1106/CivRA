@@ -2,11 +2,11 @@
 import hashlib
 from contextlib import closing
 import json
+import math
 import os
 from pathlib import Path
 import sqlite3
 import sys
-import time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -27,8 +27,12 @@ def load_local_env():
 
 
 class EmbeddingClient(Embeddings):
-    def __init__(self, cache_path=None):
+    def __init__(self, cache_path=None, *, timeout_s=None):
         load_local_env()
+        self.timeout_s = float(timeout_s if timeout_s is not None else
+                               os.getenv("RAG_EMBEDDING_TIMEOUT_S", "30"))
+        if not math.isfinite(self.timeout_s) or self.timeout_s <= 0:
+            raise ValueError("Embedding timeout_s must be finite and positive")
         self.model = os.getenv("RAG_EMBEDDING_MODEL", "BAAI/bge-m3")
         self.base_url = os.getenv("RAG_EMBEDDING_BASE_URL", "https://api.siliconflow.cn/v1").rstrip("/")
         if not self.base_url.startswith("https://"):
@@ -50,32 +54,33 @@ class EmbeddingClient(Embeddings):
         return self.embed([text])[0].tolist()
 
     def _request(self, texts):
+        """One HTTP attempt; the calling Runtime owns retries."""
         if not self.api_key:
             raise ValueError("Set SILICONFLOW_API_KEY in the environment or local .env")
         payload = json.dumps({"model": self.model, "input": texts}).encode("utf-8")
-        for attempt in range(4):
-            request = Request(self.base_url + "/embeddings", data=payload, headers={
-                "Authorization": "Bearer " + self.api_key, "Content-Type": "application/json",
-            })
-            try:
-                with urlopen(request, timeout=90) as response:
-                    body = json.load(response)
-                items = sorted(body["data"], key=lambda item: item["index"])
-                if [item["index"] for item in items] != list(range(len(texts))):
-                    raise ValueError("Embedding response has missing/duplicate indices")
-                vectors = np.asarray([item["embedding"] for item in items], dtype=np.float32)
-                if vectors.ndim != 2 or vectors.shape[1] == 0 or not np.isfinite(vectors).all() or (np.linalg.norm(vectors, axis=1) == 0).any():
-                    raise ValueError("Embedding response contains invalid vectors")
-                return vectors
-            except HTTPError as exc:
-                status = exc.code
-                exc.close()
-                if status not in (429, 500, 502, 503, 504) or attempt == 3:
-                    raise RuntimeError(f"Embedding API returned HTTP {status}; check model, quota and credentials") from None
-            except (URLError, TimeoutError):
-                if attempt == 3:
-                    raise RuntimeError("Embedding API connection failed after retries") from None
-            time.sleep(2 ** attempt)
+        request = Request(self.base_url + "/embeddings", data=payload, headers={
+            "Authorization": "Bearer " + self.api_key, "Content-Type": "application/json",
+        })
+        try:
+            with urlopen(request, timeout=self.timeout_s) as response:
+                body = json.load(response)
+        except HTTPError as exc:
+            status = exc.code
+            exc.close()
+            raise RuntimeError(f"Embedding API returned HTTP {status}; check model, quota and credentials") from None
+        except TimeoutError:
+            raise TimeoutError("Embedding API request timed out") from None
+        except URLError as exc:
+            if isinstance(exc.reason, TimeoutError):
+                raise TimeoutError("Embedding API request timed out") from None
+            raise RuntimeError("Embedding API connection failed") from None
+        items = sorted(body["data"], key=lambda item: item["index"])
+        if [item["index"] for item in items] != list(range(len(texts))):
+            raise ValueError("Embedding response has missing/duplicate indices")
+        vectors = np.asarray([item["embedding"] for item in items], dtype=np.float32)
+        if vectors.ndim != 2 or vectors.shape[1] == 0 or not np.isfinite(vectors).all() or (np.linalg.norm(vectors, axis=1) == 0).any():
+            raise ValueError("Embedding response contains invalid vectors")
+        return vectors
 
     def embed(self, texts, batch_size=16):
         if batch_size < 1 or not texts or any(not isinstance(t, str) or not t.strip() for t in texts):

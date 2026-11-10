@@ -1,6 +1,8 @@
 """Scored community BM25 retriever with CivRA's unchanged jieba preprocessing."""
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from langchain_community.retrievers import BM25Retriever
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from langchain_core.documents import Document
@@ -22,7 +24,7 @@ def create_bm25_retriever(index: "BM25Index") -> "ScoredBM25Retriever":
 
 
 class ScoredBM25Retriever(BM25Retriever):
-    """Add scores/positive filtering without replacing community candidate ranking."""
+    """Score once, preserving rank_bm25's get_top_n ordering and positive filter."""
 
     def _get_relevant_documents(
         self, query: str, *, run_manager: CallbackManagerForRetrieverRun,
@@ -34,11 +36,11 @@ class ScoredBM25Retriever(BM25Retriever):
         tokens = self.preprocess_func(query)
         if not tokens:
             return []
-        # Per-call copy avoids mutating shared k during concurrent invocation.
-        configured = self.model_copy(update={"k": depth})
-        docs = super(ScoredBM25Retriever, configured)._get_relevant_documents(
-            query, run_manager=run_manager)
-        scores = dict(zip((doc.id for doc in self.docs), self.vectorizer.get_scores(tokens)))
-        return [doc.model_copy(update={"metadata": {
-            **doc.metadata, "retrieval": {"score": float(scores[doc.id]), "matched_by": ["keyword"]},
-        }}) for doc in docs if scores[doc.id] > 0]
+        assert self.vectorizer.corpus_size == len(self.docs), "The documents given don't match the index corpus!"
+        scores = self.vectorizer.get_scores(tokens)
+        # Match rank_bm25.get_top_n exactly, including NumPy's default ties.
+        # Keep depth local so concurrent calls never mutate the shared k.
+        ranked = np.argsort(scores)[::-1][:depth]
+        return [self.docs[i].model_copy(update={"metadata": {
+            **self.docs[i].metadata, "retrieval": {"score": float(scores[i]), "matched_by": ["keyword"]},
+        }}) for i in ranked if scores[i] > 0]
