@@ -7,18 +7,18 @@ time as the real tools are registered.
 from __future__ import annotations
 
 from backend.agent.case_port import InMemoryCaseStore
-from backend.common.schemas import SourceRef, ToolContext, ToolResult, ToolSpec
+from backend.common.schemas import ToolContext, ToolResult, ToolSpec
+from backend.tools.knowledge_tools import SEARCH_STATUTES, to_tool_result
 from backend.tools.registry import ToolRegistry
 
-CIVIL_CODE_1213 = SourceRef(
-    source_id="civil_code_1213",
-    source_type="statute",
-    title="中华人民共和国民法典",
-    locator="第一千二百一十三条",
-    version="2021-01-01",
-    excerpt="机动车发生交通事故造成损害，属于该机动车一方责任的，先由承保机动车强制保险的保险人在强制保险责任限额范围内予以赔偿……",
-    url="https://flk.npc.gov.cn/",
-)
+CIVIL_CODE_1213 = {
+    "provision_id": "civil_code_1213", "law_title": "中华人民共和国民法典",
+    "article_no": "第一千二百一十三条", "hierarchy_path": [],
+    "text": "机动车发生交通事故造成损害，属于该机动车一方责任的，先由承保机动车强制保险的保险人在强制保险责任限额范围内予以赔偿……",
+    "version": {"publication_date": "2020-05-28", "effective_date": "2021-01-01", "expiry_date": None},
+    "source": {"url": "https://flk.npc.gov.cn/", "file": None, "page_start": None, "page_end": None},
+    "retrieval": {"rank": 1, "score": 0.82, "score_type": "mock", "matched_by": ["mock"]},
+}
 
 # Facts check_evidence expects for a traffic accident claim.
 REQUIRED_FACTS = {
@@ -26,23 +26,6 @@ REQUIRED_FACTS = {
     "liability_finding": "交警事故责任认定",
     "insurance": "对方车辆的保险情况（交强险、商业险）",
 }
-
-SEARCH_STATUTES = ToolSpec(
-    name="search_statutes",
-    description="检索法律、司法解释条文。输入问题和纠纷类型，返回相关条款原文、版本和出处。只返回法条，不做法律结论。",
-    parameters={
-        "type": "object",
-        "properties": {
-            "query": {"type": "string", "minLength": 1},
-            "incident_date": {"type": "string"},
-            "top_k": {"type": "integer", "minimum": 1, "maximum": 20},
-        },
-        "required": ["query"],
-        "additionalProperties": False,
-    },
-    owner="member2",
-    feedback_loop="retrieve_verify",
-)
 
 VERIFY_OUTPUT = ToolSpec(
     name="verify_output",
@@ -96,19 +79,19 @@ DRAFT_DOCUMENT = ToolSpec(
 )
 
 
-def build_mock_registry(cases: InMemoryCaseStore) -> ToolRegistry:
-    reg = ToolRegistry()
+def register_mock_tools(reg: ToolRegistry, cases: InMemoryCaseStore, *,
+                        statutes: bool = True, business: bool = True) -> None:
+    """Register selected development tools; case updates use the in-memory store."""
 
-    @reg.tool(SEARCH_STATUTES)
     def search_statutes(args: dict, ctx: ToolContext) -> ToolResult:
-        return ToolResult(
-            status="ok",
-            summary="找到 1 条相关条文（mock）。",
-            data={"hits": [{"source_id": CIVIL_CODE_1213.source_id, "score": 0.82}]},
-            source_refs=[CIVIL_CODE_1213],
-        )
+        result = to_tool_result({
+            "status": "ok", "query": args["query"], "results": [CIVIL_CODE_1213],
+            "warnings": ["模拟检索结果，仅用于开发联调。"],
+        })
+        result.summary = "模拟检索：" + result.summary
+        return result
 
-    @reg.tool(CHECK_EVIDENCE)
+
     def check_evidence(args: dict, ctx: ToolContext) -> ToolResult:
         facts = cases.get_snapshot(ctx.case_id).summary.get("facts", {})
         missing = [{"field": k, "label": v, "question": f"请提供{v}。"} for k, v in REQUIRED_FACTS.items() if k not in facts]
@@ -120,17 +103,27 @@ def build_mock_registry(cases: InMemoryCaseStore) -> ToolRegistry:
             )
         return ToolResult(status="ok", summary="必要事实已齐全（mock）。", data={"missing": [], "conflicts": []})
 
-    @reg.tool(UPDATE_CASE)
     def update_case(args: dict, ctx: ToolContext) -> ToolResult:
         version = cases.update_facts(ctx.case_id, args["facts"])
         return ToolResult(status="ok", summary=f"已更新 {len(args['facts'])} 项事实。", case_version=version)
 
-    @reg.tool(VERIFY_OUTPUT)
     def verify_output(args: dict, ctx: ToolContext) -> ToolResult:
         return ToolResult(status="ok", summary="未发现问题（mock）。", data={"issues": []})
 
-    @reg.tool(DRAFT_DOCUMENT)
     def draft_document(args: dict, ctx: ToolContext) -> ToolResult:
         return ToolResult(status="ok", summary="已生成起诉状草稿（mock）。", data={"output_id": "draft_mock_1"})
 
-    return reg
+    reg.register(UPDATE_CASE, update_case)
+    if statutes:
+        reg.register(SEARCH_STATUTES, search_statutes)
+    if business:
+        reg.register(CHECK_EVIDENCE, check_evidence)
+        reg.register(VERIFY_OUTPUT, verify_output)
+        reg.register(DRAFT_DOCUMENT, draft_document)
+
+
+def build_mock_registry(cases: InMemoryCaseStore) -> ToolRegistry:
+    """Convenience entry point for offline demos and tests."""
+    registry = ToolRegistry()
+    register_mock_tools(registry, cases)
+    return registry

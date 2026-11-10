@@ -1,10 +1,11 @@
 """Talk to the Agent in the terminal: it may ask you questions, you answer, it continues.
 
-    .venv/bin/python scripts/run_agent.py --message "我的车被追尾了，想要对方赔偿维修费"
-    .venv/bin/python scripts/run_agent.py --dry-run          # no API key: scripted model
+    .venv/bin/python scripts/agent/run_agent.py --message "我的车被追尾了，想要对方赔偿维修费"
+    .venv/bin/python scripts/agent/run_agent.py --dry-run --mock-statutes  # fully offline
 
-Needs SILICONFLOW_API_KEY in the repo's .env (never committed) unless --dry-run.
-search_statutes uses the real index (build it with scripts/rag/build_bm25_index.py);
+Needs SILICONFLOW_API_KEY in the repo's .env (never committed) for real models
+and uncached query embeddings. Default retrieval uses vector_metadata.npz;
+--dry-run only replaces the model, while --mock-statutes also replaces retrieval.
 member 3's tools are mock stand-ins until they are delivered.
 """
 
@@ -12,18 +13,21 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import threading
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from backend.agent.factory import MissingAPIKey, build_runner, run_config_from_pilot  # noqa: E402
-from backend.agent.llm import ScriptedLLM, tool_call  # noqa: E402
+from backend.common.config import load_dotenv
+from evaluation.config import run_config_from_pilot
+from backend.agent.factory import MissingAPIKey, build_runner  # noqa: E402
+from backend.agent.model.llm import ScriptedLLM, tool_call  # noqa: E402
 from backend.agent.runner import AgentRunner  # noqa: E402
-from backend.common.schemas import RunConfig, RunInfo, UserReply, Wait  # noqa: E402
-from backend.knowledge.config import keyword_index_path  # noqa: E402
+from backend.common.schemas import RunConfig, RunInfo, TraceStep, UserReply, Wait  # noqa: E402
+from backend.knowledge.config import DEFAULT_MODE, RetrievalConfig, keyword_index_path, vector_index_path  # noqa: E402
 
 
 
@@ -35,9 +39,17 @@ def main() -> int:
     if args.model:
         config = config.model_copy(update={"model": args.model})
 
-    real_statutes = not args.mock_statutes and keyword_index_path().exists()
+    load_dotenv()
+    retrieval_config = RetrievalConfig.from_mode(os.environ.get("CIVRA_RETRIEVAL_MODE", DEFAULT_MODE))
+    required_indexes = []
+    if retrieval_config.channel in ("vector", "hybrid"):
+        required_indexes.append(vector_index_path(retrieval_config.variant))
+    if retrieval_config.channel in ("keyword", "hybrid"):
+        required_indexes.append(keyword_index_path("metadata" if retrieval_config.channel == "hybrid" else retrieval_config.variant))
+    real_statutes = not args.mock_statutes and all(path.exists() for path in required_indexes)
     if not args.mock_statutes and not real_statutes:
-        print("提示：没有找到检索索引，search_statutes 改用 mock。构建：.venv/bin/python scripts/rag/build_bm25_index.py\n")
+        missing = ", ".join(str(path) for path in required_indexes if not path.exists())
+        print(f"提示：当前检索模式缺少索引：{missing}，search_statutes 改用 mock。请运行对应的向量/BM25构建脚本。\n")
     try:
         setup = build_runner(llm=dry_run_llm() if args.dry_run else None, config=config,
                              real_statutes=real_statutes, mock_business_tools=not args.no_mock_tools)
@@ -45,27 +57,30 @@ def main() -> int:
         print(e)
         return 2
 
-    facts = dict(f.split("=", 1) for f in args.fact)
-    summary = {"facts": facts} | ({"dispute_type": args.dispute_type} if args.dispute_type else {})
-    case_id = f"cli-{time.strftime('%Y%m%d-%H%M%S')}"  # one case per invocation, so runs never collide
-    setup.cases.create(case_id, summary)
-    runner = setup.runner
-    model = config.model or getattr(runner.llm, "model", "?")
-    tools = ", ".join(sorted(setup.registry.names()))
-    print(f"模型：{model}{'（脚本，dry-run）' if args.dry_run else ''}\n工具：{tools}\n")
+    try:
+        facts = dict(f.split("=", 1) for f in args.fact)
+        summary = {"facts": facts} | ({"dispute_type": args.dispute_type} if args.dispute_type else {})
+        case_id = f"cli-{time.strftime('%Y%m%d-%H%M%S')}"  # one case per invocation, so runs never collide
+        setup.cases.create(case_id, summary)
+        runner = setup.runner
+        model = config.model or getattr(runner.llm, "model_name", "?")
+        tools = ", ".join(sorted(setup.registry.names()))
+        print(f"模型：{model}{'（脚本，dry-run）' if args.dry_run else ''}\n工具：{tools}\n")
 
-    message = args.message or input("请描述你的问题：").strip()
-    progress = Progress(runner, case_id)
-    info = progress.run(lambda: runner.start_run(case_id, message))
-    while info.status == "waiting_user":
-        reply = ask_user(info.wait, args.auto_reply)
-        if reply is None:
-            info = runner.cancel_run(info.run_id)
-            break
-        info = progress.run(lambda: runner.resume_run(
-            info.run_id, reply, wait_id=info.wait.wait_id, expected_case_version=info.case_version))
-    report(runner, info)
-    return 0 if info.status == "completed" else 1
+        message = args.message or input("请描述你的问题：").strip()
+        progress = Progress(runner, case_id)
+        info = progress.run(lambda: runner.start_run(case_id, message))
+        while info.status == "waiting_user":
+            reply = ask_user(info.wait, args.auto_reply)
+            if reply is None:
+                info = runner.cancel_run(info.run_id)
+                break
+            info = progress.run(lambda: runner.resume_run(
+                info.run_id, reply, wait_id=info.wait.wait_id, expected_case_version=info.case_version))
+        report(runner, info)
+        return 0 if info.status == "completed" else 1
+    finally:
+        setup.registry.close(wait=False)
 
 
 def parse_args() -> argparse.Namespace:
@@ -97,7 +112,7 @@ class Progress:
     def __init__(self, runner: AgentRunner, case_id: str) -> None:
         self.runner, self.case_id = runner, case_id
         self.run_id: str | None = None
-        self.seen = 0
+        self.cursor = 0
 
     def run(self, call) -> RunInfo:
         result: dict = {}
@@ -126,16 +141,16 @@ class Progress:
                                 if cp.case_id == self.case_id), None)
             if self.run_id is None:
                 return
-        for event in self.runner.iter_events(self.run_id, after_seq=self.seen):
-            self.seen = event.seq
-            if event.type == "step.finished":
-                print_step(self.runner, self.run_id, event.step_id)
+        while True:
+            page = self.runner.export_trace(self.run_id, cursor=self.cursor)
+            for step in page.steps:
+                print_step(step)
+            self.cursor += len(page.steps)
+            if len(page.steps) < 100:
+                break
 
 
-def print_step(runner: AgentRunner, run_id: str, step_id: int) -> None:
-    step = next((s for s in runner.get_trace(run_id) if s.step_id == step_id), None)
-    if step is None:
-        return
+def print_step(step: TraceStep) -> None:
     name = step.tool_name or ""
     seconds = f"{step.duration_ms / 1000:.1f}s"
     print(f"  · #{step.step_id:<2} {step.step_type:<11} {name:<16} {step.status:<12} {seconds:>6}  {step.result_summary[:70]}")
@@ -185,7 +200,7 @@ def report(runner: AgentRunner, info: RunInfo) -> None:
             refs = {s.source_id: s for s in final.source_refs}
             for c in final.citations:
                 ref = refs.get(c.source_id)
-                print(f"  · {ref.title + ref.locator if ref else c.source_id} ← {c.location}")
+                print(f"  · {ref.title + str(ref.locator) if ref else c.source_id} ← {c.location}")
         elif final.source_refs:
             print("\n检索到的来源：" + "、".join(f"{s.title}{s.locator}" for s in final.source_refs))
         if final.open_issues:

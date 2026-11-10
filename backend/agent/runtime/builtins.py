@@ -68,7 +68,7 @@ FINISH = ToolSpec(
             "open_issues": {"type": "array", "items": {"type": "string"}},
             "output_refs": {"type": "array", "items": {"type": "string"}},
             "citations": {
-                "description": "回答中依赖来源的句子或段落，以及对应的 source_id（来自工具返回的 source_refs）",
+                "description": "回答中依赖来源的句子或段落，以及对应的 source_id（来自工具返回的 data.matches[].source_ref）",
                 "type": "array",
                 "items": {
                     "type": "object",

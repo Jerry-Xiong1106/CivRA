@@ -1,178 +1,140 @@
-# RAG 与 Agent 接入讨论稿
+# RAG 接入与评测说明
 
-状态：交接讨论稿。以下区分当前实现与接入建议，工具接口和公共类型待双方确认后落地。
+更新：2026-11-11。适配已迁到 feature/agent-factory 的现有 knowledge_tools.py；检索修复由 origin/develop 同步。评测人员对返回格式的正式验收仍待完成。
 
-## 1. 当前实现
+## 1. 当前范围
 
-RAG 模块位于 `backend/knowledge/`，统一 Python 入口为 `RetrievalService`。
+- 三部法律共1690条；默认精确条号路由＋metadata向量检索，top_k默认5。
+- query/top_k是实际工具的全部参数。案例检索、日期/法域过滤、get_source、多版本检索和reranker延期。
+- 原始调用仍为 RetrievalService.search()。没有 search_matches()、filters或deadline查询入口。
+- 工具只返回候选，不判断法律依据是否充分，不认定案件事实或生成文书。
+- 真实适配集中于 backend/tools/knowledge_tools.py；mock_tools.py继续提供模拟工具和演示业务工具。LangChain工具包装仍经过现有注册表。
 
-- 语料：民法典、民事诉讼法、道路交通安全法，共 1690 条法条。
-- 默认检索：精确条号路由＋metadata 向量检索，`top_k=5`。
-- 向量方案：SiliconFlow `BAAI/bge-m3`，1024 维，本地精确余弦检索。
-- 可选通道：BM25、向量检索、BM25＋向量 RRF 融合。
-- 返回内容：法条原文、条号、来源、版本元数据和检索诊断信息。
+## 2. 直接调用与工具接入
 
-当前已有检索核心、CLI 和评测入口，尚未实现 Agent 工具适配与注册。案例检索、日期/效力过滤、多版本检索和 reranker 暂不在本次接入范围内。
+直接检索、评测可继续使用原接口：
 
-## 2. 调用方式与工具参数
-
-当前可以直接调用：
-
-```python
+~~~python
 from backend.knowledge.retrieval.service import RetrievalService
+from backend.knowledge.retrieval.results import to_search_match
 
-# 在应用启动或组件初始化时创建，后续复用。
 service = RetrievalService.from_config()
+raw = service.search("民法典第一条和第二条", top_k=1)
+matches = [to_search_match(hit, service.source_metadata) for hit in raw["results"]]
+# 精确指定的两条全部返回，top_k不截断明确目标。
+manifest = service.knowledge_manifest  # 初始化后由评测程序保存一次
+~~~
 
-result = service.search(
-    "借车发生事故，车主要承担责任吗？",
-    top_k=5,
-)
-```
+通过现有factory接入Agent：
 
-建议第一版注册工具名为 `search_statutes`，输入参数如下：
+~~~python
+from backend.agent.factory import build_runner
 
-| 参数 | 类型 | 说明 |
+setup = build_runner(retrieval_service=service)
+setup.cases.create("case-1", {"facts": {}})
+# setup.runner.start_run("case-1", "民法典第一条规定什么？")
+~~~
+
+也可以只注册检索工具，不启动Agent：
+
+~~~python
+from backend.tools.registry import ToolRegistry
+from backend.tools.knowledge_tools import register_knowledge_tools
+
+registry = ToolRegistry()
+register_knowledge_tools(registry, retrieval_service=service)
+# execution = registry.execute("search_statutes", {"query": "民法典第一条"}, ctx)
+# result = execution.result
+~~~
+
+不传service时，真实工具在第一次调用时懒加载服务，后续复用。statute_search/search函数注入保留给测试；它与retrieval_service不能同时提供。只有裸回调、没有服务来源信息时，knowledge_version和未知获取日期返回null，不伪造快照。
+
+factory默认注册真实search_statutes，其他成员的业务工具仍可为mock；mock_business_tools=False可关闭这些模拟业务工具。这不代表真实Agent已经通过法律效果验收。
+
+## 3. 返回与错误
+
+原search()保留status/query/results/warnings和必要的reason。工具适配负责整理ToolResult：
+
+| 情况 | 工具状态 | 返回内容 |
 |---|---|---|
-| `query` | `str` | 必填，自然语言问题或法律名称＋条号 |
-| `top_k` | `int` | 可选，默认 5，必须为正整数；工具侧上限待确认 |
+| 有候选 | ok | data.matches，每条source_ref是工具载荷中唯一的引用位置 |
+| 指定条文不存在或普通检索无候选 | empty | matches=[]，empty_reason及warnings |
+| 空白/符号查询、不支持的精确写法、非法参数 | error / INVALID_ARGS | 保留原因，不当作语料缺失 |
+| HTTP超时 | error / TIMEOUT | 可由Runtime重试 |
+| embedding上游失败 | error / UPSTREAM | 429、500、502、503、504及连接失败可重试，401等不重试 |
+| 索引/来源文件缺失 | error / UPSTREAM | 提示准备对应索引 |
+| 其他执行故障 | error / INTERNAL | 脱敏错误，不返回替代候选 |
 
-检索模式、embedding 模型和融合参数由服务配置固定，第一版不向模型开放。`incident_date`、`dispute_type` 等参数尚无对应过滤实现，暂不加入工具参数。
+payload包含schema_version=0.1、query、matches、empty_reason、warnings、knowledge_version。每个match包含text、source_ref、rank、score、score_type、retrieval和hierarchy_path。引用仅在matches[].source_ref中，正文仅在matches[].text中，不输出顶层source_refs或重复hits。rank/score/score_type只保留在match顶层，retrieval保留matched_by、通道诊断等其他字段。
 
-## 3. 返回结构与状态映射
+重复的工具meta计时、固定attempt_count和implementation_version已移除。Runtime以TraceStep.duration_ms计时，以Execution.attempts/RunUsage记录含重试的执行次数；单次RAG基线另由评测程序记录retrieval_ms。这些计数不是embedding HTTP请求数，未测量的用量和费用保持未知。
 
-检索核心当前返回普通 `dict`，结构如下（字段值为示意）：
+Runtime的ToolContext保持原样；RAG不接收deadline。embedding单次默认30秒且无内部重试。Runtime停止等待仍不等于终止底层线程，不能声称已有跨重试的严格总截止时间。
 
-```python
-{
-    "status": "ok",
-    "query": "原始查询",
-    "results": [
-        {
-            "provision_id": "法条唯一标识",
-            "law_title": "法律名称",
-            "article_no": "条号",
-            "hierarchy_path": ["章、节等层级"],
-            "text": "完整法条正文",
-            "source": {
-                "url": "来源链接",
-                "file": "来源 PDF 路径",
-                "page_start": 1,
-                "page_end": 1,
-            },
-            "version": {
-                "publication_date": "YYYY-MM-DD",
-                "effective_date": "YYYY-MM-DD",
-                "expiry_date": None,
-                "status": "登记的效力状态",
-            },
-            "retrieval": {
-                "rank": 1,
-                "score": 0.8,
-                "matched_by": ["vector"],
-            },
-        }
-    ],
-    "warnings": [],
-}
-```
+## 4. 引用结构
 
-建议适配为 Runtime 的 `ToolResult`：
+公共类型沿用schemas.py。SourceRef只接受结构化SourceLocator，source_version为必填字符串，不保留旧字段或字符串定位解析。
 
-| 核心行为 | 工具状态 | 处理方式 |
-|---|---|---|
-| `status="ok"` | `ok` | 在 `data` 中保留查询、候选和警告，生成 `source_refs` |
-| `status="no_results"` | `empty` | 保留空列表、`reason` 和 `warnings` |
-| 抛出执行异常 | `error` | 按异常类型转换错误，保留必要诊断信息，避免暴露密钥 |
-
-核心不会把执行异常包装为无结果。目前也没有经过验证的依据充分性判断，不自动输出 `insufficient`。
-
-**语义约束：** `ok` 只表示存在候选；`score` 是排序分数，不是法律适用概率。精确路由、余弦检索与 RRF 的分数含义不同，不应直接跨通道比较。
-
-## 4. Agent 需要了解的检索行为
-
-- 明确的法律全称或简称＋中文/阿拉伯数字条号优先走精确路由，亦支持条号在法律名称之前的写法。
-- 支持同法多条和跨法分别指定目标，按查询顺序去重返回全部指定条文，不因 `top_k` 截断。
-- 任一指定目标未找到时，返回 `no_results`、`reason=exact_article_not_found`，警告列出缺失目标，不返回部分命中或相似条文。
-- 条号范围、简写或法律与条号对应关系不明确时，返回 `no_results`、`reason=unsupported_exact_query`，提示逐条写明目标。
-- 空白、仅符号输入，以及关键词无有效词或无正分候选，可以返回确定性空结果。
-- 普通语义查询即使超出语料范围，也可能返回相似候选。Agent 仍需检查候选是否支持当前问题。
-- 当前仅有单版本语料。登记为有效不代表已核验现行效力，也不代表适用于任意历史案件。
-
-## 5. 分层与职责
-
-```text
-前端 → Agent / Runtime → search_statutes 薄适配 → RetrievalService
-CLI / 检索评测 ───────────────────────────────→ RetrievalService
-```
-
-| 内容 | 建议负责方 |
+| 字段 | 约定 |
 |---|---|
-| 资料解析、索引、召回、来源元数据 | RAG 侧 |
-| 检索工具参数说明、结果包装和引用转换 | RAG 侧，结合 Runtime 类型实现 |
-| 公共 ToolSpec / ToolContext / ToolResult、注册与调度 | Agent / Runtime 侧 |
-| 查询组织、多争点拆分、继续检索或追问的决策 | Agent 侧 |
-| 检索后依据充分性、答案生成 | Agent 侧；引用与答案核验需协同确认 |
-| 运行状态、事件和前端交互接口 | Agent / Runtime 与 API 侧 |
+| source_id | 原有provision_id |
+| source_type | statute |
+| title | 法律名称 |
+| locator | 法规返回article、page_start、page_end；不输出未使用的paragraph/chunk_id |
+| source_version | 法律公布日期；未知时用条文正文SHA-256 |
+| effective_from / effective_to | 生效/失效日期，未知null |
+| retrieved_at / retrieved_date | 现有登记只有日期，填retrieved_date，时间戳为null |
+| content_sha256 | 返回正文的SHA-256 |
+| source_file / url | 原PDF文件名和来源URL |
 
-适配层建议放在 `backend/tools/knowledge_tools.py`，仅做参数传递、结果包装与异常转换。检索核心不依赖 Runtime。跨模块模型可沿用团队契约中的 Pydantic 类型，具体导入路径以双方实际代码为准。
+SourceLocator至少有一种位置，页码必须为正且起止有序。来源版本只有source_version；version、excerpt及字符串locator会被明确拒绝。
 
-RAG 内部使用 LangChain 检索组件，不要求 Agent 主流程采用相同框架。CLI 继续作为独立调试入口，评测脚本用于批量验证检索效果。
+to_search_match只映射JSON字段，不先构造模型再转回字典。Runtime从matches校验一次并收集SourceRef；无效引用转为INTERNAL，不进入模型上下文或最终来源。执行轨迹、检查点和最终答案中的source_refs是派生的运行级汇总，不是工具的第二份引用载荷，也不复制正文。mock法规检索复用相同工具参数和转换函数。
 
-## 6. 来源引用
+可复现的引用样例：
 
-建议以现有字段构造 `SourceRef`：
+~~~python
+hit = service.search("民法典第一条")
+ref = to_search_match(hit["results"][0], service.source_metadata)["source_ref"]
+assert ref["source_id"] == "中华人民共和国民法典::2020-05-28::第一条"
+assert ref["source_version"] == "2020-05-28"
+assert ref["locator"]["page_start"] == 7
+assert ref["retrieved_at"] is None and ref["retrieved_date"] == "2026-10-30"
+empty = service.search("民法典第9000条")
+assert empty["reason"] == "exact_article_not_found"
+~~~
 
-| SourceRef 字段 | RAG 字段或建议值 |
-|---|---|
-| `source_id` | `provision_id` |
-| `source_type` | `"statute"` |
-| `title` | `law_title` |
-| `locator` | `article_no` |
-| `version` | 版本标识的表达方式待确认，当前有日期和状态字段 |
-| `excerpt` | `text`，第一版可保留完整法条 |
-| `url` | `source.url` |
+最终答案应引用实际返回的source_id。部分URL仍是官方数据库首页，具体原文可按PDF文件、页码和条号核对。结构化引用不保证模型最终会正确标注或解释依据，仍需输出核验。
 
-PDF 文件和页码可作为扩展字段保留，用于定位原文。`source.file` 是后端来源路径，若前端需要打开 PDF，需要 API 层提供可访问的文件地址。
+## 5. 快照与评测衔接
 
-最终答案中的引用应使用工具实际返回的 `source_id`，能回溯到对应条文。当前部分来源 URL 仍为官方数据库首页，具体版本链接需后续补齐。
+knowledge_version是实际加载法条按ID排序并规范JSON序列化后的SHA-256。它标识法条记录，与top_k和检索模式无关。knowledge_manifest另外记录各法律条数、向量配置/向量哈希、BM25版本/分词指纹/参数和检索配置。
 
-## 7. 环境与运行管理
+这些是内存属性，不自动复制或保存语料。评测程序在实验开始时核对并保存manifest及对应JSONL、PDF和索引；不增加请求级knowledge_version校验或独立manifest工具。工具结果中携带knowledge_version，便于关联记录。
 
-- 建议使用已验证的 `.venv-rag` 环境，依赖见根目录 `requirements.txt`。
-- 默认向量模式依赖 `data/index/vector_metadata.npz`，查询缓存为 `embedding_cache.sqlite3`；关键词/混合模式还需 BM25 索引。
-- BM25索引必须携带与当前词典、分词源码、jieba版本和配置匹配的`tokenizer_fingerprint`；无指纹旧索引或失配索引需通过`scripts/rag/build_bm25_index.py`重建。运行中修改词典/源码需先重启进程；默认向量通道不依赖此索引。
-- `.venv-rag/`、`.env`、`data/index/` 不随 Git 分发，需要约定本地环境和索引的准备方式。
-- 环境变量见 `.env.example`：`SILICONFLOW_API_KEY`、`RAG_EMBEDDING_BASE_URL`、`RAG_EMBEDDING_MODEL`。查询模型与端点必须匹配索引。
-- 服务初始化后复用已加载资源。普通查询缓存未命中时会请求 embedding API，延迟与网络有关。
-- embedding 客户端默认单次 HTTP 超时为 30 秒，与 Runtime 的 `ToolSpec.timeout_s` 默认值一致；通过构造参数 `timeout_s` 或 `RAG_EMBEDDING_TIMEOUT_S` 可配置。客户端不自动重试，由 Runtime 按 `ToolSpec.max_retries` 决定是否重新调用工具，独立脚本失败后由调用方决定是否重跑。
-- 检索入口保持 `RetrievalService.search(query, top_k=5)`，当前不增加 `deadline` 参数；后续确有需要再扩展。HTTP 请求超时抛出 `TimeoutError`，不包装为无结果。未来工具适配需将其转换为 `TIMEOUT` 并按约定标记可重试；目前尚未实现该适配。
-- Runtime 放弃等待不等于底层请求已取消。urllib 的 HTTP 超时是阻塞操作超时，不保证整个工具调用在 30 秒内强制结束；执行取消和跨重试的总预算由 Runtime 侧后续确认。
+当前只索引法规，case_exclusion_manifest为null不代表已完成最终测试排除审计。现有40/24题用于检索开发和回归，不能直接充当端到端最终测试。
 
-## 8. 首轮联调
+评测人员可以直接适配search()原结果，也可读取真实工具的data.matches。request_id、experiment_run_id、评测ok/error外壳和评分记录由evaluation/adapters衔接。当前RetrievalAdapter也复用to_search_match，统一结构化source_ref和公布日期source_version；历史试点仍保留原载荷，不覆盖或混入新结果。
 
-先验证调用链与结果语义，再验证真实模型的工具调用和回答表现。
+## 6. 环境与模式
 
-| 场景 | 重点检查 |
-|---|---|
-| 普通法律问题 | 工具可调用，候选正文与来源完整 |
-| 法律名称＋中文条号 | 精确命中指定条文 |
-| 同法多条、跨法多条、阿拉伯条号及反向全称 | 完整定位，按查询顺序去重，不受top_k截断 |
-| 部分目标缺失或不支持的复合写法 | 返回empty并保留缺失或格式原因，不静默返回首条 |
-| 指定但未找到的条号 | 映射为 `empty`，保留原因，不返回相似条文替代 |
-| 空白、符号或非法参数 | 参数校验和空结果处理清晰 |
-| 超出语料覆盖范围 | Agent 不把相似候选自动视为充分依据 |
-| API 失败或索引缺失 | 识别为执行故障，不混作无依据 |
-| 生成带引用的答案 | 引用 ID 对应实际候选，能定位原文 |
+默认CIVRA_RETRIEVAL_MODE=exact-vector，使用data/index/vector_metadata.npz；索引已有时直接复用。语义查询缓存未命中会请求SiliconFlow BAAI/bge-m3 API，法条向量不重新生成；精确路由不请求embedding。
 
-现有检索评测只能说明候选召回与排序表现，尚不能证明 Agent 的答案和引用正确性。双方应共同选少量端到端样例验证这些行为。
+离线关键词检查可显式选择CIVRA_RETRIEVAL_MODE=keyword或注入RetrievalService(RetrievalConfig(channel="keyword"), ...)。这是测试配置，不改变默认方案。CIVRA_RETRIEVAL_MODE只控制工具默认懒加载，显式注入service时以其配置为准。
 
-## 9. 本次需要确认的事项
+.env、.venv-rag及data/index不提交Git。CLI按当前检索模式检查所需索引，不再仅以BM25文件判断向量模式能否使用。--dry-run只替换生成模型；完全离线需同时使用--mock-statutes，或显式使用离线检索配置。
 
-1. 第一版是否采用 `search_statutes(query, top_k=5)`，以及 `top_k` 的上限。
-2. Runtime 公共类型、注册方式和工具适配层的实现分工。
-3. `ToolResult.data` 的候选存放方式，以及 `SourceRef` 的版本与页码字段。
-4. 索引准备方式、初始化时机、超时预算与重试归属。
-5. 首轮联调样例及双方接入顺序。
+## 7. 联调与验证
 
-上述事项确认后即可实现薄适配并联调；日期过滤、reranker、多版本管理等增强另行讨论。
+首轮检查普通候选、精确多条、指定条文缺失、非法参数、模拟超时与上游故障，以及结构化引用在工具、LangChain包装和检查点间的传递。保留现有测试，临时验证脚本用完删除；不以脚本模型结果宣称真实模型效果。
+
+2026-11-10本地验证：系统Python运行现有88项测试全部通过；.venv-rag使用本地只读查询缓存和真实向量索引，对64道既有题逐条核对正文、排名、分数和引用，全部一致。另验证默认exact-vector懒加载只初始化一次、service注入、多条号不截断、非法参数拒绝、超时/上游错误重试及factory脚本Agent的检查点往返。没有请求真实embedding/生成API，未重建索引或写入查询缓存，临时验证未保留文件。系统Python的LangChain版本与requirements固定版本不同，本结果不等同于固定依赖环境的完整验收。
+
+正式评测仍需共同确认接收格式、固定检索配置、缓存冷热、计时/重试规则和团队标注复核。get_source、案例检索、日期过滤等延期项不因接口接通而视为完成。
+
+同日Agent执行层已改为create_agent，RAG的search、工具注册和matches/source_ref合同不变。新运行恢复需保留var/runs/agent.sqlite3和项目JSON元数据；旧版未完成会话重新开始，旧原始文件不改动，当前接口不再兼容解析旧引用。离线ScriptedLLM与真实模型共用同一框架路径，原生HTTP客户端和独立lc_tools/lc_model包装已移除；历史试点结果未覆盖，本次没有新增真实模型效果结论。
+
+create_agent迁移最终验收使用.venv-rag的固定依赖：95项测试及4项子测试通过，pip check无冲突。两个独立进程在重建相同案件状态后成功恢复同一框架线程；真实向量RAG在只读问题缓存下通过新Agent及引用链路。此前系统Python的88项结果为迁移前适配记录，不作为本轮固定依赖验收结论。
+
+2026-11-11引用去重后97项测试及4项子测试通过；另以真实缓存向量核对新工具载荷只保留一份引用和正文，轨迹/最终来源汇总、引用校验及检索分数排序均保持正确。临时验证不留脚本，不请求真实API。
+2026-11-11进一步删除旧引用模型字段与同步校验，运行记录使用langchain-create-agent-v2。当前运行管理跳过旧格式记录，不尝试转换旧引用，旧文件不删除。

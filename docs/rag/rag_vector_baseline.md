@@ -40,6 +40,8 @@ $ragPython = ".\.venv-rag\Scripts\python.exe"
 
 ### 统一Python入口与配置
 
+2026-11-10接入更新：原有search()及CLI继续使用；真实工具在现有knowledge_tools.py中调用同一服务，包装为data.matches和结构化引用，默认exact-vector＋metadata。factory可注入service，检索快照由service属性提供。完整接入示例及首轮限制见[交接说明](rag_agent_handoff.md)。
+
 `scripts/rag/search.py` 是CLI入口，实际程序入口为 `backend.knowledge.retrieval.service.RetrievalService`。CLI和评测均调用该服务；其他Python模块可直接调用，不需要运行命令行脚本。服务初始化时加载资源，重复查询复用索引、精确查找表及embedding客户端。
 
 ```python

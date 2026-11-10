@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import threading
@@ -11,18 +12,21 @@ from pathlib import Path
 
 import pytest
 
+from backend.common.config import load_dotenv
+from evaluation.config import run_config_from_pilot
 from backend.agent.factory import (
     DEFAULT_MODEL, SILICONFLOW_BASE_URL, MissingAPIKey, build_registry, build_runner, llm_from_env,
-    load_dotenv, run_config_from_pilot,
 )
 from backend.agent.case_port import InMemoryCaseStore
-from backend.agent.llm import OpenAICompatibleClient, ScriptedLLM, tool_call
-from backend.agent.store import RunStore
+from backend.agent.model.llm import ScriptedLLM, make_chat_model, response_from_message, tool_call
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessage
+from backend.agent.runtime.store import RunStore
 from backend.common.schemas import RunConfig, UserReply
 from backend.knowledge.retrieval.results import to_result
 from evaluation.adapters.team import AgentAdapter
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 LLM_VARS = ("SILICONFLOW_API_KEY", "CIVRA_LLM_API_KEY", "CIVRA_LLM_BASE_URL", "CIVRA_LLM_MODEL",
             "CIVRA_LLM_PRICE_IN", "CIVRA_LLM_PRICE_OUT", "CIVRA_LLM_PRICE_VERSION")
 
@@ -49,24 +53,25 @@ def test_load_dotenv_sets_only_missing_names(tmp_path, monkeypatch):
 
 
 def test_llm_from_env_defaults_to_langchain_on_siliconflow(monkeypatch):
-    from backend.agent.lc_model import LangChainLLMClient
     monkeypatch.setenv("SILICONFLOW_API_KEY", "sk-team")
     client = llm_from_env()
-    assert isinstance(client, LangChainLLMClient) and client.model == DEFAULT_MODEL
-    chat = client.chat_model
+    assert isinstance(client, ChatOpenAI) and client.model_name == DEFAULT_MODEL
+    chat = client
     assert (chat.openai_api_base, chat.max_retries) == (SILICONFLOW_BASE_URL, 0)
     assert chat.openai_api_key.get_secret_value() == "sk-team"
 
 
-def test_llm_from_env_native_backend_and_overrides(monkeypatch):
+def test_llm_from_env_overrides_and_rejects_removed_backend(monkeypatch):
     monkeypatch.setenv("CIVRA_LLM_API_KEY", "sk-own")
     monkeypatch.setenv("CIVRA_LLM_BASE_URL", "http://other/v1")
     monkeypatch.setenv("CIVRA_LLM_BACKEND", "native")
+    with pytest.raises(ValueError, match="native已移除"):
+        llm_from_env(model="deepseek-chat")
+    monkeypatch.delenv("CIVRA_LLM_BACKEND")
     client = llm_from_env(model="deepseek-chat")
-    assert isinstance(client, OpenAICompatibleClient)
-    assert (client.base_url, client.model, client.api_key) == ("http://other/v1", "deepseek-chat", "sk-own")
-    with pytest.raises(ValueError, match="langchain or native"):
-        llm_from_env(backend="other")
+    assert isinstance(client, ChatOpenAI)
+    assert (client.openai_api_base, client.model_name) == ("http://other/v1", "deepseek-chat")
+    assert client.openai_api_key.get_secret_value() == "sk-own"
 
 
 def test_missing_key_is_a_clear_error(tmp_path):
@@ -78,7 +83,8 @@ def test_registry_options(tmp_path):
     cases = InMemoryCaseStore()
     full = build_registry(cases, statute_search=lambda q, k=None: {})
     assert {"search_statutes", "update_case", "check_evidence", "verify_output", "draft_document"} == set(full.names())
-    assert full.get_spec("search_statutes").owner == "member2" and "incident_date" in full.get_spec("search_statutes").parameters["properties"]
+    assert full.get_spec("search_statutes").owner == "member2"
+    assert set(full.get_spec("search_statutes").parameters["properties"]) == {"query", "top_k"}
     real_only = build_registry(cases, statute_search=lambda q, k=None: {}, mock_business_tools=False)
     assert set(real_only.names()) == {"search_statutes", "update_case"}
     mock = build_registry(cases, real_statutes=False)
@@ -163,22 +169,25 @@ def provider():
 def test_client_request_and_response_over_http(provider):
     fake = provider([completion(calls=[("search_statutes", {"query": "交强险"})], finish="tool_calls"),
                      completion(content="好的", usage=False, rid="req-2")])
-    client = OpenAICompatibleClient(base_url=fake.url, api_key="sk-test", model="Qwen/Qwen2.5-7B-Instruct",
+    client = make_chat_model(base_url=fake.url, api_key="sk-test", model="Qwen/Qwen2.5-7B-Instruct",
                                     price_in="2", price_out="8", price_version="2026-11")
     from backend.tools.knowledge_tools import SEARCH_STATUTES
-    r = client.chat([{"role": "user", "content": "hi"}], [SEARCH_STATUTES], temperature=0.1, max_tokens=500,
-                    seed=7, tool_choice="search_statutes")
+    schema = {"type": "function", "function": {"name": SEARCH_STATUTES.name,
+              "description": SEARCH_STATUTES.description, "parameters": SEARCH_STATUTES.parameters}}
+    reply = client.bind_tools([schema], temperature=0.1, max_tokens=500,
+                              seed=7, tool_choice="search_statutes").invoke([HumanMessage("hi")])
+    r = response_from_message(reply, client)
     sent = fake.requests[0]
     assert sent["path"] == "/v1/chat/completions" and sent["auth"] == "Bearer sk-test"
     body = sent["body"]
-    assert (body["model"], body["temperature"], body["max_tokens"], body["seed"]) == ("Qwen/Qwen2.5-7B-Instruct", 0.1, 500, 7)
+    assert (body["model"], body["temperature"], body.get("max_tokens", body.get("max_completion_tokens")), body["seed"]) == ("Qwen/Qwen2.5-7B-Instruct", 0.1, 500, 7)
     assert body["tools"][0]["function"]["name"] == "search_statutes"
     assert body["tool_choice"] == {"type": "function", "function": {"name": "search_statutes"}}
     assert r.tool_calls[0].arguments == {"query": "交强险"} and r.finish_reason == "tool_calls"
     assert r.provider_request_id == "req-1" and r.usage.total_tokens == 150 and r.usage.cached_tokens == 20
     assert r.cost.amount == "0.000480" and r.cost.price_version == "2026-11"  # (2*120 + 8*30) / 1e6
 
-    r2 = client.chat([{"role": "user", "content": "hi"}], model="other-model")
+    r2 = response_from_message(client.bind(model="other-model").invoke([HumanMessage("hi")]), client)
     assert fake.requests[1]["body"]["model"] == "other-model" and "tools" not in fake.requests[1]["body"]
     assert r2.usage.prompt_tokens is None and r2.cost is None  # unknown stays null
 
@@ -193,11 +202,11 @@ def test_full_agent_over_http_through_member5_adapter(provider, tmp_path):
     }
     fake = provider([
         completion(calls=[("ask_user", {"questions": [{"question_id": "q1", "text": "对方是否投保交强险？"}]})], finish="tool_calls"),
-        completion(calls=[("search_statutes", {"query": "交强险 赔偿", "incident_date": "2026-05-12"})], finish="tool_calls"),
+        completion(calls=[("search_statutes", {"query": "交强险 赔偿"})], finish="tool_calls"),
         completion(calls=[("finish", {"answer": "先由交强险赔偿。", "citations": [
             {"source_id": "民法典::第一千二百一十三条", "location": "先由交强险赔偿。"}]})], finish="tool_calls"),
     ])
-    client = OpenAICompatibleClient(base_url=fake.url, api_key="sk-test", model="Qwen/Qwen2.5-7B-Instruct")
+    client = make_chat_model(base_url=fake.url, api_key="sk-test", model="Qwen/Qwen2.5-7B-Instruct")
     setup = build_runner(llm=client, store=RunStore(tmp_path), mock_business_tools=False, dotenv=None,
                          statute_search=lambda q, k=None: {"status": "ok", "query": q, "warnings": [],
                                                            "results": [to_result(provision, 1, 9.0, ["keyword"])]})
@@ -223,7 +232,7 @@ def test_full_agent_over_http_through_member5_adapter(provider, tmp_path):
     assert any("有交强险" in (m.get("content") or "") for m in second["messages"])
     assert {t["function"]["name"] for t in second["tools"]} == {"search_statutes", "update_case", "ask_user",
                                                                 "request_route_choice", "finish"}
-    assert second["max_tokens"] == 800
+    assert second.get("max_tokens", second.get("max_completion_tokens")) == 800
     # Every assistant tool_call got its tool reply before the next request (OpenAI format requirement).
     third = fake.requests[2]["body"]["messages"]
     called = {c["id"] for m in third if m.get("tool_calls") for c in m["tool_calls"]}
@@ -235,10 +244,11 @@ def test_full_agent_over_http_through_member5_adapter(provider, tmp_path):
 
 def test_run_agent_dry_run_cli(tmp_path):
     proc = subprocess.run(
-        [sys.executable, "-W", "ignore", "scripts/run_agent.py", "--dry-run", "--mock-statutes",
+        [sys.executable, "-W", "ignore", "scripts/agent/run_agent.py", "--dry-run", "--mock-statutes",
          "--message", "我的车被追尾了", "--auto-reply", "有交强险"],
         cwd=ROOT, capture_output=True, text=True, timeout=60,
-        env={"PATH": "/usr/bin:/bin", "CIVRA_RUNS_DIR": str(tmp_path)},
+        env={**{k: v for k, v in os.environ.items() if k.upper() in {"PATH", "SYSTEMROOT", "WINDIR", "TEMP", "TMP"}},
+             "CIVRA_RUNS_DIR": str(tmp_path)},
     )
     assert proc.returncode == 0, proc.stderr
     out = proc.stdout

@@ -7,9 +7,9 @@ import time
 import pytest
 
 from backend.agent.case_port import InMemoryCaseStore
-from backend.agent.llm import ScriptedLLM, tool_call
+from backend.agent.model.llm import ScriptedLLM, tool_call
 from backend.agent.runner import AgentRunner, RunStateError, StaleWait, VersionConflict
-from backend.agent.store import RunStore
+from backend.agent.runtime.store import RunStore
 from backend.common.schemas import CostInfo, LLMResponse, RunConfig, TokenUsage, UserReply
 from backend.tools.mock_tools import build_mock_registry
 
@@ -173,7 +173,8 @@ def test_export_trace_pages_and_exposes_full_results(cases, tmp_path):
     assert tool_step.parent_step_id == tool_step.step_id - 1
     full = runner.get_step_result(info.run_id, tool_step.result_ref)
     assert full["arguments"] == {"query": "交强险"}
-    assert full["result"]["source_refs"][0]["source_id"] == "civil_code_1213"
+    assert full["result"]["data"]["matches"][0]["source_ref"]["source_id"] == "civil_code_1213"
+    assert "source_refs" not in full["result"]
     model_step = next(s for s in steps if s.step_type == "model_call")
     assert runner.get_step_result(info.run_id, model_step.result_ref)["response"]["finish_reason"]
 

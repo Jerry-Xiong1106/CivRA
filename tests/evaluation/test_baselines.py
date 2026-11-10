@@ -4,10 +4,10 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from backend.agent.llm import ScriptedLLM, tool_call
+from backend.agent.model.llm import ScriptedLLM, tool_call
 from backend.agent.case_port import InMemoryCaseStore
 from backend.agent.runner import AgentRunner
-from backend.agent.store import RunStore
+from backend.agent.runtime.store import RunStore
 from backend.common.schemas import LLMResponse, TokenUsage, UserReply, RunConfig
 from backend.tools.mock_tools import build_mock_registry
 from evaluation.adapters.team import ModelAdapter, RetrievalAdapter, AgentAdapter
@@ -44,6 +44,26 @@ class BaselineTests(unittest.TestCase):
         self.assertEqual(result['status'], 'completed')
         self.assertEqual(result['retrieval']['matches'], [])
         self.assertEqual(result['retrieval_calls'], 1)
+
+    def test_retrieval_adapter_uses_shared_structured_source_contract(self):
+        from backend.knowledge.retrieval.results import to_result
+        from tests.rag.test_langchain_retrieval import provision
+        p = provision('第一条', 'body')
+        class Service:
+            knowledge_version = 'test-snapshot'
+            source_metadata = {}
+            def search(self, query, top_k):
+                return {'status': 'ok', 'query': query, 'warnings': [],
+                        'results': [to_result(p, 1, 0.8, ['vector'])]}
+        data = RetrievalAdapter(Service()).search_statutes('q', 5)
+        ref = data['matches'][0]['source_ref']
+        self.assertEqual(ref['source_version'], '2020-05-28')
+        self.assertEqual(ref['effective_from'], '2021-01-01')
+        self.assertEqual(ref['locator']['article'], '第一条')
+        self.assertEqual(data['knowledge_version'], 'test-snapshot')
+        p['page_start'] = 0
+        with self.assertRaises(ValueError):
+            RetrievalAdapter(Service()).search_statutes('q', 5)
 
     def test_failure_does_not_call_model_after_retrieval_error(self):
         class Broken:

@@ -8,9 +8,9 @@ import time
 import pytest
 
 from backend.agent.case_port import InMemoryCaseStore
-from backend.agent.llm import ScriptedLLM, tool_call
+from backend.agent.model.llm import ScriptedLLM, tool_call
 from backend.agent.runner import AgentRunner, RunConflict, RunStateError
-from backend.agent.store import RunStore
+from backend.agent.runtime.store import CURRENT_ENGINE, RunStore
 from backend.common.schemas import LLMResponse, RunConfig, ToolResult, ToolSpec, UserReply
 from backend.tools.mock_tools import build_mock_registry
 from backend.tools.registry import ToolRegistry
@@ -250,9 +250,10 @@ def test_long_history_is_compacted_but_stored_in_full(cases, tmp_path):
     ids_answered = {m["tool_call_id"] for m in sent if m["role"] == "tool"}
     assert ids_called == ids_answered  # no orphaned tool_calls after compaction
 
-    from backend.agent.store import RunStore as RS
-    stored = RS(tmp_path).load_checkpoint(info.run_id).messages
-    assert sum(big in (m.get("content") or "") for m in stored if m["role"] == "tool") == 11  # full history kept
+    from backend.agent.runtime.store import RunStore as RS
+    stored = RS(tmp_path).read_messages(info.run_id)
+    assert "messages" not in json.loads((tmp_path / info.run_id / "checkpoint.json").read_text(encoding="utf-8"))
+    assert sum(big in m.content for m in stored if m.type == "tool") == 11  # full history kept
 
 
 def test_model_error_fails_run(cases, tmp_path):
@@ -261,7 +262,8 @@ def test_model_error_fails_run(cases, tmp_path):
 
     runner = make_runner(cases, tmp_path, [boom])
     info = runner.start_run(CASE, "hi")
-    assert info.status == "failed" and "network down" in info.error
+    assert info.status == "failed" and "ConnectionError" in info.error
+    assert "network down" not in info.error  # provider exception text is not persisted
 
 
 def test_cancel_while_waiting_and_conflicts(cases, tmp_path):
@@ -275,8 +277,8 @@ def test_cancel_while_waiting_and_conflicts(cases, tmp_path):
 def test_one_running_run_per_case(cases, tmp_path):
     store = RunStore(tmp_path)
     runner = AgentRunner(ScriptedLLM([]), build_mock_registry(cases), cases, store)
-    from backend.agent.store import Checkpoint
-    store.save_checkpoint(Checkpoint(run_id="run_x", case_id=CASE, status="running", config=RunConfig(),
+    from backend.agent.runtime.store import Checkpoint
+    store.save_checkpoint(Checkpoint(run_id="run_x", engine=CURRENT_ENGINE, case_id=CASE, status="running", config=RunConfig(),
                                      messages=[], case_version=1, stage="consultation"))
     with pytest.raises(RunConflict):
         runner.start_run(CASE, "hi")
@@ -285,10 +287,10 @@ def test_one_running_run_per_case(cases, tmp_path):
 # ---------------------------------------------------------------- registry
 
 def _ctx():
-    from datetime import datetime, timezone
+    from datetime import datetime, timedelta, timezone
     from backend.common.schemas import ToolContext
     return ToolContext(case_id=CASE, run_id="r", step_id=1, case_version=1,
-                       deadline=datetime.now(timezone.utc), stage="consultation")
+                       deadline=datetime.now(timezone.utc) + timedelta(seconds=30), stage="consultation")
 
 
 def _spec(name, **kw):
@@ -327,3 +329,57 @@ def test_registry_rejects_duplicates_and_unknown_tools():
     with pytest.raises(ValueError):
         reg.register(_spec("a"), lambda a, c: ToolResult(status="ok"))
     assert reg.execute("nope", {}, _ctx()).result.error.code == "NOT_FOUND"
+
+
+def test_registry_does_not_retry_side_effect_after_timeout():
+    from threading import Event
+    release = Event()
+    calls = []
+    with ToolRegistry() as reg:
+        @reg.tool(_spec("write", timeout_s=0.02, max_retries=3, side_effects=True))
+        def write(args, ctx):
+            calls.append(1)
+            release.wait(2)
+            return ToolResult(status="ok")
+
+        try:
+            result = reg.execute("write", {}, _ctx())
+            assert result.attempts == 1 and calls == [1]
+            assert result.result.error.code == "TIMEOUT"
+            assert not result.result.error.retryable
+        finally:
+            release.set()
+
+
+def test_registry_expired_deadline_never_submits_handler():
+    from datetime import datetime, timedelta, timezone
+    calls = []
+    with ToolRegistry() as reg:
+        reg.register(_spec("read"), lambda a, c: calls.append(1))
+        ctx = _ctx().model_copy(update={"deadline": datetime.now(timezone.utc) - timedelta(seconds=1)})
+        result = reg.execute("read", {}, ctx)
+        assert result.attempts == 0 and calls == []
+        assert result.result.error.code == "TIMEOUT"
+
+
+def test_registry_retry_shares_original_deadline():
+    from datetime import datetime, timedelta, timezone
+    from threading import Event
+    release = Event()
+    calls = []
+    with ToolRegistry() as reg:
+        @reg.tool(_spec("read", timeout_s=1, max_retries=3))
+        def read(args, ctx):
+            calls.append(ctx.deadline)
+            if len(calls) == 1:
+                return ToolResult.fail("UPSTREAM", "retry", retryable=True)
+            release.wait(2)
+            return ToolResult(status="ok")
+
+        try:
+            ctx = _ctx().model_copy(update={"deadline": datetime.now(timezone.utc) + timedelta(seconds=0.1)})
+            result = reg.execute("read", {}, ctx)
+            assert result.result.error.code == "TIMEOUT" and result.attempts == 2
+            assert calls == [ctx.deadline, ctx.deadline]
+        finally:
+            release.set()

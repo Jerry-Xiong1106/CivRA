@@ -87,8 +87,8 @@ Member 5 owns the evaluation protocol, task sets, three baselines, experiment ru
 Mock runs check the evaluation software; they are not evidence of model performance. Offline task checks (Python with Pydantic 2.7+):
 
 ```bash
-python scripts/validate_evaluation_tasks.py
-python scripts/validate_evaluation_tasks.py --private-dir evaluation/private/pilot_v1
+python scripts/evaluation/validate_evaluation_tasks.py
+python scripts/evaluation/validate_evaluation_tasks.py --private-dir evaluation/private/pilot_v1
 python -m unittest discover -s tests/evaluation -p 'test_*.py' -v
 ```
 
@@ -175,7 +175,7 @@ python3 -m venv .venv-evaluation
 .venv-evaluation/bin/python -m pip install -r evaluation/requirements.txt
 # Set SILICONFLOW_API_KEY in your shell for index construction; never commit it.
 .venv-evaluation/bin/python scripts/rag/build_vector_index.py --variant metadata
-.venv-evaluation/bin/python scripts/run_evaluation_pilot.py --prompt-key
+.venv-evaluation/bin/python scripts/evaluation/run_evaluation_pilot.py --prompt-key
 .venv-evaluation/bin/python -m pytest tests -q
 ```
 
@@ -188,7 +188,7 @@ The first batch report is [pilot_results_v1.md](../docs/evaluation/pilot_results
 Review aggregation is separate from model execution:
 
 ```bash
-.venv-evaluation/bin/python scripts/review_evaluation_pilot.py \
+.venv-evaluation/bin/python scripts/evaluation/review_evaluation_pilot.py \
   --batch-dir evaluation/results/<batch-id> \
   --gold evaluation/private/pilot_v1/gold.jsonl \
   --reviews evaluation/results/<batch-id>/review_scores.json

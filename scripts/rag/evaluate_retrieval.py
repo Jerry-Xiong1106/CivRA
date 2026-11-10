@@ -10,10 +10,12 @@ import sys
 from time import perf_counter
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from backend.common.config import load_dotenv
 from backend.knowledge.keyword.bm25_index import build_index
 from backend.knowledge.retrieval.service import RetrievalService
-from backend.knowledge.config import (ROOT, CORPUS_DIR, DATASET_PATH, INDEX_DIR, INPUT_VARIANTS,
-    DEFAULT_CANDIDATE_K, DEFAULT_RRF_K, evaluation_specs, includes_metadata, vector_index_path)
+from backend.knowledge.config import (ROOT, CORPUS_DIR, INDEX_DIR, INPUT_VARIANTS,
+    DEFAULT_CANDIDATE_K, DEFAULT_RRF_K, includes_metadata, vector_index_path)
+from evaluation.config import DATASET_PATH, evaluation_specs
 from backend.knowledge.keyword.tokenizer import TOKENIZER_VERSION, tokenize
 
 
@@ -74,6 +76,7 @@ def main():
     parser.add_argument("--candidate-k", type=int, default=DEFAULT_CANDIDATE_K)
     parser.add_argument("--rrf-k", type=int, default=DEFAULT_RRF_K)
     args = parser.parse_args()
+    load_dotenv()
     if min(args.candidate_k, args.rrf_k) < 1:
         parser.error("candidate-k and rrf-k must be positive")
     paths = sorted(args.corpus_dir.glob("*.jsonl"))
@@ -98,7 +101,7 @@ def main():
         from backend.knowledge.vector.embedding import EmbeddingClient
         from backend.knowledge.vector.vector_index import load_vector_index
 
-        client = EmbeddingClient()
+        client = EmbeddingClient.from_env()
         corpus_hash = hashlib.sha256(json.dumps(bm25["metadata"].provisions, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
         for variant in INPUT_VARIANTS:
             index = load_vector_index(vector_index_path(variant, args.index_dir))

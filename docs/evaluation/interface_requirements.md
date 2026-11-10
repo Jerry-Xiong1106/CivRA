@@ -505,8 +505,8 @@ Related documents: [protocol](protocol.md), [annotation guide](annotation_guide.
 
 | 评测入口 | 实际接口及映射 | 验证范围 |
 | --- | --- | --- |
-| ModelAdapter.generate | LLMClient.chat；输出上限映射max_tokens，prompt/completion映射input/output | 脚本测试及10次真实生成 |
-| RetrievalAdapter.search_statutes | RetrievalService.search；no_results映射成功空matches | 空结果测试及5次真实向量查询 |
+| ModelAdapter.generate | BaseChatModel.invoke；输出上限映射max_tokens，prompt/completion映射input/output | 新接口已做本地HTTP/脚本验证；既有10次真实结果属于迁移前实现 |
+| RetrievalAdapter.search_statutes | RetrievalService.search；复用to_search_match，正常no_results映射成功空matches，引用/快照与真实工具一致 | 新结构已离线验证；既有5次真实向量结果使用迁移前载荷 |
 | AgentAdapter.run | start_run/resume_run、UserReply、wait/version/request保护、export_trace | 仅脚本暂停/恢复/轨迹测试 |
 
 Agent披露由回调决定，尚无自动语义隐藏事实控制器。基线只加载公开任务，私有标注由独立评分命令读取。工具调用ID、参数Schema和来源归属复用团队类型，不重复实现检索算法或案件数据库。
@@ -517,8 +517,8 @@ Implemented in [team.py](../../evaluation/adapters/team.py):
 
 | Evaluation API | Existing team API | Verification |
 | --- | --- | --- |
-| ModelAdapter.generate | LLMClient.chat; max_output_tokens becomes max_tokens; prompt/completion tokens become input/output tokens | Scripted tests and ten real generations |
-| RetrievalAdapter.search_statutes | RetrievalService.search; no_results becomes a successful empty matches list | Empty-result test and five real vector queries |
+| ModelAdapter.generate | BaseChatModel.invoke; max_output_tokens becomes max_tokens; prompt/completion tokens become input/output tokens | New interface verified with local HTTP/scripted tests; the ten retained real generations predate this migration |
+| RetrievalAdapter.search_statutes | RetrievalService.search plus shared to_search_match; normal no_results becomes empty matches; structured references and snapshot identity match the real tool | New structure verified offline; the five retained real queries use the earlier payload |
 | AgentAdapter.run | AgentRunner.start_run/resume_run, UserReply, wait_id/version/request safeguards, export_trace | Scripted pause/resume/trace test only |
 
 The Agent adapter delegates disclosure decisions to a callback. It is not an
