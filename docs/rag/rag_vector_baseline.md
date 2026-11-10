@@ -36,7 +36,7 @@ $ragPython = ".\.venv-rag\Scripts\python.exe"
 & $ragPython scripts/rag/search.py "把车借给朋友开，结果出了事故，车主要不要承担责任？" --mode vector --variant text
 ```
 
-命令行查询入口只有 `scripts/rag/search.py`，默认 `--mode exact-vector` 与metadata向量；可切换keyword（精确路由＋BM25）、vector（纯向量）、exact-vector（精确路由＋向量）、hybrid（精确路由＋RRF）。旧重复查询脚本已删除。`--top-k`控制最终结果数。
+命令行查询入口只有 `scripts/rag/search.py`，默认 `--mode exact-vector` 与metadata向量；可切换keyword（精确路由＋BM25）、vector（纯向量）、exact-vector（精确路由＋向量）、hybrid（精确路由＋RRF）。旧重复查询脚本已删除。`--top-k`控制普通检索的结果数；精确路由返回全部明确指定的条文，不因该参数截断。
 
 ### 统一Python入口与配置
 
@@ -66,15 +66,21 @@ hybrid的variant只选择向量输入，关键词始终使用metadata BM25，保
 
 查询模型/endpoint不匹配、融合语料不一致时会报错。法条改变后仍需重建索引；缓存复用不等于增量版本更新。服务端模型名不保证永久固定版本，因此不承诺跨时间位级复现。
 
+embedding 请求默认 HTTP 超时为 30 秒，可通过 `RAG_EMBEDDING_TIMEOUT_S` 或 `EmbeddingClient(timeout_s=...)` 配置；客户端不自动重试，由调用方或 Agent Runtime 决定重试。检索入口保持原有参数，当前不增加 `deadline`。HTTP 请求超时抛出 `TimeoutError`，属于执行失败，不是无检索结果。urllib 超时不能保证整个工具调用在 30 秒内强制结束或取消底层线程。独立构建/评测脚本每次 HTTP 请求受上述超时约束，没有整批总超时。
+
 ## RRF与共享逻辑
 
-统一服务先检查输入，再按配置调用 `exact/router.py`；`exact/matcher.py`负责原有法律名称＋条号识别，`retrieval/results.py`负责来源结果格式。精确命中返回单条条文并跳过embedding，识别到目标但库中未找到则停止并返回明确空结果；未识别到精确请求才运行相应召回通道。当前不处理一问多条号或阿拉伯条号规范化。
+统一服务先检查输入，再按配置调用 `exact/router.py`；`exact/matcher.py`负责法律名称＋条号识别，`retrieval/results.py`负责来源结果格式。精确路由支持同法多条、跨法分别指定条号、阿拉伯数字条号，以及条号在法律全称或简称之前的写法。全部目标命中时按查询顺序去重返回，跳过embedding；有目标缺失或格式无法完整识别时返回带原因的空结果，避免静默返回部分条文。未识别到精确请求才运行相应召回通道。
 
 RRF默认每通道召回50条、等权、`rrf_k=60`；分数是各通道 `1/(60+rank)` 之和，不直接相加BM25与余弦分数。按provision_id去重，每通道重复ID只算一次。平局按最佳通道排名、法条ID排序。`retrieval.channels`记录原始排名、原始分数及融合贡献；score_type区分exact与rrf。`--candidate-k`和`--rrf-k`可显式设置，本轮未扫描这些参数。
 
 评测统一为 `evaluate_retrieval.py`：默认只评关键词，`--mode all`加载两套向量并评全部十种配置。评测经过与CLI相同的 `RetrievalService.search()`及LangChain组件，复用内存索引并传入已有查询向量，不另写精确匹配或排序。默认输出路径仍对应原开发报告，进行迁移/新题对照时必须显式指定 `--output`避免覆盖；本轮已另存新报告。配置、分词和汇总指标未变，但少量BM25平局与RRF排名/分数发生变化，不再声称所有模式逐题位级一致。检索代码不读取gold。
 
 共享语料读取和metadata拼接位于 `backend/knowledge/corpus.py`；`keyword/`放BM25、jieba分词和词典，`vector/`放embedding客户端及向量索引，`exact/`放精确路由，`retrieval/`放统一编排、结果与融合。原先从扁平目录迁移到keyword后BM25已重建；本次不再移动BM25类所在模块，现有pickle仍可加载。NPZ和SQLite也继续原样复用。
+
+2026-11-09起BM25索引还必须携带匹配的分词配置指纹；上文pickle兼容性描述为目录迁移时的状态，无指纹旧索引现在需重建。本地metadata索引已离线重建，分词与排序不变；规则及重建命令见[关键词报告](rag_keyword_baseline.md#当前实现与运行)。NPZ向量索引和SQLite缓存无需变动。
+
+2026-11-09补充语料加载校验：`load_provisions()`在首个错误处停止并报告文件、实际行号和原因，不跳过坏记录。必填非空字符串为`provision_id`、`law_id`、`law_title`、`article_no`、`text`、`source_file`、`source_url`和`status`；`hierarchy_path`必须为非空字符串组成的列表，但允许列表为空。日期允许缺省或null，填写时须为有效的`YYYY-MM-DD`；页码允许同时缺省/null，否则须成对为正整数且起始页不大于结束页。非法JSON、非对象记录、空文件和跨文件重复ID同样报错，重复ID会指出首次出现的位置。校验不清洗正文、不判断法律适用或效力，也不替代`validate_provisions.py`对PDF、条号连续性和内容哈希的离线检查。104个异常样例及可空字段检查通过，现有1690条加载结果与修改前逐字段一致，原有5项组件测试通过；未重建索引或请求API，临时验证未保留脚本。
 
 ## 当前开发集结果
 
@@ -113,7 +119,15 @@ RRF默认每通道召回50条、等权、`rrf_k=60`；分数是各通道 `1/(60+
 
 查询CLI及各检索入口对空白、仅标点/符号的查询返回 `status=no_results`，新增稳定的 `reason` 字段，并在 `warnings` 解释原因。空查询为 `empty_query`，无文字或数字为 `no_searchable_content`。这一步不修改原查询或BM25分词。
 
-keyword、exact-vector和hybrid识别到现有精确路由支持的法律名称＋中文条号，但库中未找到时，返回 `exact_article_not_found`，不再以相似条文替代。阿拉伯数字条号返回 `unsupported_article_number`，提示改用中文条号，不将格式限制当作法条缺失。多法条请求和未知法律名称的识别仍未扩展。纯vector及评测中关闭精确路由的配置继续用于语义检索对照，不作精确存在性检查。
+keyword、exact-vector和hybrid识别到明确法条请求时，遵守以下规则（2026-11-09修复；上面的历史评分不重新覆盖）：
+
+- `民法典第一条和第二条`、`民法典第1条、第2条`、`第一条《中华人民共和国民法典》`均可精确定位；跨法请求需分别写明法律与条号，例如`民法典第76条和道路交通安全法第76条`。
+- 重复目标按首次出现顺序去重，返回原始法条正文与来源。明确指定的目标全部返回，不受 `top_k` 截断。
+- 任一目标不存在时返回 `exact_article_not_found`，警告列出缺失目标；结果列表为空，不返回部分命中或相似条文替代。
+- 条号范围、条号简写、`条之一`等附加编号、混合数字以及无法完整确定法律与条号对应关系的请求返回 `unsupported_exact_query`。例如`民法典第一条至第三条`或`民法典与道路交通安全法第七十六条`，需改为逐条写明目标，不猜测或只返回首条。
+- 未知法律名称的识别仍未扩展；只有未知法律或未指定法律的查询继续走普通检索。纯vector及评测中关闭精确路由的配置继续用于语义检索对照，不作精确存在性检查。
+
+本次离线验证覆盖多目标、顺序去重、格式拒绝、缺失目标、`top_k`不截断及跳过embedding；1690条法条的阿拉伯条号转换均与原条号一致，64道现有题的路由结果与修复前一致，原有5项组件测试通过。未请求embedding API、重建索引或覆盖历史评测报告；临时验证脚本已删除。
 
 keyword另区分 `no_keyword_tokens`（原始分词无可用词）与 `no_keyword_matches`（没有正分候选）；该规则不阻断vector或hybrid。融合通道均无候选时为 `no_candidates`。正常返回结构和排序保持不变；`ok`只表示返回了候选，不表示已有充分法律依据。没有新增相似度拒答阈值，现有4道语料不足反例仍返回候选。
 
