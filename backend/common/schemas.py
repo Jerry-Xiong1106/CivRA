@@ -129,6 +129,7 @@ class RunConfig(BaseModel):
     seed: int | None = None
     max_output_tokens: int | None = None     # per model call
     max_steps: int = 30
+    max_model_calls: int | None = None       # None = only max_steps limits model calls
     max_tool_calls: int = 20
     max_total_tokens: int | None = 200_000   # prompt + completion over the run; None = no limit
     max_run_seconds: float | None = 600      # active execution time, excluding waits for the user

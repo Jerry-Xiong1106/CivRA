@@ -227,6 +227,8 @@ class AgentRunner:
                 return self._stop(cp, "cancelled", "用户取消")
             if cp.usage.steps >= cfg.max_steps:
                 return self._stop(cp, "budget_exhausted", f"达到步数上限（{cfg.max_steps} 步）")
+            if cfg.max_model_calls is not None and cp.usage.model_calls >= cfg.max_model_calls:
+                return self._stop(cp, "budget_exhausted", f"达到模型调用上限（{cfg.max_model_calls} 次）")
             if cp.usage.tool_calls >= cfg.max_tool_calls:
                 return self._stop(cp, "budget_exhausted", f"达到工具调用上限（{cfg.max_tool_calls} 次）")
             used_tokens = cp.usage.prompt_tokens + cp.usage.completion_tokens

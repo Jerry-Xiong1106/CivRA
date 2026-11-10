@@ -1,0 +1,208 @@
+"""Talk to the Agent in the terminal: it may ask you questions, you answer, it continues.
+
+    .venv/bin/python scripts/run_agent.py --message "我的车被追尾了，想要对方赔偿维修费"
+    .venv/bin/python scripts/run_agent.py --dry-run          # no API key: scripted model
+
+Needs SILICONFLOW_API_KEY in the repo's .env (never committed) unless --dry-run.
+search_statutes uses the real index (build it with scripts/rag/build_bm25_index.py);
+member 3's tools are mock stand-ins until they are delivered.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+import threading
+import time
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from backend.agent.factory import MissingAPIKey, build_runner, run_config_from_pilot  # noqa: E402
+from backend.agent.llm import ScriptedLLM, tool_call  # noqa: E402
+from backend.agent.runner import AgentRunner  # noqa: E402
+from backend.common.schemas import RunConfig, RunInfo, UserReply, Wait  # noqa: E402
+from backend.knowledge.config import keyword_index_path  # noqa: E402
+
+
+
+def main() -> int:
+    args = parse_args()
+    config = RunConfig()
+    if args.pilot_config:
+        config = run_config_from_pilot(json.loads(args.pilot_config.read_text(encoding="utf-8")))
+    if args.model:
+        config = config.model_copy(update={"model": args.model})
+
+    real_statutes = not args.mock_statutes and keyword_index_path().exists()
+    if not args.mock_statutes and not real_statutes:
+        print("提示：没有找到检索索引，search_statutes 改用 mock。构建：.venv/bin/python scripts/rag/build_bm25_index.py\n")
+    try:
+        setup = build_runner(llm=dry_run_llm() if args.dry_run else None, config=config,
+                             real_statutes=real_statutes, mock_business_tools=not args.no_mock_tools)
+    except MissingAPIKey as e:
+        print(e)
+        return 2
+
+    facts = dict(f.split("=", 1) for f in args.fact)
+    summary = {"facts": facts} | ({"dispute_type": args.dispute_type} if args.dispute_type else {})
+    case_id = f"cli-{time.strftime('%Y%m%d-%H%M%S')}"  # one case per invocation, so runs never collide
+    setup.cases.create(case_id, summary)
+    runner = setup.runner
+    model = config.model or getattr(runner.llm, "model", "?")
+    tools = ", ".join(sorted(setup.registry.names()))
+    print(f"模型：{model}{'（脚本，dry-run）' if args.dry_run else ''}\n工具：{tools}\n")
+
+    message = args.message or input("请描述你的问题：").strip()
+    progress = Progress(runner, case_id)
+    info = progress.run(lambda: runner.start_run(case_id, message))
+    while info.status == "waiting_user":
+        reply = ask_user(info.wait, args.auto_reply)
+        if reply is None:
+            info = runner.cancel_run(info.run_id)
+            break
+        info = progress.run(lambda: runner.resume_run(
+            info.run_id, reply, wait_id=info.wait.wait_id, expected_case_version=info.case_version))
+    report(runner, info)
+    return 0 if info.status == "completed" else 1
+
+
+def parse_args() -> argparse.Namespace:
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--message", help="first message; asked interactively when omitted")
+    p.add_argument("--dry-run", action="store_true", help="scripted model, no API key or network for the model")
+    p.add_argument("--model", help="override the model, e.g. a stronger tool-calling model")
+    p.add_argument("--pilot-config", type=Path, help="use budgets from evaluation/configs/*.json")
+    p.add_argument("--fact", action="append", default=[], metavar="KEY=VALUE", help="initial confirmed fact")
+    p.add_argument("--dispute-type", help="e.g. traffic_accident")
+    p.add_argument("--mock-statutes", action="store_true", help="use the mock search_statutes")
+    p.add_argument("--no-mock-tools", action="store_true", help="do not register member 3's mock tools")
+    p.add_argument("--auto-reply", help="answer every question with this text instead of asking")
+    return p.parse_args()
+
+
+def dry_run_llm() -> ScriptedLLM:
+    return ScriptedLLM([
+        tool_call("ask_user", questions=[{"question_id": "q1", "text": "事故发生在哪一天？对方是否投保了交强险？"}]),
+        tool_call("search_statutes", query="机动车交通事故 交强险 赔偿", top_k=3),
+        tool_call("finish", answer="（dry-run 脚本回答）可先向交强险保险人主张赔偿，不足部分再由商业险和侵权人承担。",
+                  open_issues=["这是脚本模型的固定回答，未经真实模型分析"]),
+    ])
+
+
+class Progress:
+    """Runs a blocking start/resume in a thread and prints each step once as it finishes."""
+
+    def __init__(self, runner: AgentRunner, case_id: str) -> None:
+        self.runner, self.case_id = runner, case_id
+        self.run_id: str | None = None
+        self.seen = 0
+
+    def run(self, call) -> RunInfo:
+        result: dict = {}
+
+        def work():
+            try:
+                result["info"] = call()
+            except BaseException as e:  # re-raised in the main thread
+                result["error"] = e
+
+        thread = threading.Thread(target=work, daemon=True)
+        thread.start()
+        while True:
+            alive = thread.is_alive()
+            self._print_new_steps()
+            if not alive:
+                break
+            time.sleep(0.3)
+        if "error" in result:
+            raise result["error"]
+        return result["info"]
+
+    def _print_new_steps(self) -> None:
+        if self.run_id is None:
+            self.run_id = next((cp.run_id for cp in self.runner.store.list_checkpoints()
+                                if cp.case_id == self.case_id), None)
+            if self.run_id is None:
+                return
+        for event in self.runner.iter_events(self.run_id, after_seq=self.seen):
+            self.seen = event.seq
+            if event.type == "step.finished":
+                print_step(self.runner, self.run_id, event.step_id)
+
+
+def print_step(runner: AgentRunner, run_id: str, step_id: int) -> None:
+    step = next((s for s in runner.get_trace(run_id) if s.step_id == step_id), None)
+    if step is None:
+        return
+    name = step.tool_name or ""
+    seconds = f"{step.duration_ms / 1000:.1f}s"
+    print(f"  · #{step.step_id:<2} {step.step_type:<11} {name:<16} {step.status:<12} {seconds:>6}  {step.result_summary[:70]}")
+
+
+def ask_user(wait: Wait, auto_reply: str | None) -> UserReply | None:
+    """None means the user cancelled."""
+    print()
+    if wait.kind == "route_selection":
+        print(f"Agent 请你选择处理路线：\n{wait.comparison}")
+        for i, option in enumerate(wait.options, 1):
+            print(f"  {i}. {option.label}（{option.route}）")
+        if auto_reply is not None:
+            return UserReply(route_choice=wait.options[0].route)
+        while True:
+            choice = input("输入编号（q 取消）：").strip()
+            if choice.lower() == "q":
+                return None
+            if choice.isdigit() and 1 <= int(choice) <= len(wait.options):
+                return UserReply(route_choice=wait.options[int(choice) - 1].route)
+
+    label = "Agent 请你补充材料" if wait.kind == "material_request" else "Agent 追问"
+    answers = {}
+    for q in wait.questions:
+        print(f"{label}：{q.text}")
+        if auto_reply is not None:
+            print(f"  （自动回答）{auto_reply}")
+            answers[q.question_id] = auto_reply
+            continue
+        answer = input("  你的回答（直接回车跳过，q 取消）：").strip()
+        if answer.lower() == "q":
+            return None
+        if answer:
+            answers[q.question_id] = answer
+    return UserReply(answers=answers) if answers else UserReply(text="用户没有回答这些问题。")
+
+
+def report(runner: AgentRunner, info: RunInfo) -> None:
+    print(f"\n状态：{info.status}")
+    if info.error:
+        print(f"错误：{info.error}")
+    final = info.final
+    if final:
+        print(f"\n回答：\n{final.answer}")
+        if final.citations:
+            print("\n引用：")
+            refs = {s.source_id: s for s in final.source_refs}
+            for c in final.citations:
+                ref = refs.get(c.source_id)
+                print(f"  · {ref.title + ref.locator if ref else c.source_id} ← {c.location}")
+        elif final.source_refs:
+            print("\n检索到的来源：" + "、".join(f"{s.title}{s.locator}" for s in final.source_refs))
+        if final.open_issues:
+            print("\n未解决事项：")
+            for issue in final.open_issues:
+                print(f"  · {issue}")
+    u = info.usage
+    cost = f"{u.estimated_cost} {u.cost_currency}" if u.estimated_cost is not None else "未知（未配置单价）"
+    tokens = f"{u.prompt_tokens + u.completion_tokens}" + ("" if u.tokens_complete else "（部分调用未报告）")
+    print(f"\n用量：{u.model_calls} 次模型调用，{u.tool_calls} 次工具调用，{tokens} tokens，"
+          f"费用 {cost}，耗时 {u.duration_ms / 1000:.1f}s")
+    print(f"记录：var/runs/{info.run_id}/")
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        print("\n已中断。")
+        sys.exit(130)

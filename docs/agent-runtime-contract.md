@@ -1,4 +1,4 @@
-# Agent Runtime 接口约定（草案 v0.6）
+# Agent Runtime 接口约定（草案 v0.7）
 
 维护人：成员4（Agent 执行层）  
 状态：**草案，待全组确认**。确认后，第 2–5 节的数据结构会落到 `backend/common/` 中的代码定义，以代码为准。
@@ -491,6 +491,7 @@ running ──► waiting_user ──(resume_run)──► running
 | 项目 | 默认值 | `RunConfig` 字段 |
 |---|---|---|
 | 每次运行最多步数 | 30 | `max_steps` |
+| 每次运行最多模型调用 | 不限（只受步数限制） | `max_model_calls` |
 | 每次运行最多工具调用 | 20 | `max_tool_calls` |
 | 每次运行 token 上限（输入加输出累计） | 200,000，试点后调整 | `max_total_tokens` |
 | 每次运行执行时间（不含等待用户的时间） | 600 秒 | `max_run_seconds` |
@@ -543,6 +544,7 @@ class RunConfig(BaseModel):
     seed: int | None = None
     max_output_tokens: int | None = None
     max_steps: int = 30
+    max_model_calls: int | None = None
     max_tool_calls: int = 20
     max_total_tokens: int | None = 200_000
     max_run_seconds: float | None = 600
@@ -550,6 +552,19 @@ class RunConfig(BaseModel):
     max_context_chars: int = 60_000
     enabled_tools: list[str] | None = None   # None 表示按阶段默认开放
 ```
+
+组装一个可以直接运行的 Agent（真实模型、真实 `search_statutes`、成员3工具暂用 mock），用 `backend/agent/factory.py`：
+
+```python
+from backend.agent.factory import build_runner, run_config_from_pilot
+
+cfg = run_config_from_pilot(json.loads(Path("evaluation/configs/pilot_v1.json").read_text()))
+setup = build_runner(config=cfg)              # 读取 .env 中的 SILICONFLOW_API_KEY
+setup.cases.create(case_id, {"facts": {...}}) # 每次重复用新的 case_id
+result = AgentAdapter(setup.runner).run(case_id, user_message, cfg, exp_id, reply_to_wait)
+```
+
+`run_config_from_pilot` 把评测计划中的模型、`max_output_tokens` 和 `budgets`（`max_model_calls`、`max_tool_calls`、`max_total_tokens`、`max_active_seconds`）对应到 `RunConfig`。模型不重试，工具按 `ToolSpec.max_retries` 重试（默认 1 次），与计划中的 `model_retries=0`、`tool_retries=1` 一致。`build_runner(mock_business_tools=False)` 只开放真实工具。命令行试运行：`scripts/run_agent.py`（`--dry-run` 不需要 Key）。
 
 Agent 模式的典型调用流程（由成员5的 adapter 实现，隐藏事实的披露也由成员5控制）：
 
@@ -620,3 +635,4 @@ manifest = runner.get_runtime_manifest()
 | v0.4 | 2026-11-01 | 新增 token 上限、检索—核验 3 轮上限（`ToolSpec.feedback_loop`）、上下文压缩和 `RunInfo.stale`（6.2、6.4） |
 | v0.5 | 2026-11-03 | 按成员5的评测接口需求修改：`resume_run` 需要 `wait_id`，支持 `expected_case_version` 和 `request_id` 防重复；`pending` 改为 `Wait`（含 `material_request`）；新增 `export_trace`、`get_step_result`、`get_runtime_manifest`；执行记录增加 `event_id`、`parent_step_id`、`finished_at` 和完整结果文件；模型接口支持 `model`、`seed`、`tool_choice`，返回 `finish_reason`、请求 ID，用量未知时为 `null`，费用带币种和价格版本；`RunInfo` 增加 `case_version`、`experiment_run_id`；提前结束时保留已完成部分；`finish` 支持 `citations`；新增执行时间上限；新增与评测文档的名称对照（7.1）和待确认问题 11–14 |
 | v0.6 | 2026-11-04 | `search_statutes` 接入真实检索（2.6）；去掉示例中的 `dispute_type` |
+| v0.7 | 2026-11-10 | 新增 `RunConfig.max_model_calls`；第 7 节补充 `build_runner`、`run_config_from_pilot` 和命令行脚本 |
