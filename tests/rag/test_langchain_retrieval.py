@@ -35,7 +35,7 @@ class FixedEmbeddings(Embeddings):
     def embed_documents(self, texts):
         raise AssertionError("Stored law vectors must not be re-embedded")
 
-    def embed_query(self, text):
+    def embed_query(self, text, *, deadline=None):
         return [1., 0.]
 
 
@@ -84,8 +84,7 @@ class LangChainRetrievalTests(unittest.TestCase):
 
     def test_embedding_interface_reuses_cache_for_documents_and_queries(self):
         with tempfile.TemporaryDirectory() as tmp:
-            with patch("backend.knowledge.vector.embedding.load_local_env"):
-                client = EmbeddingClient(Path(tmp) / "cache.sqlite3")
+            client = EmbeddingClient(Path(tmp) / "cache.sqlite3")
             self.assertIsInstance(client, Embeddings)
             with patch.object(client, "_request", return_value=np.array([[0.6, 0.8]], dtype=np.float32)) as request:
                 doc_vector = client.embed_documents(["same input"])[0]
@@ -114,6 +113,23 @@ class LangChainRetrievalTests(unittest.TestCase):
             loaded = load_index(output)
             self.assertNotIn("_retriever", loaded.__dict__)
             self.assertEqual(retriever.invoke("定金合同"), create_bm25_retriever(loaded).invoke("定金合同"))
+
+def test_embedding_deadline_bounds_http_timeout_without_mutating_client(tmp_path):
+    from datetime import datetime, timedelta, timezone
+    from io import BytesIO
+    import pytest
+
+    client = EmbeddingClient(tmp_path / "cache.sqlite3", api_key="test", timeout_s=30)
+    deadline = datetime.now(timezone.utc) + timedelta(seconds=1)
+    with patch("backend.knowledge.vector.embedding.urlopen") as request:
+        request.return_value.__enter__.return_value = BytesIO(b'{"data":[{"index":0,"embedding":[1,0]}]}')
+        assert client.embed_query("query", deadline=deadline) == [1.0, 0.0]
+        assert 0 < request.call_args.kwargs["timeout"] <= 1
+        assert client.timeout_s == 30
+        with pytest.raises(TimeoutError):
+            client.embed_query("another query", deadline=datetime.now(timezone.utc) - timedelta(seconds=1))
+        assert request.call_count == 1
+
 
 if __name__ == "__main__":
     unittest.main()

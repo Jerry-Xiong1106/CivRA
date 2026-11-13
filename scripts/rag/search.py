@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from backend.common.config import load_dotenv
 from backend.knowledge.config import (DEFAULT_MODE, DEFAULT_VARIANT, DEFAULT_TOP_K,
     DEFAULT_CANDIDATE_K, DEFAULT_RRF_K, MODES, INPUT_VARIANTS, RetrievalConfig)
 from backend.knowledge.retrieval.service import RetrievalService
@@ -23,6 +24,7 @@ def main():
     parser.add_argument("--candidate-k", type=int, default=DEFAULT_CANDIDATE_K)
     parser.add_argument("--rrf-k", type=int, default=DEFAULT_RRF_K)
     args = parser.parse_args()
+    load_dotenv()
     try:
         config = RetrievalConfig.from_mode(args.mode, variant=args.variant, top_k=args.top_k,
                                            candidate_k=args.candidate_k, rrf_k=args.rrf_k)

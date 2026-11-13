@@ -5,6 +5,7 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Callable
 
 import jsonschema
@@ -20,6 +21,18 @@ class Execution:
     attempts: int
 
 
+def validate_call(spec: ToolSpec, args: dict, stage: str,
+                  enabled: list[str] | None = None) -> ToolResult | None:
+    """Shared call checks for business tools and runtime control tools."""
+    if stage not in spec.stages or (enabled is not None and spec.name not in enabled):
+        return ToolResult.fail("NOT_ALLOWED", f"{spec.name} is not available in stage {stage}")
+    try:
+        jsonschema.validate(args, spec.parameters)
+    except jsonschema.ValidationError as exc:
+        return ToolResult.fail("INVALID_ARGS", exc.message)
+    return None
+
+
 class ToolRegistry:
     def __init__(self) -> None:
         self._tools: dict[str, tuple[ToolSpec, ToolHandler]] = {}
@@ -30,6 +43,10 @@ class ToolRegistry:
             raise ValueError(f"tool already registered: {spec.name}")
         jsonschema.Draft202012Validator.check_schema(spec.parameters)
         self._tools[spec.name] = (spec, handler)
+
+    def unregister(self, name: str) -> None:
+        """Remove a tool, e.g. to swap a mock for the real implementation."""
+        del self._tools[name]
 
     def tool(self, spec: ToolSpec) -> Callable[[ToolHandler], ToolHandler]:
         """Decorator form of register()."""
@@ -60,38 +77,41 @@ class ToolRegistry:
         if entry is None:
             return Execution(ToolResult.fail("NOT_FOUND", f"unknown tool: {name}"), 0)
         spec, handler = entry
-        if ctx.stage not in spec.stages or (enabled is not None and name not in enabled):
-            return Execution(ToolResult.fail("NOT_ALLOWED", f"{name} is not available in stage {ctx.stage}"), 0)
-        try:
-            jsonschema.validate(args, spec.parameters)
-        except jsonschema.ValidationError as e:
-            return Execution(ToolResult.fail("INVALID_ARGS", e.message), 0)
+        error = validate_call(spec, args, ctx.stage, enabled)
+        if error is not None:
+            return Execution(error, 0)
 
         attempts = 0
         while True:
+            remaining = (ctx.deadline - datetime.now(timezone.utc)).total_seconds()
+            if remaining <= 0:
+                return Execution(ToolResult.fail("TIMEOUT", f"{name} exceeded its execution deadline"), attempts)
             attempts += 1
-            result = self._call_once(spec, handler, args, ctx)
+            result = self._call_once(spec, handler, args, ctx, min(spec.timeout_s, remaining))
             retry = result.status == "error" and result.error is not None and result.error.retryable
-            if not retry or attempts > spec.max_retries:
+            if spec.side_effects or not retry or attempts > spec.max_retries:
                 return Execution(result, attempts)
 
-    def _call_once(self, spec: ToolSpec, handler: ToolHandler, args: dict, ctx: ToolContext) -> ToolResult:
+    def _call_once(self, spec: ToolSpec, handler: ToolHandler, args: dict, ctx: ToolContext, timeout_s: float) -> ToolResult:
         future = self._pool.submit(handler, args, ctx)
         try:
-            result = future.result(timeout=spec.timeout_s)
+            result = future.result(timeout=timeout_s)
         except FutureTimeout:
-            # The worker thread cannot be killed; its late result is discarded.
-            return ToolResult.fail("TIMEOUT", f"{spec.name} timed out after {spec.timeout_s}s", retryable=True)
+            # Cancel queued work; running threads cannot be killed.
+            future.cancel()
+            return ToolResult.fail("TIMEOUT", f"{spec.name} timed out after {timeout_s:.3f}s", retryable=not spec.side_effects)
         except Exception as e:  # tools should return errors, but never let one crash the run
             return ToolResult.fail("INTERNAL", f"{type(e).__name__}: {e}")
         if not isinstance(result, ToolResult):
             return ToolResult.fail("INTERNAL", f"{spec.name} returned {type(result).__name__}, expected ToolResult")
         return result
 
+    def close(self, *, wait: bool = True) -> None:
+        """Release workers; running handlers still need to finish cooperatively."""
+        self._pool.shutdown(wait=wait, cancel_futures=True)
 
-default_registry = ToolRegistry()
+    def __enter__(self) -> "ToolRegistry":
+        return self
 
-
-def register_tool(spec: ToolSpec) -> Callable[[ToolHandler], ToolHandler]:
-    """Register a tool on the shared default registry."""
-    return default_registry.tool(spec)
+    def __exit__(self, *exc) -> None:
+        self.close()

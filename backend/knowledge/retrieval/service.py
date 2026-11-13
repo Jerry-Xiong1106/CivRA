@@ -1,67 +1,35 @@
-"""Public Python retrieval service shared by CLI, evaluation and future tools."""
-from ..config import (
-    INDEX_DIR, RetrievalConfig, includes_metadata, keyword_index_path, vector_index_path,
-)
+"""Public query routing over validated, reusable retrieval resources."""
+from ..config import INDEX_DIR, RetrievalConfig
 from ..exact.router import ExactRouter
+from .resources import RetrievalResources, load_resources, prepare_resources
 from .results import no_results, query_preflight, to_result
 
 
 class RetrievalService:
     def __init__(self, config: RetrievalConfig | None = None, *, keyword_index=None,
-                 vector_index=None, client=None):
-        """Inject loaded resources; use from_config for local artifact loading."""
-        self.config = config or RetrievalConfig()
-        self.keyword_index, self.vector_index, self.client = keyword_index, vector_index, client
-        needs_keyword = self.config.channel in ("keyword", "hybrid")
-        needs_vector = self.config.channel in ("vector", "hybrid")
-        if needs_keyword:
-            if keyword_index is None:
-                raise ValueError("This channel requires a keyword index")
-            # RRF retains the original metadata BM25 baseline.
-            expected = True if self.config.channel == "hybrid" else includes_metadata(self.config.variant)
-            if keyword_index.include_metadata != expected:
-                raise ValueError("Keyword index input variant differs from retrieval config")
-        if needs_vector:
-            if vector_index is None or client is None:
-                raise ValueError("This channel requires a vector index and embedding client")
-            if vector_index.config["include_metadata"] != includes_metadata(self.config.variant):
-                raise ValueError("Vector index input variant differs from retrieval config")
-            if (client.model, client.base_url) != (vector_index.config["model"], vector_index.config["base_url"]):
-                raise ValueError("Query embedding model/endpoint differs from the index")
-        if needs_keyword and needs_vector:
-            keyword = {p["provision_id"]: p for p in keyword_index.provisions}
-            dense = {p["provision_id"]: p for p in vector_index.provisions}
-            if len(keyword) != len(keyword_index.provisions) or len(dense) != len(vector_index.provisions) or keyword != dense:
-                raise ValueError("BM25 and vector indexes must contain identical provisions and versions; rebuild indexes")
-        self.provisions = vector_index.provisions if needs_vector else keyword_index.provisions
+                 vector_index=None, client=None, source_metadata=None,
+                 resources: RetrievalResources | None = None):
+        """Accept either prepared resources or indexes supplied by an existing caller."""
+        if resources is not None and any(item is not None for item in
+                (config, keyword_index, vector_index, client, source_metadata)):
+            raise ValueError("Pass resources or individual resource inputs, not both")
+        resources = resources or prepare_resources(
+            config or RetrievalConfig(), keyword_index=keyword_index, vector_index=vector_index,
+            client=client, source_metadata=source_metadata)
+        self.config = resources.config
+        self.client, self.provisions = resources.client, resources.provisions
+        self.source_metadata = resources.source_metadata
+        self.knowledge_version, self.knowledge_manifest = resources.knowledge_version, resources.knowledge_manifest
+        self.keyword_retriever, self.vector_retriever = resources.keyword_retriever, resources.vector_retriever
         self.exact_router = ExactRouter(self.provisions) if self.config.exact_match else None
-        self.keyword_retriever = None
-        if needs_keyword:
-            from ..keyword.bm25_retriever import create_bm25_retriever
-            self.keyword_retriever = create_bm25_retriever(keyword_index)
-        self.vector_retriever = None
-        if needs_vector:
-            from ..vector.vector_retriever import create_vector_retriever
-            self.vector_retriever = create_vector_retriever(vector_index, client, self.config.top_k)
 
     @classmethod
     def from_config(cls, config: RetrievalConfig | None = None, *, index_dir=INDEX_DIR,
                     keyword_path=None, vector_path=None):
-        """Load only the selected channel's dependencies once, then reuse search."""
-        config = config or RetrievalConfig()
-        keyword, vector, client = None, None, None
-        if config.channel in ("keyword", "hybrid"):
-            from ..keyword.bm25_index import load_index
-            variant = "metadata" if config.channel == "hybrid" else config.variant
-            keyword = load_index(keyword_path or keyword_index_path(variant, index_dir))
-        if config.channel in ("vector", "hybrid"):
-            from ..vector.vector_index import load_vector_index
-            from ..vector.embedding import EmbeddingClient
-            vector = load_vector_index(vector_path or vector_index_path(config.variant, index_dir))
-            client = EmbeddingClient()
-        return cls(config, keyword_index=keyword, vector_index=vector, client=client)
+        return cls(resources=load_resources(config, index_dir=index_dir,
+                                            keyword_path=keyword_path, vector_path=vector_path))
 
-    def search(self, query: str, top_k: int | None = None, *, query_vector=None) -> dict:
+    def search(self, query: str, top_k: int | None = None, *, query_vector=None, deadline=None) -> dict:
         """ok means candidates exist, not that they suffice to answer the query.
 
         query_vector is an evaluation hook; ordinary callers leave it unset.
@@ -83,19 +51,18 @@ class RetrievalService:
             documents = self.keyword_retriever.invoke(query, top_k=top_k)
             if not documents:
                 return no_results(query, "no_keyword_matches", "当前关键词索引没有正分候选；这不表示语料中没有相关法律依据。")
-            results = [to_result(doc.metadata, rank, doc.metadata["retrieval"]["score"], ["keyword"])
-                       for rank, doc in enumerate(documents, 1)]
         else:
             if query_vector is None:
-                query_vector = self.client.embed_query(query)
+                query_vector = self.client.embed_query(query, **({"deadline": deadline} if deadline is not None else {}))
             if self.config.channel == "vector":
                 documents = self.vector_retriever.invoke(query, top_k=top_k, query_vector=query_vector)
-                results = [to_result(doc.metadata, rank, doc.metadata["retrieval"]["score"], ["vector"])
-                           for rank, doc in enumerate(documents, 1)]
             else:
                 from .fusion import search_hybrid
                 results = search_hybrid(query, self.keyword_retriever, self.vector_retriever, query_vector,
                                         top_k, self.config.candidate_k, self.config.rrf_k)
+        if self.config.channel != "hybrid":
+            results = [to_result(doc.metadata, rank, doc.metadata["retrieval"]["score"], [self.config.channel])
+                       for rank, doc in enumerate(documents, 1)]
         if not results:
             return no_results(query, "no_candidates", "当前检索通道没有返回候选。")
         return {"status": "ok", "query": query, "results": results, "warnings": []}

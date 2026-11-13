@@ -52,8 +52,8 @@ not unseen final tests and may be used for implementation debugging.
 From the repository root, using a Python environment with Pydantic 2.7+:
 
 ```bash
-python scripts/validate_evaluation_tasks.py
-python scripts/validate_evaluation_tasks.py --private-dir evaluation/private/pilot_v1
+python scripts/evaluation/validate_evaluation_tasks.py
+python scripts/evaluation/validate_evaluation_tasks.py --private-dir evaluation/private/pilot_v1
 python -m unittest discover -s tests/evaluation -p 'test_*.py' -v
 ```
 

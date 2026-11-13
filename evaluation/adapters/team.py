@@ -1,6 +1,12 @@
 """Evaluation names mapped to existing team interfaces; no duplicate algorithms."""
 
-from backend.common.schemas import UserReply
+from time import perf_counter
+
+from langchain_core.messages import convert_to_messages
+
+from backend.agent.model.llm import response_from_message
+from backend.knowledge.retrieval.results import to_search_match
+from backend.common.schemas import SourceRef, UserReply
 
 
 class ModelAdapter:
@@ -8,11 +14,12 @@ class ModelAdapter:
         self.client = client
 
     def generate(self, messages, config):
-        response = self.client.chat(
-            messages, tools=None, model=config["model"],
-            temperature=config["temperature"], seed=config.get("seed"),
-            max_tokens=config["max_output_tokens"],
-        )
+        params = {"model": config["model"], "temperature": config["temperature"],
+                  "seed": config.get("seed"), "max_tokens": config["max_output_tokens"]}
+        tick = perf_counter()
+        reply = self.client.bind(**{k: v for k, v in params.items() if v is not None}).invoke(
+            convert_to_messages(messages))
+        response = response_from_message(reply, self.client, round((perf_counter() - tick) * 1000))
         data = response.model_dump(mode="json")
         usage = data.pop("usage")
         data["usage"] = {
@@ -31,17 +38,15 @@ class RetrievalAdapter:
         response = self.service.search(query, top_k=top_k)
         if response["status"] not in ("ok", "no_results"):
             raise ValueError("Unrecognized retrieval status")
-        matches = []
-        for hit in response["results"]:
-            matches.append({
-                "source_id": hit["provision_id"], "title": hit["law_title"],
-                "locator": hit["article_no"], "text": hit["text"],
-                "source_version": hit["version"]["effective_date"],
-                "page_start": hit["source"]["page_start"], "page_end": hit["source"]["page_end"],
-                "source_file": hit["source"]["file"], "url": hit["source"]["url"],
-                "rank": hit["retrieval"]["rank"], "score": hit["retrieval"]["score"],
-            })
-        return {"status": "ok", "matches": matches, "empty_reason": response.get("reason"),
+        if response.get("reason") in ("empty_query", "no_searchable_content", "unsupported_exact_query"):
+            raise ValueError("Unsupported retrieval request")
+        metadata = getattr(self.service, "source_metadata", {})
+        matches = [to_search_match(hit, metadata) for hit in response["results"]]
+        for match in matches:
+            SourceRef.model_validate(match["source_ref"])
+        return {"status": "ok", "schema_version": "0.1", "matches": matches,
+                "knowledge_version": getattr(self.service, "knowledge_version", None),
+                "empty_reason": response.get("reason"),
                 "warnings": response.get("warnings", [])}
 
 
