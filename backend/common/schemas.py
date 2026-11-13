@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 def now_iso() -> str:
@@ -32,23 +32,60 @@ class ToolError(BaseModel):
     details: dict[str, Any] | None = None
 
 
+class SourceLocator(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    article: str | None = None
+    page_start: int | None = Field(default=None, ge=1)
+    page_end: int | None = Field(default=None, ge=1)
+    paragraph: str | None = None
+    chunk_id: str | None = None
+
+    def __str__(self) -> str:
+        location = self.article or self.paragraph or self.chunk_id or ""
+        if self.page_start is not None:
+            pages = str(self.page_start)
+            if self.page_end is not None and self.page_end != self.page_start:
+                pages += f"–{self.page_end}"
+            location += f"（PDF第{pages}页）"
+        elif self.page_end is not None:
+            location += f"（PDF第{self.page_end}页）"
+        return location
+
+    @model_validator(mode="after")
+    def check_location(self) -> "SourceLocator":
+        if not any((self.article, self.page_start, self.page_end, self.paragraph, self.chunk_id)):
+            raise ValueError("At least one source location is required")
+        if self.page_start is not None and self.page_end is not None and self.page_start > self.page_end:
+            raise ValueError("page_start must not exceed page_end")
+        return self
+
+
 class SourceRef(BaseModel):
+    model_config = {"extra": "forbid"}
+
     source_id: str
     source_type: Literal[
         "statute", "judicial_interpretation", "case", "template", "guideline", "user_material"
     ]
     title: str
-    locator: str
-    version: str | None = None
-    excerpt: str | None = None
+    locator: SourceLocator
+    source_version: str
+    effective_from: str | None = None
+    effective_to: str | None = None
+    decision_date: str | None = None
+    retrieved_at: str | None = None
+    retrieved_date: str | None = None
+    source_file: str | None = None
+    content_sha256: str | None = None
     url: str | None = None
 
-
 class ToolResult(BaseModel):
+    model_config = {"extra": "forbid"}
+
     status: ToolStatus
     data: dict[str, Any] | None = None
     summary: str = ""
-    source_refs: list[SourceRef] = Field(default_factory=list)
     error: ToolError | None = None
     case_version: int | None = None
 
@@ -129,6 +166,7 @@ class RunConfig(BaseModel):
     seed: int | None = None
     max_output_tokens: int | None = None     # per model call
     max_steps: int = 30
+    max_model_calls: int | None = None       # None = only max_steps limits model calls
     max_tool_calls: int = 20
     max_total_tokens: int | None = 200_000   # prompt + completion over the run; None = no limit
     max_run_seconds: float | None = 600      # active execution time, excluding waits for the user

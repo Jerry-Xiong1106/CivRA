@@ -25,3 +25,21 @@ answer citation checks, and the remaining model/UI integration work.
 - `scripts/`: data processing and development scripts
 
 Each module may organize its internal files according to its owner's implementation needs. Cross-module data structures and interfaces should be documented in `backend/common/` and `docs/`.
+
+## Scripts and tests
+
+| Module | Scripts | Tests |
+| --- | --- | --- |
+| Agent | `scripts/agent/run_agent.py` | `tests/agent/` |
+| Retrieval / RAG | `scripts/rag/` | `tests/rag/` |
+| Evaluation | `scripts/evaluation/` (run, validate, review) | `tests/evaluation/` |
+
+Run checks from the repository root:
+
+```powershell
+.\.venv-rag\Scripts\python.exe -m pytest tests -q -p no:cacheprovider
+.\.venv-rag\Scripts\python.exe scripts/agent/run_agent.py --dry-run --mock-statutes
+.\.venv-rag\Scripts\python.exe scripts/evaluation/validate_evaluation_tasks.py
+```
+
+The main Agent CLI replaces the separate mock demo script. Run, validate and review remain separate evaluation commands.

@@ -1,5 +1,6 @@
 """Common result schema and input checks, without retrieval channel imports."""
 import unicodedata
+import hashlib
 
 
 def no_results(query: str, reason: str, message: str) -> dict:
@@ -28,3 +29,25 @@ def to_result(provision: dict, rank: int, score: float, matched_by: list[str]) -
                     "expiry_date": provision["expiry_date"], "status": provision["status"]},
         "retrieval": {"rank": rank, "score": score, "matched_by": matched_by},
     }
+
+
+def to_search_match(result: dict, source_metadata: dict) -> dict:
+    """Convert an existing hit; preserve text, order, score and diagnostics."""
+    version, source = result["version"], result["source"]
+    content_hash = hashlib.sha256(result["text"].encode("utf-8")).hexdigest()
+    source_version = version["publication_date"] or f"sha256:{content_hash}"
+    registered = source_metadata.get((result["law_title"], version["publication_date"], source["file"]), {})
+    ref = {
+        "source_id": result["provision_id"], "source_type": "statute", "title": result["law_title"],
+        "locator": {"article": result["article_no"], "page_start": source["page_start"], "page_end": source["page_end"]},
+        "source_version": source_version,
+        "effective_from": version["effective_date"], "effective_to": version["expiry_date"],
+        "source_file": source["file"], "url": source["url"], "content_sha256": content_hash,
+        "retrieved_at": None, "retrieved_date": registered.get("retrieved_at"),
+    }
+    retrieval = result["retrieval"]
+    score_type = retrieval.get("score_type") or {"keyword": "bm25", "vector": "cosine"}.get(retrieval["matched_by"][0])
+    diagnostics = {key: value for key, value in retrieval.items() if key not in ("rank", "score", "score_type")}
+    return {"text": result["text"], "source_ref": ref,
+            "rank": retrieval["rank"], "score": retrieval["score"], "score_type": score_type,
+            "retrieval": diagnostics, "hierarchy_path": result["hierarchy_path"]}

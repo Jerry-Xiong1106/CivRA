@@ -31,6 +31,7 @@ def main():
         "provisions": len(index.provisions),
         "include_metadata": index.include_metadata,
         "tokenizer_version": index.tokenizer_version,
+        "tokenizer_fingerprint": index.tokenizer_fingerprint,
         "output": str(output),
     }, ensure_ascii=False))
 

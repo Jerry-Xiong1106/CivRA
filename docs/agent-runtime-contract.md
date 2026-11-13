@@ -1,4 +1,4 @@
-# Agent Runtime 接口约定（草案 v0.5）
+# Agent Runtime 接口约定（草案 v0.8）
 
 维护人：成员4（Agent 执行层）  
 状态：**草案，待全组确认**。确认后，第 2–5 节的数据结构会落到 `backend/common/` 中的代码定义，以代码为准。
@@ -79,7 +79,7 @@ class ToolSpec(BaseModel):
 from backend.tools.registry import register_tool
 from backend.knowledge import retrieval            # 成员2的业务模块
 
-@register_tool(spec=SEARCH_STATUTES_SPEC)
+@registry.tool(SEARCH_STATUTES_SPEC)  # registry由装配入口显式传入
 def search_statutes(args: dict, ctx: ToolContext) -> ToolResult:
     hits = retrieval.search_statutes(**args)        # 业务逻辑
     return ToolResult(status="ok" if hits else "empty", ...)  # 包装为统一格式
@@ -109,10 +109,11 @@ class ToolContext(BaseModel):
 
 ```python
 class ToolResult(BaseModel):
+    model_config = {"extra": "forbid"}    # 不接受旧顶层source_refs等未声明字段
+
     status: Literal["ok", "empty", "insufficient", "error"]
     data: dict | None = None             # 工具自己的业务结果，结构由工具负责人定义
     summary: str = ""                    # 一两句话概括结果，给模型和时间线显示
-    source_refs: list[SourceRef] = []    # 结果依据的法律、案例或用户材料
     error: ToolError | None = None
     case_version: int | None = None      # 修改了案件状态的工具返回新版本号
 
@@ -129,66 +130,77 @@ class ToolError(BaseModel):
 | `insufficient` | 有结果，但工具判断依据不足或信息缺失 | 追问用户、补充检索，或在输出中标注缺口 |
 | `error` | 执行失败 | 可重试错误由 Runtime 重试；其余交给模型决定 |
 
-错误码中，`INVALID_ARGS`（参数不符合 Schema）、`NOT_ALLOWED`（当前阶段未开放该工具）和 `NOT_FOUND`（工具不存在）由 Runtime 在调用工具之前返回；`TIMEOUT` 由 Runtime 计时；工具未捕获的异常记为 `INTERNAL`。只有 `retryable=True` 的错误会被重试，`TIMEOUT` 默认可重试。
+错误码中，`INVALID_ARGS`（参数不符合 Schema）、`NOT_ALLOWED`（当前阶段未开放该工具）和 `NOT_FOUND`（工具不存在）由 Runtime 在调用工具之前返回；`TIMEOUT` 由 Runtime 计时；工具未捕获的异常记为 `INTERNAL`。仅无副作用的工具在`retryable=True`、重试次数未耗尽且deadline仍有余量时自动重试。所有尝试共用ToolContext.deadline；Agent为一次逻辑工具调用分配ToolSpec.timeout_s总时限。超时后取消尚未开始的任务，已运行的线程不能强制终止。检索服务把deadline继续传递给embedding HTTP调用，注入的embedding客户端应支持可选deadline关键字参数。
 
 工具只报告“缺什么、发现了什么问题”，**不直接决定追问用户**。是否追问由 Agent 决定（见第 6 节）。例如 `check_evidence` 发现缺少保险信息时，返回 `status="insufficient"`，并在 `data` 中列出缺失字段和建议问题。
 
-### 2.4 来源引用 `SourceRef`（成员2定义，这里只列最低字段）
+### 2.4 来源引用 `SourceRef`（成员2定义）
 
 ```python
+class SourceLocator(BaseModel):
+    article: str | None = None
+    page_start: int | None = None
+    page_end: int | None = None
+    paragraph: str | None = None
+    chunk_id: str | None = None
+
 class SourceRef(BaseModel):
     source_id: str          # 知识库或材料中的唯一 ID
     source_type: Literal["statute", "judicial_interpretation", "case", "template", "guideline", "user_material"]
     title: str              # 法律名称、案号或文件名
-    locator: str            # 条款编号、段落号或页码，例如 "第一千二百零八条"、"p.3"
-    version: str | None     # 法律版本或生效日期；用户材料为 case_version
-    excerpt: str | None     # 原文片段
+    locator: SourceLocator  # 仅接受结构化定位
+    source_version: str  # 来源版本必填，公布日期未知时使用正文哈希
+    effective_from: str | None = None
+    effective_to: str | None = None
+    decision_date: str | None = None
+    retrieved_at: str | None = None
+    retrieved_date: str | None = None  # 只有获取日期时保留日期，不能编造时间戳
+    source_file: str | None = None
+    content_sha256: str | None = None
     url: str | None
 ```
 
-成员2可以增加字段，但请保留以上字段，Runtime 和前端依赖它们展示和核验引用。
+SourceLocator至少有一种定位信息，页码为正整数且起始页不能大于结束页。SourceRef只接受结构化locator和source_version，不再定义version、excerpt或字符串定位兼容。工具引用仅保存在data.matches[].source_ref，正文仅在matches[].text；Runtime从这些匹配项派生TraceStep/FinalOutput.source_refs。
 
-### 2.5 示例
+### 2.5 法规工具示例
 
-请求（由模型发出，Runtime 校验后执行）：
+请求参数只包含query和top_k。下例摘录返回的主要字段，真实引用还包含页码、来源URL、效力日期和内容哈希；正文只保存一份。
 
-```json
-{
-  "tool_name": "search_statutes",
-  "arguments": {
-    "query": "机动车交通事故 交强险 赔偿顺序",
-    "dispute_type": "traffic_accident",
-    "incident_date": "2026-05-12",
-    "top_k": 5
-  }
-}
-```
-
-返回：
-
-```json
+~~~json
 {
   "status": "ok",
-  "summary": "找到 3 条相关条文，均为现行有效版本。",
-  "data": {"hits": [{"source_id": "civil_code_1213", "score": 0.82}]},
-  "source_refs": [
-    {
-      "source_id": "civil_code_1213",
-      "source_type": "statute",
-      "title": "中华人民共和国民法典",
-      "locator": "第一千二百一十三条",
-      "version": "2021-01-01",
-      "excerpt": "机动车发生交通事故造成损害，属于该机动车一方责任的，先由承保机动车强制保险的保险人在强制保险责任限额范围内予以赔偿……",
-      "url": "https://flk.npc.gov.cn/"
-    }
-  ],
+  "summary": "找到 1 条候选；候选不代表已有充分法律依据。",
+  "data": {
+    "schema_version": "0.1",
+    "query": "民法典第一千二百一十三条",
+    "matches": [{
+      "text": "检索到的完整法条正文（此处仅示意字段）",
+      "source_ref": {
+        "source_id": "中华人民共和国民法典::2020-05-28::第一千二百一十三条",
+        "source_type": "statute",
+        "title": "中华人民共和国民法典",
+        "source_version": "2020-05-28",
+        "locator": {"article": "第一千二百一十三条"}
+      },
+      "rank": 1,
+      "score": 1.0,
+      "score_type": "exact"
+    }],
+    "empty_reason": null,
+    "warnings": [],
+    "knowledge_version": null
+  },
   "error": null
 }
-```
+~~~
+
+knowledge_version为null表示此示例没有绑定实际知识库快照；默认真实service会提供快照标识。旧工具顶层source_refs字段不再接受；旧日志仍可按原始记录读取。引用与空结果的可运行样例见[RAG交接说明](rag/rag_agent_handoff.md)。
 
 ### 2.6 计划中的工具清单
 
 工具名称沿用 Proposal 附录 A，具体参数由负责人在注册时给出。
+
+`search_statutes` 在现有 `backend/tools/knowledge_tools.py` 接入成员2的 `RetrievalService.search()`，默认 `exact-vector`＋metadata；离线关键词实验须显式设置 `CIVRA_RETRIEVAL_MODE=keyword`。工具只接受query/top_k，incident_date、dispute_type、filters等未实现参数明确拒绝。结果统一为data.matches及data.empty_reason，不返回重复hits；正常无匹配映射empty，空白/符号/不支持的条号格式映射INVALID_ARGS，超时及embedding失败分别映射TIMEOUT/UPSTREAM。embedding内部不重试，重试由注册表执行。factory支持注入retrieval_service以复用资源，也保留statute_search回调供测试；两者不可同时传入。
 
 | 工具 | 负责人 | `side_effects` | 开放阶段 |
 |---|---|---|---|
@@ -234,22 +246,13 @@ class SourceRef(BaseModel):
 
 ## 3. 模型接口
 
-所有模型调用经过同一个入口，Agent 和成员5的基线都使用它，用量统一记录。
+Agent与项目内评测基线共享LangChain BaseChatModel。Agent由create_agent管理模型/工具循环；单次生成基线直接invoke模型，不获得动态工具规划能力。统一转换函数仅整理用量与轨迹字段。
 
 ```python
-class LLMClient(Protocol):
-    model: str                         # 默认模型名称
-    def chat(
-        self,
-        messages: list[dict],          # OpenAI 兼容格式：role/content/tool_calls/tool_call_id
-        tools: list[ToolSpec] | None = None,
-        *,
-        model: str | None = None,      # None 表示使用默认模型
-        temperature: float = 0.0,
-        max_tokens: int | None = None, # 单次输出 token 上限
-        seed: int | None = None,
-        tool_choice: str | None = None,  # "auto" / "none" / "required" / 某个工具名；None 为供应商默认
-    ) -> LLMResponse: ...
+# model: BaseChatModel = llm_from_env()
+# Agent: create_agent(model, tools=..., middleware=..., checkpointer=...)
+# 单次基线: model.bind(...).invoke(messages)
+# 下列LLMResponse仅用于项目记录及评测返回格式，不是另一套模型客户端。
 
 class LLMResponse(BaseModel):
     content: str | None
@@ -276,9 +279,11 @@ class CostInfo(BaseModel):
 ```
 
 - 采用 OpenAI 兼容的 tool calling 格式，便于切换 DeepSeek 等模型供应商。
-- 实现：`backend/agent/llm.py` 中的 `OpenAICompatibleClient`（真实模型）和 `ScriptedLLM`（按脚本回复，用于测试和演示）。
-- `chat` 只负责调用和计算用量；在 Agent 运行中，模型调用由 Runtime 写入执行记录。基线直接调用 `chat` 时，用返回的 `usage` 和 `cost` 自行统计。
-- 客户端不自动重试，每次 `chat` 只发一次请求。调用方如需重试，可以自己重试，不会出现重复计数。
+- 模型适配位于backend/agent/model/llm.py：make_chat_model返回ChatOpenAI，response_from_message统一用量/费用/来源请求ID，ScriptedLLM也是BaseChatModel，离线测试与真实Agent使用相同create_agent执行路径。字典输入转换使用LangChain原生convert_to_messages，提示压缩直接操作原生消息。
+- runner.py保留开始、恢复、取消和导出接口。runtime/middleware.py直接提供框架钩子、案件刷新、模型及工具适配；runtime/state.py保存运行元数据及输出规则；runtime/store.py通过统一step上下文管理器记录步骤、事件和用量。execution.py和独立recorder已删除，middleware不回调Runner私有方法。
+- 同步invoke设置max_concurrency=1，由框架维持同批工具顺序；追问或结束后，剩余工具只返回未执行回执，不进行副作用。当前入口没有提供异步ainvoke的顺序保证。
+- 原生HTTP客户端、lc_model.py、lc_tools.py已移除。项目内Direct/RAG基线已同步改为BaseChatModel.invoke；用量仍映射为原评测字段，不重跑或覆盖历史真实输出。
+- 模型max_retries固定0，每次模型执行尝试都计数；发生异常时用量/费用保持未知并保存脱敏错误。工具重试继续由注册表执行，当前评测计划支持model_retries=0、tool_retries=1，其他设置明确报错。
 - `seed` 会原样传给供应商，但不是所有供应商都支持；是否生效以供应商说明为准。Agent 运行中，每次模型调用的参数都写在执行记录的 `arguments` 里。
 - 配置从环境变量读取，API Key 只放在 `.env`，不提交到仓库：
 
@@ -286,6 +291,7 @@ class CostInfo(BaseModel):
 |---|---|
 | `CIVRA_LLM_BASE_URL` | OpenAI 兼容接口地址，例如 `https://api.deepseek.com` |
 | `CIVRA_LLM_API_KEY` | API Key |
+| `CIVRA_LLM_BACKEND` | 已废弃；删除旧native设置，当前仅使用LangChain |
 | `CIVRA_LLM_MODEL` | 模型名称 |
 | `CIVRA_LLM_PRICE_IN` / `CIVRA_LLM_PRICE_OUT` | 每百万输入 / 输出 token 的价格（元），用于估算费用；不填时费用为未知 |
 | `CIVRA_LLM_PRICE_VERSION` | 价格版本，例如核对价格的日期 |
@@ -430,7 +436,7 @@ data: {"seq": 7, "run_id": "run_20261031_ab12cd", "type": "step.finished", "step
 
 ### 5.2 执行记录 `TraceStep`
 
-每一步在调用前后由 Runtime 自动追加写入，不依赖模型自己报告。每次运行的文件放在 `var/runs/{run_id}/`：`trace.jsonl`（执行记录）、`events.jsonl`（事件）、`checkpoint.json`（检查点）、`results/step_NNNN.json`（每步的完整参数和结果）。后续需要时迁移到数据库。`data/` 只放法律资料、案例、模板和示例数据；运行时产生的文件放在 `var/`，该目录已在 `.gitignore` 中，不提交到仓库。
+每一步由create_agent middleware与生命周期适配在实际调用前后追加写入，不依赖模型自己报告。每次运行的文件放在 `var/runs/{run_id}/`：`trace.jsonl`（执行记录）、`events.jsonl`（事件）、`checkpoint.json`（检查点）、`results/step_NNNN.json`（每步的完整参数和结果）。后续需要时迁移到数据库。`data/` 只放法律资料、案例、模板和示例数据；运行时产生的文件放在 `var/`，该目录已在 `.gitignore` 中，不提交到仓库。
 
 ```python
 class TraceStep(BaseModel):
@@ -461,6 +467,8 @@ class TraceStep(BaseModel):
 
 执行记录展示的是实际动作、结果和决策摘要，不代表模型内部的完整思维过程，也不能证明法律判断正确。
 
+新运行另在var/runs/agent.sqlite3保存框架SQLite检查点，以run_id作为thread_id。checkpoint.json保存engine=langchain-create-agent-v2、预算、wait和引用；它不再重复保存消息历史，也不能单独恢复新会话。完整原生消息通过RunStore.read_messages(run_id)按需读取；已有v2记录中的messages字段被忽略，恢复以框架历史为准。取消请求写入独立cancel.requested标记，由执行边界读取，避免旧checkpoint覆盖取消状态。追问后middleware结束当次invoke并保存线程，用户回复通过同一thread_id继续；框架检查点缺失时失败，不重放工具。迁移前的旧engine记录不兼容恢复，需新建运行。案件数据仍由CaseStatePort提供。
+
 ---
 
 ## 6. 运行状态、预算与检查点
@@ -490,6 +498,7 @@ running ──► waiting_user ──(resume_run)──► running
 | 项目 | 默认值 | `RunConfig` 字段 |
 |---|---|---|
 | 每次运行最多步数 | 30 | `max_steps` |
+| 每次运行最多模型调用 | 不限（只受步数限制） | `max_model_calls` |
 | 每次运行最多工具调用 | 20 | `max_tool_calls` |
 | 每次运行 token 上限（输入加输出累计） | 200,000，试点后调整 | `max_total_tokens` |
 | 每次运行执行时间（不含等待用户的时间） | 600 秒 | `max_run_seconds` |
@@ -532,7 +541,7 @@ running ──► waiting_user ──(resume_run)──► running
 
 ## 7. 评测模式接口
 
-成员5用同一入口批量运行四种模式。Direct LLM、RAG、Fixed Workflow 三个基线由成员5实现，复用 `LLMClient` 和已注册的工具；Agent 模式由成员4提供。
+成员5用同一入口批量运行四种模式。Direct LLM、RAG、Fixed Workflow 三个基线由成员5实现，复用同一 `BaseChatModel` 和已注册的工具；Agent 模式由成员4提供。
 
 ```python
 class RunConfig(BaseModel):
@@ -542,6 +551,7 @@ class RunConfig(BaseModel):
     seed: int | None = None
     max_output_tokens: int | None = None
     max_steps: int = 30
+    max_model_calls: int | None = None
     max_tool_calls: int = 20
     max_total_tokens: int | None = 200_000
     max_run_seconds: float | None = 600
@@ -549,6 +559,20 @@ class RunConfig(BaseModel):
     max_context_chars: int = 60_000
     enabled_tools: list[str] | None = None   # None 表示按阶段默认开放
 ```
+
+组装一个可以直接运行的 Agent（真实模型、真实 `search_statutes`、成员3工具暂用 mock），用 `backend/agent/factory.py`：
+
+```python
+from backend.agent.factory import build_runner
+from evaluation.config import run_config_from_pilot
+
+cfg = run_config_from_pilot(json.loads(Path("evaluation/configs/pilot_v1.json").read_text()))
+setup = build_runner(config=cfg)              # 读取 .env 中的 SILICONFLOW_API_KEY
+setup.cases.create(case_id, {"facts": {...}}) # 每次重复用新的 case_id
+result = AgentAdapter(setup.runner).run(case_id, user_message, cfg, exp_id, reply_to_wait)
+```
+
+`evaluation.config.run_config_from_pilot` 把评测计划中的模型、`max_output_tokens` 和 `budgets`（`max_model_calls`、`max_tool_calls`、`max_total_tokens`、`max_active_seconds`）对应到 `RunConfig`。模型不重试，无副作用工具按`ToolSpec.max_retries`限制重试次数（默认最多1次），并受共同deadline约束。`build_runner(mock_business_tools=False)`保留真实检索和内存update_case，关闭模拟业务核验及文书工具。命令行试运行：`scripts/agent/run_agent.py`（`--dry-run --mock-statutes` 为全离线检查）。
 
 Agent 模式的典型调用流程（由成员5的 adapter 实现，隐藏事实的披露也由成员5控制）：
 
@@ -573,8 +597,8 @@ manifest = runner.get_runtime_manifest()
 
 | 评测文档中的名称 | 本文档 / 代码中的对应 |
 |---|---|
-| `generate(ModelRequest)` | `LLMClient.chat(messages, tools, model=, temperature=, max_tokens=, seed=, tool_choice=)` |
-| `generation.max_output_tokens` | `chat(max_tokens=)` / `RunConfig.max_output_tokens` |
+| `generate(ModelRequest)` | `ModelAdapter.generate` → `BaseChatModel.bind(...).invoke(...)` |
+| `generation.max_output_tokens` | `bind(max_tokens=)` / `RunConfig.max_output_tokens`；SDK可发送等价max_completion_tokens |
 | `ToolCall.call_id` | `ToolCall.id` |
 | 工具规格 `input_schema` | `ToolSpec.parameters` |
 | `input_tokens` / `output_tokens` | `TokenUsage.prompt_tokens` / `completion_tokens` |
@@ -618,3 +642,12 @@ manifest = runner.get_runtime_manifest()
 | v0.3 | 2026-11-01 | 与骨架代码对齐：新增错误码 `NOT_ALLOWED`、事件 `run.resumed` 和 `run.budget_exhausted`；运行接口返回 `RunInfo` 且为同步调用；`chat` 去掉 `run_id` 参数；补充模型环境变量和 `CaseStatePort` |
 | v0.4 | 2026-11-01 | 新增 token 上限、检索—核验 3 轮上限（`ToolSpec.feedback_loop`）、上下文压缩和 `RunInfo.stale`（6.2、6.4） |
 | v0.5 | 2026-11-03 | 按成员5的评测接口需求修改：`resume_run` 需要 `wait_id`，支持 `expected_case_version` 和 `request_id` 防重复；`pending` 改为 `Wait`（含 `material_request`）；新增 `export_trace`、`get_step_result`、`get_runtime_manifest`；执行记录增加 `event_id`、`parent_step_id`、`finished_at` 和完整结果文件；模型接口支持 `model`、`seed`、`tool_choice`，返回 `finish_reason`、请求 ID，用量未知时为 `null`，费用带币种和价格版本；`RunInfo` 增加 `case_version`、`experiment_run_id`；提前结束时保留已完成部分；`finish` 支持 `citations`；新增执行时间上限；新增与评测文档的名称对照（7.1）和待确认问题 11–14 |
+| v0.6 | 2026-11-04 | `search_statutes` 接入真实检索（2.6）；去掉示例中的 `dispute_type` |
+| v0.7 | 2026-11-10 | 新增 `RunConfig.max_model_calls`；第 7 节补充 `build_runner`、`run_config_from_pilot` 和命令行脚本 |
+| v0.8 | 2026-11-10 | 模型层改用 LangChain（`LangChainLLMClient`，默认）；新增 `to_langchain_tools`；新增 `CIVRA_LLM_BACKEND` |
+| v0.9 | 2026-11-10 | 迁移成员2适配：真实检索默认exact-vector，统一matches、结构化SourceRef、来源版本和快照记录；query/top_k为首轮参数，保留旧mock/检查点读取 |
+
+
+| v1.0 | 2026-11-10 | 主循环迁移到create_agent；直接模型/工具入口，项目middleware保留预算、版本、顺序和轨迹；框架SQLite检查点，新旧未完成会话不跨版本恢复；同步评测调用并移除旧客户端及重复包装 |
+| v1.1 | 2026-11-11 | 工具引用统一为matches[].source_ref，移除重复正文/引用和固定meta；Runtime派生轨迹与最终来源，mock复用工具合同，简化中间件结果处理 |
+| v1.2 | 2026-11-11 | 删除SourceRef.version/excerpt及字符串定位兼容，只接受当前结构；运行记录格式升为v2，旧文件保持原样且不参与新运行加载 |

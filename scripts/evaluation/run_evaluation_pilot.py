@@ -8,10 +8,11 @@ from pathlib import Path
 import ssl
 import sys
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
+from backend.common.config import load_dotenv
 
-from backend.agent.llm import OpenAICompatibleClient  # noqa: E402
+from backend.agent.factory import llm_from_env  # noqa: E402
 from backend.knowledge.config import RetrievalConfig  # noqa: E402
 from backend.knowledge.retrieval.service import RetrievalService  # noqa: E402
 from evaluation.adapters.team import ModelAdapter, RetrievalAdapter  # noqa: E402
@@ -25,6 +26,7 @@ def main():
     parser.add_argument("--output-root", type=Path, default=ROOT / "evaluation/results")
     parser.add_argument("--prompt-key", action="store_true")
     args = parser.parse_args()
+    load_dotenv()
     config = json.loads(args.config.read_text())
     if not config.get("paid_execution_enabled") or not config.get("model"):
         parser.error("Model and paid_execution_enabled must be set in the pilot plan")
@@ -42,7 +44,7 @@ def main():
         os.environ.setdefault("SSL_CERT_FILE", certifi.where())
     except ImportError:
         ssl.create_default_context()
-    client = OpenAICompatibleClient(timeout_s=120)
+    client = llm_from_env(config["model"])
     service = RetrievalService.from_config(RetrievalConfig.from_mode(
         config["retrieval"]["mode"], variant=config["retrieval"]["variant"],
         top_k=config["retrieval"]["top_k"]))
