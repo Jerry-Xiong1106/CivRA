@@ -1,5 +1,36 @@
 # 成员三提交前验证记录
 
+## 2026-11-13 create_agent 接入复核
+
+基线为`develop@27c9a38`，分支为`feature/case-tools`，业务实现版本为`case-tools-0.7.0`。
+
+| 检查 | 结果 | 验证范围 |
+|---|---|---|
+| `python -m pytest tests -q -p no:cacheprovider` | 520项通过，198个子测试通过，无跳过 | 成员三、共享create_agent、RAG及评测的完整测试集 |
+| 新增create_agent回归 | 10项通过，包含在完整测试集中 | 真实本地检索、十项工具装配、来源结构、旧版本指针、消息保存、重启恢复及重试 |
+| `scripts/case/check_handoff.py` | 40/40通过 | 十工具各正常、非法、缺失、冲突场景 |
+| `scripts/case/demo_shared_tools.py` | 通过 | Agent与固定流程各11次业务调用，业务输出和案件快照一致 |
+| `scripts/case/review_pilot_citations.py` | 5/5发现缺少有效完整来源绑定 | 公开RAG原始回答的离线引用检查 |
+
+真实RAG测试使用已发布1690条法条、本地BM25索引和精确条号路由。模型使用ScriptedLLM及本地HTTP模拟服务。真实生成模型、在线embedding效果、真实OCR质量和前端验收继续列为待联调。
+
+Windows隔离Python 3.12环境按`requirements.txt`与`requirements-case-dev.txt`安装。构建本地BM25索引后，原先因索引缺失跳过的3项检索测试全部执行。完整测试保留一项现有langchain-community弃用提示。首次回归定位到CLI管道的中英文编码差异，修复后重新运行完整测试通过。
+
+复现命令如下。索引与运行结果由Git忽略规则管理。
+
+```powershell
+python -m pip install -r requirements.txt -r requirements-case-dev.txt
+python scripts/rag/build_bm25_index.py
+python -m pytest tests -q -p no:cacheprovider
+python scripts/case/check_handoff.py
+python scripts/case/demo_shared_tools.py
+python scripts/case/review_pilot_citations.py
+```
+
+带哈希与字符位置的三个合成材料通过`.gitattributes`固定为LF。测试覆盖发布日期版本、生效日期旧指针的精确兼容、歧义版本拒绝和缺失发布日期时的正文哈希版本。
+
+## 2026-11-10 历史提交前记录
+
 日期：2026-11-10。基线：`develop@653ef33af9aaf319113432ac7589d9bc700d5e48`。提交分支：`feature/case-tools`。实现版本：`case-tools-0.6.0`。
 
 ## 已通过

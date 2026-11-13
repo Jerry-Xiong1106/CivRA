@@ -49,7 +49,7 @@ info = setup.runner.start_run("case-1", "我的车被追尾了")
 
 knowledge_tools.py仍负责法条结果转换，registry.py仍负责业务工具校验、阶段、超时和重试。工具函数直接由create_agent使用，不再经过独立LangChain工具包装文件。真实业务能力未交付时仍可显式使用mock；mock结果不能作为业务核验结论。
 
-factory从空注册表按配置装配工具。`update_case`继续位于mock_tools.py并使用内存存储；关闭mock_business_tools只移除模拟核验、证据检查和文书生成。注册表由创建方通过`close()`或上下文管理器释放，CLI在退出时关闭。
+factory接受`case_service`，从空注册表装配成员三十项真实业务工具与法规检索，使用同一repository的RepositoryCasePort。传入已初始化的`retrieval_service`可复用检索资源。未传case_service时沿用内存演示工具；关闭mock_business_tools保留演示update_case。注册表由创建方通过`close()`或上下文管理器释放，CLI在退出时关闭。
 
 普通工具和内置工具共用参数、阶段校验。有副作用的工具不自动重试；只读工具仅在可重试错误且deadline仍有余量时重试。Agent为一次逻辑工具调用分配timeout_s总时限，所有尝试共用；检索会将deadline传递给embedding HTTP请求。超时不代表工作线程已被强制终止。
 
@@ -72,7 +72,7 @@ var/runs/
     └── results/step_NNNN.json
 ~~~
 
-SQLite与JSON元数据需要一起保留；缺少框架检查点时拒绝继续，不能从头重跑已执行工具。案件数据本身仍由CaseStatePort提供，当前演示使用InMemoryCaseStore。
+SQLite与JSON元数据需要一起保留；缺少框架检查点时拒绝继续，不能从头重跑已执行工具。案件数据由CaseStatePort提供。传入case_service时，用户输入和追问回复先写入业务案件库，再进入create_agent；应用已保存的消息通过message_id避免重复写入。其余演示入口使用InMemoryCaseStore。
 
 完整历史通过RunStore.read_messages(run_id)按需从框架检查点读取。旧v2元数据中的messages镜像会被忽略，后续保存时不再写入；恢复始终依赖同一LangGraph线程。提示压缩直接处理原生消息，并保留消息ID及附加字段。取消信号由共享RunStore读取，另一Runner实例也可请求取消，保存旧checkpoint不会覆盖取消标记。
 
@@ -96,4 +96,4 @@ SQLite与JSON元数据需要一起保留；缺少框架检查点时拒绝继续�
 
 ## 尚待业务联调
 
-成员3真实业务工具、案例检索、每份业务产物的版本过期标记及法律依据支持核验仍待接入。此前旧实现的DeepSeek试运行观察不能作为新实现的效果报告，也不能因迁移框架就宣称引用或法律结论得到改善。
+成员三真实工具的create_agent装配已提供，接口与复现见`docs/case/submission-handoff.md`。真实生成/embedding效果、案例检索及最终答案的法律依据支持核验仍待联调。此前旧实现的DeepSeek试运行观察不能作为新实现的效果报告，也不能因迁移框架就宣称引用或法律结论得到改善。

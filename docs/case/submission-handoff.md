@@ -1,6 +1,6 @@
 # 成员三业务代码提交与试点接入
 
-实现版本：`case-tools-0.6.0`，业务Schema保留`0.1`。基于`develop@653ef33`准备。此交付包含成员三此前本地开发的业务层及本轮试点修复，可供成员四与五调用Python接口。真实模型、最终用户界面和独立法律评审仍待接入。
+实现版本：`case-tools-0.7.0`，业务Schema保留`0.1`。基于`develop@27c9a38`的LangChain `create_agent`实现准备。此交付包含成员三此前本地开发的业务层及本轮试点修复，可供成员四与五调用Python接口。真实模型、最终用户界面和独立法律评审仍待接入。
 
 ## 安装和检查
 
@@ -8,7 +8,7 @@ Python 3.12：
 
 ```powershell
 python -m venv .venv-case
-.\.venv-case\Scripts\python.exe -m pip install -r requirements-case-dev.txt
+.\.venv-case\Scripts\python.exe -m pip install -r requirements.txt -r requirements-case-dev.txt
 .\.venv-case\Scripts\python.exe -m unittest discover -s tests/case -v
 .\.venv-case\Scripts\python.exe scripts/case/check_handoff.py
 .\.venv-case\Scripts\python.exe scripts/case/demo_shared_tools.py
@@ -22,24 +22,30 @@ python -m venv .venv-case
 ```python
 from backend.case import CaseService, SQLiteCaseRepository
 from backend.case.knowledge_bridge import CorpusSourceResolver, executable_research_plan
-from backend.case.runtime import RepositoryCasePort
-from backend.tools.case_tools import register_case_tools
-from backend.tools.registry import ToolRegistry
+from backend.agent.factory import build_runner
 
 repository = SQLiteCaseRepository("var/cases.sqlite3")  # 应用另行创建/读取真实案件
 sources = CorpusSourceResolver.from_directory()
 service = CaseService(repository, source_resolver=sources)
-registry = register_case_tools(ToolRegistry(), service)
-case_port = RepositoryCasePort(repository)
+setup = build_runner(case_service=service)  # 模型读取团队环境配置，真实检索需要准备索引
+# 也可传入 retrieval_service=已初始化的成员二RetrievalService
+# 应用创建案件后，调用 setup.runner.start_run(case_id, user_message)
+# 退出时调用 setup.registry.close()
 ```
 
-`CorpusSourceResolver`只读成员二已发布的三份JSONL，启动后复用已固定的内存快照。`SourcePointer.source_id`保持原始`provision_id`，`source_version`按当前评测/工具适配约定使用`effective_date`；不把ID中的发布日期当作生效日期。`manifest()`额外返回快照哈希。未知ID或版本明确失败，不降级到最新版。完整正文、PDF文件名、起止页、链接及登记时点均保留；不把下载时间当作法律效力核验时间。
+`CorpusSourceResolver`只读成员二已发布的三份JSONL，启动后复用已固定的内存快照。`SourcePointer.source_id`保持原始`provision_id`，`source_version`与最新RAG一致，采用`publication_date`，缺失时使用正文`sha256:`。生效日期单独保存在`effective_from`。此前案件中的生效日期版本指针通过唯一的精确别名读取同一原文；别名存在歧义时明确失败。Runtime输出使用该原文的规范版本。`manifest()`额外返回快照哈希。未知ID或版本明确失败，不降级到最新版。完整正文、PDF文件名、起止页、链接及登记时点均保留；不把下载时间当作法律效力核验时间。
 
 成员二需复核此版本约定并提供后续权威版本管理。部分URL为官方数据库首页，当前可依据随库PDF页码核对；公开PDF下载地址由应用层提供。
 
 `service.prepare_research()`仍返回业务查询计划。调用`executable_research_plan(plan)`得到当前可执行的`query/top_k`参数，尚不支持的`search_cases`进入`deferred`，日期/地区/案由要求保留在`unapplied_filters`，没有伪称已执行过滤。传入`expected_snapshot`可阻止错误知识库版本的请求。不要直接把整个ResearchQuery传给检索工具。
 
-`register_case_tools`注册原十项业务工具，并默认使用`service.get_source`转换引用。Runtime整数`step_id`转为业务日志字符串，保留`run_id`关联。实验编号仍由评测直接调用时传入InvocationContext；共享Runtime关联由成员四对接。真实检索工具注册由成员二/四负责，本提交不合并尚在`feature/statute-tool`的实现。
+`register_case_tools`注册原十项业务工具，并默认使用`service.get_source`转换引用。Runtime整数`step_id`转为业务日志字符串，保留`run_id`关联。实验编号仍由评测直接调用时传入InvocationContext；共享Runtime关联由成员四对接。`build_runner(case_service=service, retrieval_service=...)`从空注册表装配真实检索及十项业务工具，使用同一repository的RepositoryCasePort，并替换演示update_case。关闭真实检索时可用`real_statutes=False`完成离线工具联调。
+
+## create_agent返回结构与用户确认
+
+Runtime工具返回的来源放在`data.matches[].source_ref`，相应原文放在`match.text`。来源版本字段是`source_version`，`locator`包含article、PDF页码、paragraph或chunk_id。业务结果仍保留在`data.data`及原有output_refs。业务信封中的source_refs保留原始版本指针，完整来源元数据与原文通过matches传递。
+
+通过CaseService构建的Runner会在模型读取输入前保存用户消息，追问回复会追加到相同案件，再恢复相同LangGraph线程。保存消息本身不会确认任何事实；确认仍需引用已保存的message_id。应用已提前保存消息时，在`start_run`或`resume_run`传入该`message_id`避免重复写入，并传入正确的`expected_case_version`。`actor_id`由可信应用传入；CLI默认使用user。直接构造AgentRunner的调用方可显式选择`record_user_messages=True`。
 
 ## 成员五 借贷本金余额
 
@@ -99,4 +105,4 @@ report = service.review_answer({
 
 ## 团队仍需完成
 
-成员2确认版本约定、来源完整性与实际检索配置；成员4接真实模型、工具表、答案核验/修正循环和运行预算；成员5接业务接口执行Fixed Workflow与Agent试点，并独立复核法律结果；成员1接用户确认、权限和页面。13项其他扩展继续按原台账，不计入本轮完成范围。
+成员2复核来源完整性与实际检索配置；成员4复核新增case_service装配及消息持久化钩子，完成真实模型、答案核验/修正循环和运行预算联调；成员5接业务接口执行Fixed Workflow与Agent试点，并独立复核法律结果；成员1接用户确认、权限和页面。13项其他扩展继续按原台账，不计入本轮完成范围。
