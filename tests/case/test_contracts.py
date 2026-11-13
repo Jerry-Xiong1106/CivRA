@@ -196,7 +196,7 @@ class CaseContractsTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             to_runtime_tool_result(result, source_resolver=lambda pointer: source)
         source["version"] = "v1"
-        self.assertEqual(to_runtime_tool_result(result, source_resolver=lambda pointer: source)["source_refs"][0]["version"], "v1")
+        self.assertEqual(to_runtime_tool_result(result, source_resolver=lambda pointer: source)["data"]["matches"][0]["source_ref"]["source_version"], "v1")
 
     def test_runtime_case_view_and_contract_manifest(self):
         view = runtime_case_view(self.snapshot)

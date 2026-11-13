@@ -1,4 +1,4 @@
-"""Explicit bridges for the Runtime v0.5 and Evaluation v0.1 draft contracts."""
+"""Bridges between business records, create_agent tools and evaluation callers."""
 
 from __future__ import annotations
 
@@ -75,20 +75,15 @@ def to_runtime_tool_result(
     """
     if result.source_refs and source_resolver is None:
         raise ValueError("source_resolver is required for referenced sources")
-    resolved = []
+    matches = []
     for pointer in result.source_refs:
         source = dict(source_resolver(pointer))
         required = {"source_id", "source_type", "title", "locator", "version"}
         if not required <= source.keys():
-            raise ValueError("resolver must return the Runtime v0.5 SourceRef fields")
+            raise ValueError("resolver must return the pinned business source fields")
         if source["source_id"] != pointer.source_id or source["version"] != pointer.source_version:
             raise ValueError("resolved source identity/version differs from the pointer")
-        # Full text is needed by semantic review, but Runtime citations use the
-        # compact SourceRef shape. Normalize the legal aliases to its vocabulary.
-        if source["source_type"] in {"law", "regulation"}:
-            source["source_type"] = "statute"
-        allowed = required | {"excerpt", "url"}
-        resolved.append({key: value for key, value in source.items() if key in allowed})
+        matches.append(runtime_source_match(source))
     error = None
     if result.error is not None:
         error = {
@@ -97,12 +92,50 @@ def to_runtime_tool_result(
             "retryable": result.error.retryable,
             "details": {**(result.error.details or {}), "business_code": result.error.code},
         }
+    data = None if result.data is None else result.model_dump(mode="json")
+    if data is not None:
+        data["matches"] = matches
+    elif matches:
+        data = {"matches": matches}
     payload = {
         "status": result.status,
-        "data": None if result.data is None else result.model_dump(mode="json"),
+        "data": data,
         "summary": result.summary,
-        "source_refs": resolved,
         "error": error,
         "case_version": result.case_version,
     }
     return result_type.model_validate(payload) if result_type is not None else payload
+
+
+def runtime_source_match(source: Mapping[str, Any]) -> dict:
+    """Keep original text beside the current Runtime's structured source metadata."""
+    from backend.common.schemas import SourceRef
+
+    kind = source["source_type"]
+    locator = source["locator"]
+    if isinstance(locator, str):
+        field = "article" if kind in {"law", "regulation", "statute", "judicial_interpretation"} else "paragraph"
+        locator = {field: locator}
+    else:
+        locator = dict(locator)
+        page = locator.pop("page", None)
+        if page is not None:
+            locator.setdefault("page_start", page)
+    for key in ("page_start", "page_end"):
+        if source.get(key) is not None:
+            locator.setdefault(key, source[key])
+    ref = {
+        "source_id": source["source_id"],
+        "source_type": "statute" if kind in {"law", "regulation"} else kind,
+        "title": source["title"],
+        "locator": locator,
+        "source_version": source.get("source_version", source["version"]),
+    }
+    for key in ("url", "effective_from", "effective_to", "decision_date", "retrieved_at",
+                "retrieved_date", "source_file", "content_sha256"):
+        if source.get(key) is not None:
+            ref[key] = source[key]
+    if "content_sha256" not in ref and source.get("text_sha256"):
+        ref["content_sha256"] = source["text_sha256"]
+    return {"text": source.get("text", source.get("excerpt", "")),
+            "source_ref": SourceRef.model_validate(ref).model_dump(mode="json")}

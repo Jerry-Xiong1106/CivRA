@@ -17,9 +17,9 @@ from demo_support import DEMO_REPLY, confirmed_demo_changes  # noqa: E402
 
 def run_agent_demo(directory):
     # Imports are delayed so standalone business code never requires Runtime dependencies.
-    from backend.agent.llm import ScriptedLLM, tool_call
+    from backend.agent.model.llm import ScriptedLLM, tool_call
     from backend.agent.runner import AgentRunner
-    from backend.agent.store import RunStore
+    from backend.agent.runtime.store import RunStore
     from backend.common.schemas import UserReply
     from backend.tools.case_tools import register_case_tools
     from backend.tools.registry import ToolRegistry

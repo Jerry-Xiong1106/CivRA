@@ -5,14 +5,14 @@ from __future__ import annotations
 from pydantic import ValidationError
 import warnings
 
-from backend.case.adapters import to_runtime_tool_result
+from backend.case.adapters import runtime_source_match, to_runtime_tool_result
 from backend.case.client import CaseToolClient, ToolInvocation, get_case_tool_contracts
 from backend.case.contracts import InvocationContext
 from backend.case.repository import CaseNotFound
 
 
 def register_case_tools(registry, service, *, source_resolver=None):
-    from backend.common.schemas import SourceRef, ToolResult, ToolSpec
+    from backend.common.schemas import ToolResult, ToolSpec
 
     client = CaseToolClient(service)
     resolver = source_resolver or service.get_source
@@ -45,7 +45,8 @@ def register_case_tools(registry, service, *, source_resolver=None):
                                  for ref in finding.material_refs]
                 material_refs += [ref for entry in getattr(result.data, "entries", []) for ref in entry.material_refs]
                 material_refs += [segment.material_ref for segment in getattr(result.data, "text_segments", [])]
-            seen = {ref.source_id for ref in converted.source_refs}
+            matches = (converted.data or {}).get("matches", [])
+            seen = {match["source_ref"]["source_id"] for match in matches}
             snapshot = service.repository.get_case(context.case_id) if material_refs else None
             for ref in material_refs:
                 source_id = (f"material:{ref.file_id}:{ref.file_version}:{ref.extraction_version}:"
@@ -53,23 +54,27 @@ def register_case_tools(registry, service, *, source_resolver=None):
                 if source_id in seen:
                     continue
                 seen.add(source_id)
-                locator = "text"
-                if ref.page:
-                    locator = f"p.{ref.page}"
-                elif ref.paragraph:
-                    locator = "paragraph:" + ref.paragraph
+                locator = {"chunk_id": "text"}
+                if ref.page is not None:
+                    locator["page_start"] = ref.page
+                if ref.paragraph:
+                    locator["paragraph"] = ref.paragraph
                 if ref.span_start is not None:
-                    locator += f":chars[{ref.span_start}:{ref.span_end}]"
+                    locator["chunk_id"] += f":chars[{ref.span_start}:{ref.span_end}]"
                 if ref.extraction_version:
-                    locator += ":extraction:" + ref.extraction_version
+                    locator["chunk_id"] += ":extraction:" + ref.extraction_version
                 title = next((item.file_name for item in snapshot.evidence
                               if (item.file_id, item.file_version) == (ref.file_id, ref.file_version)), None)
                 if title is None:
                     title = service.assets.get_file(context.case_id, ref.file_id, ref.file_version)[0].file_name
-                converted.source_refs.append(SourceRef(
-                    source_id=source_id, source_type="user_material", title=title, locator=locator,
-                    version=ref.file_version, excerpt=ref.quote, url=None,
-                ))
+                matches.append(runtime_source_match({
+                    "source_id": source_id, "source_type": "user_material", "title": title,
+                    "locator": locator, "version": ref.file_version, "text": ref.quote or "",
+                }))
+            if material_refs:
+                if converted.data is None:
+                    converted.data = {}
+                converted.data["matches"] = matches
             return converted
         except CaseNotFound:
             failure = ToolResult.fail("NOT_FOUND", "案件、文件或业务输出不存在。")

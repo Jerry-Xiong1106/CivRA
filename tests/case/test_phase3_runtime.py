@@ -50,8 +50,8 @@ class Phase3RuntimeTests(unittest.TestCase):
             media_type="text/plain",document_type="other",content="维修金额：3000.00元".encode())
         result=self.registry.execute("parse_documents",{"file_ids":["new-upload"]},self.context()).result
         self.assertEqual(result.status,"ok",result.error)
-        self.assertTrue(result.source_refs)
-        self.assertIn("extraction:",result.source_refs[0].locator)
+        self.assertTrue(result.data["matches"])
+        self.assertIn("extraction:", result.data["matches"][0]["source_ref"]["locator"]["chunk_id"])
         self.assertEqual(result.data["data"]["extracted_facts"][0]["confirmation_status"],"unconfirmed")
 
     def test_verify_saved_output_and_litigation_gate(self):

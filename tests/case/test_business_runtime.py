@@ -33,7 +33,7 @@ class BusinessRuntimeTests(unittest.TestCase):
         execution = self.registry.execute("check_evidence", {}, self.context())
         self.assertEqual(execution.result.status, "insufficient")
         self.assertEqual(len(execution.result.data["data"]["conflicts"]), 1)
-        self.assertTrue(any(source.source_type == "user_material" for source in execution.result.source_refs))
+        self.assertTrue(any(match["source_ref"]["source_type"] == "user_material" for match in execution.result.data["matches"]))
         activity = CaseService(self.repo).get_tool_activity({
             "context": {"case_id":self.case.case_id,"request_id":"activity-check","experiment_run_id":None,"deadline_at":None},
             "case_version":1})

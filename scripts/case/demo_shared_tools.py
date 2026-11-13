@@ -103,9 +103,9 @@ def run_fixed(directory):
 
 
 def run_agent(directory):
-    from backend.agent.llm import ScriptedLLM, tool_call
+    from backend.agent.model.llm import ScriptedLLM, tool_call
     from backend.agent.runner import AgentRunner
-    from backend.agent.store import RunStore
+    from backend.agent.runtime.store import RunStore
     from backend.common.schemas import RunConfig, UserReply
     from backend.tools.case_tools import register_case_tools
     from backend.tools.registry import ToolRegistry
@@ -175,7 +175,10 @@ def run_agent(directory):
         result = record["result"]
         if result["status"] == "error":
             raise AssertionError(record)
-        steps.append({"name": step.tool_name, "result": result["data"]})
+        # Compare the business envelope with the fixed caller's result. Runtime
+        # matches carry additional resolved source/material presentation data.
+        business = {key: value for key, value in result["data"].items() if key != "matches"}
+        steps.append({"name": step.tool_name, "result": business})
     return {"steps": steps, "snapshot": repo.get_case(case_id).model_dump(mode="json"), "run_status": info.status}
 
 

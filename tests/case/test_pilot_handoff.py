@@ -134,7 +134,7 @@ class CorpusBridgeTests(PilotFixture):
 
     def test_wrong_version_never_falls_back(self):
         with self.assertRaises(KeyError):
-            self.resolver(self.pointer.model_copy(update={'source_version':'2020-05-28'}))
+            self.resolver(self.pointer.model_copy(update={'source_version':'2022-01-01'}))
 
     def test_source_card_keeps_pdf_metadata_and_homepage_warning(self):
         self.case()

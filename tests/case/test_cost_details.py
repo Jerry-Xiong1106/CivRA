@@ -115,7 +115,7 @@ class CostDetailTests(unittest.TestCase):
         self.assertIn("第十三条", source["locator"])
         self.assertEqual(source["text_scope"], "short_excerpt_only")
         self.assertTrue(source["source_id"].startswith("member3.local_rule."))
-        self.assertEqual(to_runtime_tool_result(result, source_resolver=self.service.get_source)["source_refs"][0]["version"], source["version"])
+        self.assertEqual(to_runtime_tool_result(result, source_resolver=self.service.get_source)["data"]["matches"][0]["source_ref"]["source_version"], source["version"])
         wrong = result.source_refs[0].model_copy(update={"source_version": "latest"})
         with self.assertRaises(KeyError):
             self.service.get_source(wrong)

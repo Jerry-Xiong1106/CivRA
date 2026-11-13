@@ -29,9 +29,9 @@ class RuntimeCompatibilityTests(unittest.TestCase):
         self.assertEqual(runtime_result.data["data"]["case_id"], snapshot.case_id)
 
     def test_registered_contract_validation_tool_runs_in_agent(self):
-        from backend.agent.llm import ScriptedLLM, tool_call
+        from backend.agent.model.llm import ScriptedLLM, tool_call
         from backend.agent.runner import AgentRunner
-        from backend.agent.store import RunStore
+        from backend.agent.runtime.store import RunStore
         from backend.common.schemas import ToolSpec
         from backend.tools.registry import ToolRegistry
 

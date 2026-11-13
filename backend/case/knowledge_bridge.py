@@ -13,13 +13,10 @@ def normalize_dispute_type(value):
 
 
 class CorpusSourceResolver:
-    """Pin an in-memory corpus snapshot and resolve exact ID/effective-date pairs.
-
-    The version convention matches the current evaluation and statute-tool adapters.
-    A manifest hash additionally identifies the exact content, not legal currency.
-    """
+    """Resolve canonical publication versions and unambiguous saved effective-date aliases."""
     def __init__(self, provisions):
         self._records = {}
+        aliases = {}
         for raw in provisions:
             text = raw["text"]
             if not isinstance(text, str) or not text.strip():
@@ -32,20 +29,29 @@ class CorpusSourceResolver:
                 date.fromisoformat(raw["expiry_date"])
             if type(raw["page_start"]) is not int or type(raw["page_end"]) is not int or not 1 <= raw["page_start"] <= raw["page_end"]:
                 raise ValueError("invalid PDF page range")
-            key = (raw["provision_id"], raw["effective_date"])
+            text_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
+            publication = raw.get("publication_date")
+            if publication:
+                date.fromisoformat(publication)
+            version = publication or f"sha256:{text_hash}"
+            key = (raw["provision_id"], version)
             if key in self._records:
                 raise ValueError("duplicate source ID/version in corpus")
             self._records[key] = dict(
-                source_id=key[0], version=key[1], source_type="statute", title=raw["law_title"],
+                source_id=key[0], version=version, source_version=version,
+                source_type="statute", title=raw["law_title"],
                 locator=raw["article_no"], text=text, excerpt=text, url=raw.get("source_url"),
-                effective_from=key[1], effective_to=raw.get("expiry_date"), verified_on=None,
+                effective_from=raw["effective_date"], effective_to=raw.get("expiry_date"), verified_on=None,
                 text_scope="full_provision", source_file=raw["source_file"],
                 page_start=raw["page_start"], page_end=raw["page_end"],
                 publication_date=raw.get("publication_date"), registered_status=raw.get("status"),
-                text_sha256=hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                text_sha256=text_hash,
             )
+            alias = (key[0], raw["effective_date"])
+            aliases.setdefault(alias, set()).add(key)
         if not self._records:
             raise ValueError("empty corpus snapshot")
+        self._aliases = {alias: next(iter(keys)) for alias, keys in aliases.items() if len(keys) == 1}
         payload = json.dumps([self._records[k] for k in sorted(self._records)], ensure_ascii=False, sort_keys=True)
         self.snapshot_hash = hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
@@ -61,12 +67,18 @@ class CorpusSourceResolver:
     def __call__(self, pointer):
         pointer = SourcePointer.model_validate(pointer)
         key = (pointer.source_id, pointer.source_version)
-        if key not in self._records:
+        canonical = key if key in self._records else self._aliases.get(key)
+        if canonical is None:
             raise KeyError("source ID/version is absent from the pinned corpus snapshot")
-        return deepcopy(self._records[key])
+        record = deepcopy(self._records[canonical])
+        # Existing business outputs retain their pinned pointer. Runtime metadata
+        # always receives the canonical identity of that same exact record.
+        record["version"] = pointer.source_version
+        return record
 
     def manifest(self):
-        return {"version_convention": "effective_date", "snapshot_sha256": self.snapshot_hash,
+        return {"version_convention": "publication_date_or_content_sha256",
+                "legacy_alias": "unambiguous_effective_date", "snapshot_sha256": self.snapshot_hash,
                 "source_count": len(self._records), "current_legal_validity_verified": False,
                 "capabilities": {"search_cases": False, "date_filter": False, "multi_version": False},
                 "limitations": ["仅读取当前快照，登记状态不代表已核验现行效力。",

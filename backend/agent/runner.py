@@ -11,7 +11,7 @@ import hashlib
 import json
 import time
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Iterator
 
 from langchain.agents import create_agent
@@ -59,6 +59,8 @@ class AgentRunner:
         cases: CaseStatePort,
         store: RunStore | None = None,
         default_config: RunConfig | None = None,
+        *,
+        record_user_messages: bool = False,
     ) -> None:
         if getattr(llm, "max_retries", 0) not in (0, None):
             raise ValueError("Model max_retries must be 0; retries must be accounted by the caller")
@@ -67,6 +69,7 @@ class AgentRunner:
         self.cases = cases
         self.store = store or RunStore()
         self.default_config = default_config or RunConfig()
+        self.record_user_messages = record_user_messages
 
     # ------------------------------------------------------------ public API
 
@@ -78,6 +81,8 @@ class AgentRunner:
         config: RunConfig | None = None,
         experiment_run_id: str | None = None,
         request_id: str | None = None,
+        message_id: str | None = None,
+        actor_id: str = "user",
     ) -> RunInfo:
         """Start a run. Repeating a request_id returns the run it already started."""
         if request_id is not None:
@@ -97,7 +102,8 @@ class AgentRunner:
             experiment_run_id=experiment_run_id,
             start_request_id=request_id,
         )
-        self.store.emit(cp, "run.started", case_id=case_id, case_version=snap.case_version,
+        self._record_user_message(cp, user_message, f"start:{request_id or cp.run_id}", message_id, actor_id)
+        self.store.emit(cp, "run.started", case_id=case_id, case_version=cp.case_version,
                         mode=cp.config.mode, experiment_run_id=experiment_run_id)
         self.store.save_checkpoint(cp)
         return self._drive(cp, [HumanMessage(content=user_message)])
@@ -110,6 +116,8 @@ class AgentRunner:
         wait_id: str,
         expected_case_version: int | None = None,
         request_id: str | None = None,
+        message_id: str | None = None,
+        actor_id: str = "user",
     ) -> RunInfo:
         """Answer the run's current wait and continue.
 
@@ -130,6 +138,7 @@ class AgentRunner:
         current_version = self.cases.get_snapshot(cp.case_id).case_version
         if expected_case_version is not None and expected_case_version != current_version:
             raise VersionConflict(f"expected case_version {expected_case_version}, case is at {current_version}")
+        cp.case_version = current_version
         self._ensure_not_running(cp.case_id)
         wait = cp.wait
 
@@ -137,6 +146,8 @@ class AgentRunner:
             allowed = [o.route for o in wait.options]
             if reply.route_choice not in allowed:
                 raise RunStateError(f"route_choice must be one of {allowed}")
+        reply_text = _reply_text(reply, wait)
+        self._record_user_message(cp, reply_text, f"resume:{run_id}:{wait_id}", message_id, actor_id)
         if request_id is not None:
             cp.applied_requests.append(request_id)
 
@@ -147,13 +158,39 @@ class AgentRunner:
                 cp.stage = reply.route_choice
                 step.result_summary = f"用户选择路线：{reply.route_choice}"
 
-        new_message = HumanMessage(content=_reply_text(reply, wait))
+        new_message = HumanMessage(content=reply_text)
         cp.status, cp.wait = "running", None
         # New information from the user opens a fresh retrieve/verify budget.
         cp.feedback_rounds, cp.limit_notes = {}, []
         self.store.emit(cp, "run.resumed", wait_id=wait_id, request_id=request_id,
                         reply=reply.model_dump(exclude_defaults=True))
         return self._drive(cp, [new_message], resume=True)
+
+    def _record_user_message(self, cp, text, key, message_id, actor_id):
+        """Persist trusted caller input before the model can propose confirmations.
+
+        Applications that already saved the input pass their message_id. The
+        factory enables this hook for CLI/evaluation callers using CaseService.
+        A deterministic ID also makes a retry after a partial save safe.
+        """
+        record = getattr(self.cases, "record_user_reply", None)
+        if not self.record_user_messages or message_id is not None or record is None:
+            return
+        snapshot = self.cases.get_snapshot(cp.case_id)
+        identifier = "runtime_msg_" + hashlib.sha256(key.encode("utf-8")).hexdigest()[:32]
+        existing = next((item for item in snapshot.summary.get("statements", [])
+                         if item["message_id"] == identifier), None)
+        if existing is not None:
+            if existing["text"] != text or existing["actor_id"] != actor_id:
+                raise RunStateError("同一用户消息标识已保存不同内容。")
+            cp.case_version = snapshot.case_version
+            return
+        result = record(case_id=cp.case_id, expected_case_version=snapshot.case_version,
+                        request_id=identifier, message_id=identifier, actor_id=actor_id,
+                        text=text, created_at=datetime.now(timezone.utc))
+        if result.status != "ok":
+            raise RunStateError("用户消息保存失败，请刷新案件版本后重试。")
+        cp.case_version = result.case_version
 
     def cancel_run(self, run_id: str, *, request_id: str | None = None) -> RunInfo:
         cp = self.store.load_checkpoint(run_id)

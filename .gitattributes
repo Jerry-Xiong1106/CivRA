@@ -1,0 +1,2 @@
+# These synthetic inputs have byte hashes and character offsets in case_snapshot.json.
+data/examples/member3/traffic_accident_v1/materials/*.txt text eol=lf

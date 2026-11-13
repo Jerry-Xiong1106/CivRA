@@ -13,7 +13,7 @@ from pydantic import (
 )
 
 SCHEMA_VERSION = "0.1"
-IMPLEMENTATION_VERSION = "case-tools-0.6.0"
+IMPLEMENTATION_VERSION = "case-tools-0.7.0"
 Identifier = Annotated[str, StringConstraints(strict=True, strip_whitespace=True, min_length=1)]
 PositiveInt = Annotated[StrictInt, Field(ge=1)]
 Offset = Annotated[StrictInt, Field(ge=0)]

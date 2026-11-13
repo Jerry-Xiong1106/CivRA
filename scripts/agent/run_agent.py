@@ -6,7 +6,8 @@
 Needs SILICONFLOW_API_KEY in the repo's .env (never committed) for real models
 and uncached query embeddings. Default retrieval uses vector_metadata.npz;
 --dry-run only replaces the model, while --mock-statutes also replaces retrieval.
-member 3's tools are mock stand-ins until they are delivered.
+The CLI uses the in-memory demonstration setup. Applications can pass
+case_service to backend.agent.factory.build_runner for persistent business tools.
 """
 
 from __future__ import annotations
@@ -32,6 +33,9 @@ from backend.knowledge.config import DEFAULT_MODE, RetrievalConfig, keyword_inde
 
 
 def main() -> int:
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
     args = parse_args()
     config = RunConfig()
     if args.pilot_config:
