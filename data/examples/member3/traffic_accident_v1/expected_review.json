@@ -1,0 +1,29 @@
+{
+  "development_only": true,
+  "authored_by": "member3_contract_fixture",
+  "not_tool_execution": true,
+  "expected_missing_fields": [
+    "insurance",
+    "liability_finding"
+  ],
+  "expected_conflict": {
+    "field": "accident_date",
+    "fact_ids": [
+      "f_date_user",
+      "f_date_document"
+    ]
+  },
+  "expected_duplicate_group": [
+    "e_invoice",
+    "e_invoice_copy"
+  ],
+  "expected_unique_invoice_amount": {
+    "amount": "3000.00",
+    "currency": "CNY"
+  },
+  "notes": [
+    "以上为公开开发样例的人工预期，不是程序已经发现的问题。",
+    "不应把两份相同票据相加为6000元。",
+    "金额只用于结构与去重测试，不表达法律上可获支持的金额。"
+  ]
+}

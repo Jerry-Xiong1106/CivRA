@@ -1,0 +1,27 @@
+{
+  "rule_version": "cn_property_acceptance_fee_2007_v1",
+  "effective_from": "2007-04-01",
+  "verified_on": "2026-11-09",
+  "scope": "ordinary_property_first_instance_unadjusted_estimate",
+  "source_id": "member3.local_rule.cn_property_acceptance_fee.article13_1",
+  "source_version": "2007-04-01.checked-2026-11-09",
+  "source_type": "statute",
+  "title": "诉讼费用交纳办法 第十三条第一项",
+  "locator": "第十三条第一项（财产案件分段累计标准）",
+  "url": "https://www.court.gov.cn/zixun/xiangqing/5092.html",
+  "source_text": "不超过1万元的，每件交纳50元；",
+  "source_note": "source_text仅为最高法院网页第十三条第一项第1目的短引文，并非完整条款或网页字节快照；bands为核对后转录的比例数据，完整原文须访问来源链接或由成员二提供。local_rule是成员三本地规则来源命名空间，不冒用成员二知识库ID。verified_on是核对日期，不是法律失效日期。",
+  "base_limit": "10000",
+  "base_fee": "50",
+  "bands": [
+    {"upper": "100000", "rate": "0.025"},
+    {"upper": "200000", "rate": "0.02"},
+    {"upper": "500000", "rate": "0.015"},
+    {"upper": "1000000", "rate": "0.01"},
+    {"upper": "2000000", "rate": "0.009"},
+    {"upper": "5000000", "rate": "0.008"},
+    {"upper": "10000000", "rate": "0.007"},
+    {"upper": "20000000", "rate": "0.006"},
+    {"upper": null, "rate": "0.005"}
+  ]
+}

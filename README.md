@@ -2,6 +2,13 @@
 
 An agentic AI system for evidence-grounded civil law assistance.
 
+## Member 3 case tools
+
+The case business layer includes versioned facts/evidence, local storage, document parsing,
+calculations, drafting and verification. See the [integration handoff](docs/case/submission-handoff.md)
+for installation, the ten Python tools, source resolution, principal-balance calculations,
+answer citation checks, and the remaining model/UI integration work.
+
 ## Project structure
 
 - `frontend/`: frontend pages and user interaction

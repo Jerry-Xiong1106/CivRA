@@ -1,0 +1,32 @@
+{
+  "schema_version": "0.1",
+  "output_id": "example_structure_only",
+  "output_version": 1,
+  "case_id": "synthetic_traffic_001",
+  "case_version": 1,
+  "output_type": "analysis",
+  "review_status": "unreviewed",
+  "text": "【人工编写的接口样例】事故日期存在两种记载，尚待用户确认。",
+  "artifact_id": null,
+  "structured_data": null,
+  "missing_fields": [
+    "insurance"
+  ],
+  "findings": [],
+  "links": [
+    {
+      "output_location": "paragraph:1",
+      "fact_ids": [
+        "f_date_user",
+        "f_date_document"
+      ],
+      "evidence_ids": [
+        "e_accident"
+      ],
+      "source_refs": []
+    }
+  ],
+  "source_refs": [],
+  "template_id": null,
+  "template_version": null
+}

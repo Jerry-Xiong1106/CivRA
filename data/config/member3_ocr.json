@@ -1,0 +1,12 @@
+{
+  "engine": "paddleocr",
+  "options": {
+    "ocr_version": "PP-OCRv6",
+    "device": "cpu",
+    "detection_model_name": "PP-OCRv6_small_det",
+    "recognition_model_name": "PP-OCRv6_small_rec",
+    "cpu_threads": 4,
+    "enable_mkldnn": false
+  },
+  "note": "CPU small preset for a lightweight laptop. Switch both model names to PP-OCRv6_medium_det/rec for an explicitly selected accuracy experiment."
+}

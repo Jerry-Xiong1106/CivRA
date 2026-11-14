@@ -6,9 +6,8 @@
 
 The model is configured like member 5's pilot: SILICONFLOW_API_KEY (or
 CIVRA_LLM_API_KEY) from the environment or the repo's .env file. Model calls
-use LangChain ChatOpenAI and create_agent. Member 3's
-business tools are not delivered yet, so mock stand-ins are registered by
-default; mock_business_tools=False leaves retrieval and the in-memory update_case tool.
+use LangChain ChatOpenAI and create_agent. Pass case_service to register member
+3's real tools and use its persistent case repository.
 """
 
 from __future__ import annotations
@@ -18,7 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from backend.agent.case_port import InMemoryCaseStore
+from backend.agent.case_port import CaseStatePort, InMemoryCaseStore
 from langchain_core.language_models import BaseChatModel
 
 from backend.agent.model.llm import make_chat_model
@@ -31,6 +30,7 @@ from backend.tools.mock_tools import register_mock_tools
 from backend.tools.registry import ToolRegistry
 
 if TYPE_CHECKING:
+    from backend.case import CaseService
     from backend.knowledge.retrieval.service import RetrievalService
 
 SILICONFLOW_BASE_URL = "https://api.siliconflow.cn/v1"
@@ -68,50 +68,69 @@ def _use_certifi_bundle() -> None:
 
 
 def build_registry(
-    cases: InMemoryCaseStore,
+    cases: CaseStatePort,
     *,
     real_statutes: bool = True,
     statute_search: Search | None = None,
     retrieval_service: RetrievalService | None = None,
     mock_business_tools: bool = True,
+    case_service: CaseService | None = None,
 ) -> ToolRegistry:
-    """update_case always; search_statutes real or mock; member 3's tools as mocks or not at all."""
+    """Assemble one registry, selecting the persistent or demonstration business tools."""
     registry = ToolRegistry()
-    register_mock_tools(registry, cases, statutes=not real_statutes, business=mock_business_tools)
-    if real_statutes:
-        register_knowledge_tools(registry, statute_search, retrieval_service=retrieval_service)
+    try:
+        register_mock_tools(registry, cases, statutes=not real_statutes,
+                            business=mock_business_tools and case_service is None,
+                            case_updates=case_service is None)
+        if real_statutes:
+            register_knowledge_tools(registry, statute_search, retrieval_service=retrieval_service)
+        if case_service is not None:
+            from backend.tools.case_tools import register_case_tools
+
+            register_case_tools(registry, case_service)
+    except Exception:
+        registry.close(wait=False)
+        raise
     return registry
 
 
 @dataclass
 class AgentSetup:
     runner: AgentRunner
-    cases: InMemoryCaseStore
+    cases: CaseStatePort
     registry: ToolRegistry
 
 
 def build_runner(
     *,
     llm: BaseChatModel | None = None,
-    cases: InMemoryCaseStore | None = None,
+    cases: CaseStatePort | None = None,
     store: RunStore | None = None,
     config: RunConfig | None = None,
     real_statutes: bool = True,
     statute_search: Search | None = None,
     retrieval_service: RetrievalService | None = None,
     mock_business_tools: bool = True,
+    case_service: CaseService | None = None,
     dotenv: Path | str | None = ROOT / ".env",
 ) -> AgentSetup:
     """Everything needed to run the Agent. Pass llm to use a scripted or other client."""
     if dotenv is not None:
         load_dotenv(dotenv)
-    cases = cases or InMemoryCaseStore()
+    if cases is None:
+        if case_service is None:
+            cases = InMemoryCaseStore()
+        else:
+            from backend.case.runtime import RepositoryCasePort
+
+            cases = RepositoryCasePort(case_service.repository)
     registry = build_registry(cases, real_statutes=real_statutes, statute_search=statute_search,
                               retrieval_service=retrieval_service,
-                              mock_business_tools=mock_business_tools)
+                              mock_business_tools=mock_business_tools, case_service=case_service)
     try:
         runner = AgentRunner(llm or llm_from_env(config.model if config else None), registry, cases,
-                             store or RunStore(), default_config=config)
+                             store or RunStore(), default_config=config,
+                             record_user_messages=case_service is not None)
     except Exception:
         registry.close(wait=False)
         raise

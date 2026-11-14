@@ -1,0 +1,896 @@
+{
+  "schema_version": "0.1",
+  "scope": "synthetic_development",
+  "expectation_origin": "Independently authored development expectations, not computed from tool responses; human review pending.",
+  "review_status": "pending_member5_review",
+  "scenarios": [
+    {
+      "scenario_id": "parse_documents-normal",
+      "tool": "parse_documents",
+      "category": "normal",
+      "arguments": {
+        "file_ids": [
+          "phase4_file"
+        ]
+      },
+      "expected": {
+        "status": "ok",
+        "checks": [
+          {
+            "path": "/data/extracted_facts",
+            "length": 2
+          },
+          {
+            "path": "/data/extracted_facts/0/confirmation_status",
+            "equals": "unconfirmed"
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "parse_documents-invalid",
+      "tool": "parse_documents",
+      "category": "invalid",
+      "arguments": {
+        "file_ids": [
+          "phase4_file"
+        ],
+        "unexpected_field": true
+      },
+      "expected": {
+        "status": "error",
+        "checks": [],
+        "error_code": "invalid_request"
+      }
+    },
+    {
+      "scenario_id": "parse_documents-missing",
+      "tool": "parse_documents",
+      "category": "missing",
+      "arguments": {
+        "file_ids": [
+          "missing_file"
+        ]
+      },
+      "expected": {
+        "status": "error",
+        "checks": [],
+        "error_code": "tool_error"
+      }
+    },
+    {
+      "scenario_id": "parse_documents-conflict",
+      "tool": "parse_documents",
+      "category": "conflict",
+      "arguments": {
+        "file_ids": [
+          "phase4_file"
+        ]
+      },
+      "material_text": "事故日期：2026-05-12\n事故日期：2026-05-13\n",
+      "expected": {
+        "status": "ok",
+        "checks": [
+          {
+            "path": "/data/extracted_facts",
+            "length": 2
+          },
+          {
+            "path": "/data/extracted_facts/0/value",
+            "equals": "2026-05-12"
+          },
+          {
+            "path": "/data/extracted_facts/1/value",
+            "equals": "2026-05-13"
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "check_evidence-normal",
+      "tool": "check_evidence",
+      "category": "normal",
+      "seed": "resolved",
+      "arguments": {},
+      "expected": {
+        "status": "ok",
+        "checks": [
+          {
+            "path": "/data/missing_facts",
+            "length": 0
+          },
+          {
+            "path": "/data/conflicts",
+            "length": 0
+          },
+          {
+            "path": "/data/duplicates",
+            "length": 0
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "check_evidence-invalid",
+      "tool": "check_evidence",
+      "category": "invalid",
+      "seed": "resolved",
+      "arguments": {
+        "unexpected_field": true
+      },
+      "expected": {
+        "status": "error",
+        "checks": [],
+        "error_code": "invalid_request"
+      }
+    },
+    {
+      "scenario_id": "check_evidence-missing",
+      "tool": "check_evidence",
+      "category": "missing",
+      "arguments": {},
+      "expected": {
+        "status": "insufficient",
+        "checks": [
+          {
+            "path": "/data/missing_facts",
+            "length": 2
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "check_evidence-conflict",
+      "tool": "check_evidence",
+      "category": "conflict",
+      "arguments": {},
+      "expected": {
+        "status": "insufficient",
+        "checks": [
+          {
+            "path": "/data/conflicts/0/affected_fields",
+            "equals": [
+              "accident_date"
+            ]
+          },
+          {
+            "path": "/data/duplicates",
+            "length": 1
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "calculate_costs-normal",
+      "tool": "calculate_costs",
+      "category": "normal",
+      "arguments": {
+        "calculation_type": "sum_amounts",
+        "rule_version": "arithmetic_v1",
+        "inputs": {
+          "amounts": [
+            {
+              "amount": "0.1",
+              "currency": "CNY"
+            },
+            {
+              "amount": "0.2",
+              "currency": "CNY"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "status": "ok",
+        "checks": [
+          {
+            "path": "/data/amounts/total",
+            "equals": {
+              "amount": "0.3",
+              "currency": "CNY"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "calculate_costs-invalid",
+      "tool": "calculate_costs",
+      "category": "invalid",
+      "arguments": {
+        "calculation_type": "sum_amounts",
+        "rule_version": "arithmetic_v1",
+        "inputs": {
+          "amounts": [
+            {
+              "amount": "0.1",
+              "currency": "CNY"
+            },
+            {
+              "amount": "0.2",
+              "currency": "CNY"
+            }
+          ]
+        },
+        "unexpected_field": true
+      },
+      "expected": {
+        "status": "error",
+        "checks": [],
+        "error_code": "invalid_request"
+      }
+    },
+    {
+      "scenario_id": "calculate_costs-missing",
+      "tool": "calculate_costs",
+      "category": "missing",
+      "arguments": {
+        "calculation_type": "materials_total",
+        "rule_version": "arithmetic_v1",
+        "inputs": {
+          "fact_ids": [
+            "f_repair_amount"
+          ]
+        }
+      },
+      "expected": {
+        "status": "insufficient",
+        "checks": [
+          {
+            "path": "/data/amounts",
+            "equals": {}
+          },
+          {
+            "path": "/data/unresolved_inputs",
+            "length": 1
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "calculate_costs-conflict",
+      "tool": "calculate_costs",
+      "category": "conflict",
+      "arguments": {
+        "calculation_type": "sum_amounts",
+        "rule_version": "arithmetic_v1",
+        "inputs": {
+          "amounts": [
+            {
+              "amount": "1",
+              "currency": "CNY"
+            },
+            {
+              "amount": "1",
+              "currency": "USD"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "status": "error",
+        "checks": [],
+        "error_code": "invalid_request"
+      }
+    },
+    {
+      "scenario_id": "compare_routes-normal",
+      "tool": "compare_routes",
+      "category": "normal",
+      "arguments": {
+        "available_authorities": [],
+        "calculations": [],
+        "user_goals": [
+          "了解可选处理路径"
+        ]
+      },
+      "expected": {
+        "status": "insufficient",
+        "checks": [
+          {
+            "path": "/data/options",
+            "length": 3
+          },
+          {
+            "path": "/data/options/0/route",
+            "equals": "negotiation"
+          },
+          {
+            "path": "/data/options/1/route",
+            "equals": "mediation"
+          },
+          {
+            "path": "/data/options/2/route",
+            "equals": "litigation"
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "compare_routes-invalid",
+      "tool": "compare_routes",
+      "category": "invalid",
+      "arguments": {
+        "available_authorities": [],
+        "calculations": [],
+        "user_goals": [
+          "了解可选处理路径"
+        ],
+        "unexpected_field": true
+      },
+      "expected": {
+        "status": "error",
+        "checks": [],
+        "error_code": "invalid_request"
+      }
+    },
+    {
+      "scenario_id": "compare_routes-missing",
+      "tool": "compare_routes",
+      "category": "missing",
+      "arguments": {
+        "available_authorities": [],
+        "calculations": [],
+        "user_goals": [
+          "了解可选处理路径"
+        ]
+      },
+      "expected": {
+        "status": "insufficient",
+        "checks": [
+          {
+            "path": "/data/unresolved_items",
+            "contains": "当前未提供可追溯的法律或程序依据。"
+          },
+          {
+            "path": "/data/options/2/costs",
+            "equals": []
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "compare_routes-conflict",
+      "tool": "compare_routes",
+      "category": "conflict",
+      "call_version": 999,
+      "arguments": {
+        "available_authorities": [],
+        "calculations": [],
+        "user_goals": [
+          "了解可选处理路径"
+        ]
+      },
+      "expected": {
+        "status": "error",
+        "checks": [],
+        "error_code": "version_conflict"
+      }
+    },
+    {
+      "scenario_id": "get_route_workflow-normal",
+      "tool": "get_route_workflow",
+      "category": "normal",
+      "seed": "litigation",
+      "arguments": {
+        "route": "litigation"
+      },
+      "expected": {
+        "status": "insufficient",
+        "checks": [
+          {
+            "path": "/data/route",
+            "equals": "litigation"
+          },
+          {
+            "path": "/data/steps",
+            "length": 4
+          },
+          {
+            "path": "/data/steps/0/deadline",
+            "equals": null
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "get_route_workflow-invalid",
+      "tool": "get_route_workflow",
+      "category": "invalid",
+      "seed": "litigation",
+      "arguments": {
+        "route": "litigation",
+        "unexpected_field": true
+      },
+      "expected": {
+        "status": "error",
+        "checks": [],
+        "error_code": "invalid_request"
+      }
+    },
+    {
+      "scenario_id": "get_route_workflow-missing",
+      "tool": "get_route_workflow",
+      "category": "missing",
+      "arguments": {
+        "route": "litigation"
+      },
+      "expected": {
+        "status": "error",
+        "checks": [],
+        "error_code": "invalid_request"
+      }
+    },
+    {
+      "scenario_id": "get_route_workflow-conflict",
+      "tool": "get_route_workflow",
+      "category": "conflict",
+      "seed": "litigation",
+      "arguments": {
+        "route": "mediation"
+      },
+      "expected": {
+        "status": "error",
+        "checks": [],
+        "error_code": "invalid_request"
+      }
+    },
+    {
+      "scenario_id": "draft_document-normal",
+      "tool": "draft_document",
+      "category": "normal",
+      "seed": "litigation",
+      "arguments": {
+        "route": "litigation",
+        "confirmed_fact_ids": [
+          "f_claimant"
+        ],
+        "template_id": "cn_complaint_traffic_accident",
+        "template_version": "civra-fields-v1",
+        "source_refs": []
+      },
+      "expected": {
+        "status": "insufficient",
+        "checks": [
+          {
+            "path": "/data/structured_data/fields/claimant_name",
+            "equals": "示例甲"
+          },
+          {
+            "path": "/data/missing_fields",
+            "contains": "defendant_name"
+          },
+          {
+            "path": "/data/review_status",
+            "equals": "needs_review"
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "draft_document-invalid",
+      "tool": "draft_document",
+      "category": "invalid",
+      "seed": "litigation",
+      "arguments": {
+        "route": "litigation",
+        "confirmed_fact_ids": [
+          "f_claimant"
+        ],
+        "template_id": "cn_complaint_traffic_accident",
+        "template_version": "civra-fields-v1",
+        "source_refs": [],
+        "unexpected_field": true
+      },
+      "expected": {
+        "status": "error",
+        "checks": [],
+        "error_code": "invalid_request"
+      }
+    },
+    {
+      "scenario_id": "draft_document-missing",
+      "tool": "draft_document",
+      "category": "missing",
+      "seed": "litigation",
+      "arguments": {
+        "route": "litigation",
+        "confirmed_fact_ids": [],
+        "template_id": "cn_complaint_traffic_accident",
+        "template_version": "civra-fields-v1",
+        "source_refs": []
+      },
+      "expected": {
+        "status": "insufficient",
+        "checks": [
+          {
+            "path": "/data/missing_fields",
+            "contains": "claimant_name"
+          },
+          {
+            "path": "/data/structured_data/fields/claimant_name",
+            "equals": "【待补充：原告姓名或名称】"
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "draft_document-conflict",
+      "tool": "draft_document",
+      "category": "conflict",
+      "seed": "litigation",
+      "arguments": {
+        "route": "litigation",
+        "confirmed_fact_ids": [
+          "f_date_document"
+        ],
+        "template_id": "cn_complaint_traffic_accident",
+        "template_version": "civra-fields-v1",
+        "source_refs": []
+      },
+      "expected": {
+        "status": "error",
+        "checks": [],
+        "error_code": "invalid_request"
+      }
+    },
+    {
+      "scenario_id": "verify_output-normal",
+      "tool": "verify_output",
+      "category": "normal",
+      "arguments": {
+        "output_id": "phase4_candidate"
+      },
+      "expected": {
+        "status": "insufficient",
+        "checks": [
+          {
+            "path": "/data/findings",
+            "length": 0
+          },
+          {
+            "path": "/data/checks_not_performed",
+            "contains": "semantic_fact_faithfulness"
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "verify_output-invalid",
+      "tool": "verify_output",
+      "category": "invalid",
+      "arguments": {
+        "output_id": "phase4_candidate",
+        "unexpected_field": true
+      },
+      "expected": {
+        "status": "error",
+        "checks": [],
+        "error_code": "invalid_request"
+      }
+    },
+    {
+      "scenario_id": "verify_output-missing",
+      "tool": "verify_output",
+      "category": "missing",
+      "candidate": "unavailable_source",
+      "arguments": {
+        "output_id": "phase4_candidate"
+      },
+      "expected": {
+        "status": "insufficient",
+        "checks": [
+          {
+            "path": "/data/findings/0/category",
+            "equals": "citation"
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "verify_output-conflict",
+      "tool": "verify_output",
+      "category": "conflict",
+      "candidate": "stale",
+      "arguments": {
+        "output_id": "phase4_candidate"
+      },
+      "expected": {
+        "status": "insufficient",
+        "checks": [
+          {
+            "path": "/data/findings/0/category",
+            "equals": "version"
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "update_case-normal",
+      "tool": "update_case",
+      "category": "normal",
+      "arguments": {
+        "expected_case_version": "$case_version",
+        "change_reason": "保存原始消息中的未确认诉求描述",
+        "changes": {
+          "upsert_facts": [
+            {
+              "fact_id": "f_phase4_goal",
+              "field": "requested_action",
+              "value_type": "text",
+              "value": "想主张维修费",
+              "provenance": "user_statement",
+              "confirmation_status": "unconfirmed",
+              "statement_refs": [
+                "msg_001"
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "status": "ok",
+        "checks": [
+          {
+            "path": "/case_version",
+            "equals": 2
+          },
+          {
+            "path": "/data/changed_fact_ids",
+            "contains": "f_phase4_goal"
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "update_case-invalid",
+      "tool": "update_case",
+      "category": "invalid",
+      "arguments": {
+        "expected_case_version": "$case_version",
+        "change_reason": "保存原始消息中的未确认诉求描述",
+        "changes": {
+          "upsert_facts": [
+            {
+              "fact_id": "f_phase4_goal",
+              "field": "requested_action",
+              "value_type": "text",
+              "value": "想主张维修费",
+              "provenance": "user_statement",
+              "confirmation_status": "unconfirmed",
+              "statement_refs": [
+                "msg_001"
+              ]
+            }
+          ]
+        },
+        "unexpected_field": true
+      },
+      "expected": {
+        "status": "error",
+        "checks": [],
+        "error_code": "invalid_request"
+      }
+    },
+    {
+      "scenario_id": "update_case-missing",
+      "tool": "update_case",
+      "category": "missing",
+      "arguments": {
+        "expected_case_version": "$case_version",
+        "change_reason": "保存原始消息中的未确认诉求描述",
+        "changes": {
+          "upsert_facts": [
+            {
+              "fact_id": "f_phase4_goal",
+              "field": "requested_action",
+              "value_type": "text",
+              "value": "想主张维修费",
+              "provenance": "user_statement",
+              "confirmation_status": "unconfirmed",
+              "statement_refs": [
+                "msg_missing"
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "status": "error",
+        "checks": [],
+        "error_code": "invalid_request"
+      }
+    },
+    {
+      "scenario_id": "update_case-conflict",
+      "tool": "update_case",
+      "category": "conflict",
+      "seed": "litigation",
+      "call_version": 1,
+      "arguments": {
+        "expected_case_version": "$case_version",
+        "change_reason": "保存原始消息中的未确认诉求描述",
+        "changes": {
+          "upsert_facts": [
+            {
+              "fact_id": "f_phase4_goal",
+              "field": "requested_action",
+              "value_type": "text",
+              "value": "想主张维修费",
+              "provenance": "user_statement",
+              "confirmation_status": "unconfirmed",
+              "statement_refs": [
+                "msg_001"
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "status": "error",
+        "checks": [],
+        "error_code": "version_conflict"
+      }
+    },
+    {
+      "scenario_id": "build_evidence_directory-normal",
+      "tool": "build_evidence_directory",
+      "category": "normal",
+      "seed": "resolved_litigation",
+      "arguments": {},
+      "expected": {
+        "status": "ok",
+        "checks": [
+          {
+            "path": "/data/entries",
+            "length": 2
+          },
+          {
+            "path": "/data/excluded_evidence_ids",
+            "contains": "e_invoice_copy"
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "build_evidence_directory-invalid",
+      "tool": "build_evidence_directory",
+      "category": "invalid",
+      "seed": "resolved_litigation",
+      "arguments": {
+        "unexpected_field": true
+      },
+      "expected": {
+        "status": "error",
+        "checks": [],
+        "error_code": "invalid_request"
+      }
+    },
+    {
+      "scenario_id": "build_evidence_directory-missing",
+      "tool": "build_evidence_directory",
+      "category": "missing",
+      "seed": "litigation",
+      "arguments": {},
+      "expected": {
+        "status": "insufficient",
+        "checks": [
+          {
+            "path": "/data/entries",
+            "length": 3
+          },
+          {
+            "path": "/data/supplementary_checklist",
+            "length": 4
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "build_evidence_directory-conflict",
+      "tool": "build_evidence_directory",
+      "category": "conflict",
+      "seed": "litigation",
+      "arguments": {},
+      "expected": {
+        "status": "insufficient",
+        "checks": [
+          {
+            "path": "/data/supplementary_checklist/2/category",
+            "equals": "conflict"
+          },
+          {
+            "path": "/data/supplementary_checklist/2/fact_ids",
+            "contains": "f_date_document"
+          },
+          {
+            "path": "/data/entries",
+            "length": 3
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "build_visualization-normal",
+      "tool": "build_visualization",
+      "category": "normal",
+      "arguments": {
+        "chart_type": "timeline"
+      },
+      "expected": {
+        "status": "ok",
+        "checks": [
+          {
+            "path": "/data/records",
+            "length": 2
+          },
+          {
+            "path": "/data/sample_size",
+            "equals": 2
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "build_visualization-invalid",
+      "tool": "build_visualization",
+      "category": "invalid",
+      "arguments": {
+        "chart_type": "timeline",
+        "unexpected_field": true
+      },
+      "expected": {
+        "status": "error",
+        "checks": [],
+        "error_code": "invalid_request"
+      }
+    },
+    {
+      "scenario_id": "build_visualization-missing",
+      "tool": "build_visualization",
+      "category": "missing",
+      "seed": "unknown_dates",
+      "arguments": {
+        "chart_type": "timeline"
+      },
+      "expected": {
+        "status": "ok",
+        "checks": [
+          {
+            "path": "/data/records",
+            "equals": []
+          },
+          {
+            "path": "/data/missing_values",
+            "equals": 2
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "build_visualization-conflict",
+      "tool": "build_visualization",
+      "category": "conflict",
+      "arguments": {
+        "chart_type": "timeline"
+      },
+      "expected": {
+        "status": "ok",
+        "checks": [
+          {
+            "path": "/data/records/0/date",
+            "equals": "2026-05-12"
+          },
+          {
+            "path": "/data/records/1/date",
+            "equals": "2026-05-13"
+          },
+          {
+            "path": "/data/records/0/confirmation_status",
+            "equals": "unconfirmed"
+          }
+        ]
+      }
+    }
+  ]
+}

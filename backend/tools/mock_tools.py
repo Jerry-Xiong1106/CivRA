@@ -80,7 +80,7 @@ DRAFT_DOCUMENT = ToolSpec(
 
 
 def register_mock_tools(reg: ToolRegistry, cases: InMemoryCaseStore, *,
-                        statutes: bool = True, business: bool = True) -> None:
+                        statutes: bool = True, business: bool = True, case_updates: bool = True) -> None:
     """Register selected development tools; case updates use the in-memory store."""
 
     def search_statutes(args: dict, ctx: ToolContext) -> ToolResult:
@@ -113,7 +113,8 @@ def register_mock_tools(reg: ToolRegistry, cases: InMemoryCaseStore, *,
     def draft_document(args: dict, ctx: ToolContext) -> ToolResult:
         return ToolResult(status="ok", summary="已生成起诉状草稿（mock）。", data={"output_id": "draft_mock_1"})
 
-    reg.register(UPDATE_CASE, update_case)
+    if case_updates:
+        reg.register(UPDATE_CASE, update_case)
     if statutes:
         reg.register(SEARCH_STATUTES, search_statutes)
     if business:

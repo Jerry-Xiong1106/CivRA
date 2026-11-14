@@ -1,0 +1,53 @@
+{
+  "schema_version": "1",
+  "rule_set_version": "case-evidence-rules-0.3.0",
+  "authority": "engineering_reminders_not_statutory_requirements",
+  "decision_notes": [
+    "交通事故规则沿用首期维修费与医疗费范围；新增借贷本金核对的开发提示，不作为法定材料清单。",
+    "2026-11-09用户选择：医疗票据＋诊疗记录，缺少时提醒补充或解释。",
+    "任一any_of类型满足该项开发提示；类型登记不证明内容真实、相关或会被法院采纳。",
+    "材料类型必须由调用方明确登记，不依据文件名猜测；已有材料未关联诉求时先提示关联。"
+  ],
+  "profiles": {
+    "private_lending": {
+      "profile_id": "private_lending_v1",
+      "required_fields": {
+        "loan_principal": "本笔借款本金及其材料来源",
+        "has_repaid": "是否已经发生还款；未知时不能当作未还款"
+      },
+      "claim_materials": {}
+    },
+    "traffic_accident": {
+      "profile_id": "traffic_accident_v2",
+      "required_fields": {
+        "accident_date": "事故发生日期",
+        "liability_finding": "责任认定信息",
+        "insurance": "保险关系"
+      },
+      "claim_materials": {
+        "repair_cost": [
+          {
+            "requirement_id": "repair_invoice",
+            "label": "维修费用票据",
+            "any_of": ["repair_invoice"],
+            "reason": "核对主张的维修费用及其材料来源。"
+          }
+        ],
+        "medical_cost": [
+          {
+            "requirement_id": "medical_invoice",
+            "label": "医疗费用票据",
+            "any_of": ["medical_invoice"],
+            "reason": "核对医疗费用项目、金额及其来源。"
+          },
+          {
+            "requirement_id": "medical_record",
+            "label": "诊疗记录",
+            "any_of": ["medical_record", "outpatient_record", "inpatient_record", "diagnosis_certificate", "discharge_summary"],
+            "reason": "提示核对就诊、诊断或治疗经过与本案的关系；不自动判断因果关系。"
+          }
+        ]
+      }
+    }
+  }
+}
