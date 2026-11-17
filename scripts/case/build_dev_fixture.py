@@ -12,7 +12,8 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from backend.case.models import BusinessOutput, CaseSnapshot  # noqa: E402
-from backend.case.contracts import CheckEvidenceRequest, InvocationContext  # noqa: E402
+from backend.case.materials.contracts import CheckEvidenceRequest
+from backend.case.contracts import InvocationContext
 
 
 def write_json(path: Path, value):

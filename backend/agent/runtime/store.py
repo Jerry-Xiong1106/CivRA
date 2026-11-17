@@ -13,6 +13,7 @@ from decimal import Decimal
 from pathlib import Path
 from threading import RLock
 from typing import Any, Iterator
+from uuid import uuid4
 
 from pydantic import BaseModel
 
@@ -65,15 +66,26 @@ class RunStore:
     def save_checkpoint(self, cp: Checkpoint) -> None:
         with self._checkpoint_lock:
             path = self._dir(cp.run_id) / "checkpoint.json"
-            tmp = path.with_suffix(".tmp")
+            # Separate stores/processes must never share a temporary file.
+            tmp = path.with_name(f".checkpoint-{uuid4().hex}.tmp")
             tmp.write_text(cp.model_dump_json(indent=2), encoding="utf-8")
-            tmp.replace(path)  # readers never see a half-written checkpoint
+            for attempt in range(7):
+                try:
+                    tmp.replace(path)  # Readers never see a partial JSON document.
+                    break
+                except PermissionError as exc:
+                    # Windows readers, indexers or antivirus can briefly hold the
+                    # target without delete sharing. Keep permanent failures visible.
+                    if getattr(exc, "winerror", None) not in (5, 32, 33) or attempt == 6:
+                        raise
+                    time.sleep(0.01 * 2**attempt)
 
     def load_checkpoint(self, run_id: str) -> Checkpoint:
         path = self.root / run_id / "checkpoint.json"
-        if not path.exists():
-            raise KeyError(f"unknown run: {run_id}")
-        record = json.loads(path.read_text(encoding="utf-8"))
+        with self._checkpoint_lock:
+            if not path.exists():
+                raise KeyError(f"unknown run: {run_id}")
+            record = json.loads(path.read_text(encoding="utf-8"))
         if record.get("engine") != CURRENT_ENGINE:
             raise ValueError("运行记录格式已变化，请新建会话；历史原始文件未改动。")
         return Checkpoint.model_validate(record)
@@ -82,7 +94,8 @@ class RunStore:
         if not self.root.exists():
             return
         for p in sorted(self.root.glob("*/checkpoint.json")):
-            record = json.loads(p.read_text(encoding="utf-8"))
+            with self._checkpoint_lock:
+                record = json.loads(p.read_text(encoding="utf-8"))
             if record.get("engine") == CURRENT_ENGINE:
                 yield Checkpoint.model_validate(record)
 

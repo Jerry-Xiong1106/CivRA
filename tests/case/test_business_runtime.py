@@ -1,4 +1,4 @@
-"""Integration checks requiring Member 4's actual ToolRegistry and AgentRunner."""
+"""Integration checks requiring Member 4's actual NativeTools and AgentRunner."""
 
 import sys
 import unittest
@@ -9,21 +9,21 @@ from tempfile import TemporaryDirectory
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case
 
 try:
-    from backend.tools.registry import ToolRegistry
+    from tests.native_tools import NativeTools
     from backend.common.schemas import ToolContext
 except ModuleNotFoundError:
-    ToolRegistry = None
+    NativeTools = None
 
 
-@unittest.skipIf(ToolRegistry is None, "requires Member 4 runtime in the integration checkout")
+@unittest.skipIf(NativeTools is None, "requires Member 4 runtime in the integration checkout")
 class BusinessRuntimeTests(unittest.TestCase):
     def setUp(self):
-        from backend.tools.case_tools import register_case_tools
+        from tests.native_tools import register_case_tools
         self.directory = TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
         self.repo = SQLiteCaseRepository(Path(self.directory.name) / "cases.sqlite3")
         self.case = self.repo.create_case(load_development_case())
-        self.registry = register_case_tools(ToolRegistry(), CaseService(self.repo))
+        self.registry = register_case_tools(NativeTools(), CaseService(self.repo))
 
     def context(self, stage="consultation", version=1):
         return ToolContext(case_id=self.case.case_id, run_id="run_test", step_id=1,
@@ -69,7 +69,7 @@ class BusinessRuntimeTests(unittest.TestCase):
         self.assertEqual(result.error.code, "NOT_ALLOWED")
 
     def test_registry_rejects_stale_case_context(self):
-        from backend.case.runtime import RepositoryCasePort
+        from backend.agent.case_adapter import RepositoryCasePort
         RepositoryCasePort(self.repo).set_stage(self.case.case_id, "route_selection")
         result = self.registry.execute("check_evidence", {}, self.context()).result
         self.assertEqual(result.error.details["business_code"], "version_conflict")

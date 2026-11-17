@@ -9,7 +9,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case
 from backend.case.models import CaseSnapshot
-from backend.case.runtime import RepositoryCasePort
+from backend.agent.case_adapter import RepositoryCasePort
 
 
 def synthetic_source(pointer):

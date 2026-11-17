@@ -14,12 +14,12 @@
 
 真实RAG测试使用已发布1690条法条、本地BM25索引和精确条号路由。模型使用ScriptedLLM及本地HTTP模拟服务。真实生成模型、在线embedding效果、真实OCR质量和前端验收继续列为待联调。
 
-Windows隔离Python 3.12环境按`requirements.txt`与`requirements-case-dev.txt`安装。构建本地BM25索引后，原先因索引缺失跳过的3项检索测试全部执行。完整测试保留一项现有langchain-community弃用提示。首次回归定位到CLI管道的中英文编码差异，修复后重新运行完整测试通过。
+Windows隔离Python 3.12环境按 `requirements-dev.txt` 安装（包含运行依赖）。构建本地BM25索引后，原先因索引缺失跳过的3项检索测试全部执行。完整测试保留一项现有langchain-community弃用提示。首次回归定位到CLI管道的中英文编码差异，修复后重新运行完整测试通过。
 
 复现命令如下。索引与运行结果由Git忽略规则管理。
 
 ```powershell
-python -m pip install -r requirements.txt -r requirements-case-dev.txt
+python -m pip install -r requirements-dev.txt
 python scripts/rag/build_bm25_index.py
 python -m pytest tests -q -p no:cacheprovider
 python scripts/case/check_handoff.py
@@ -47,7 +47,7 @@ python scripts/case/review_pilot_citations.py
 
 ## 环境与复现
 
-Windows，Codex捆绑Python 3.12；业务依赖按`requirements-case-dev.txt`安装。附加评测检查需要团队检索依赖，本次在隔离目录使用项目声明的`langchain-core==1.7.4`。没有修改系统Python。
+Windows，Codex捆绑Python 3.12；业务依赖按`requirements-dev.txt`安装。附加评测检查需要团队检索依赖，本次在隔离目录使用项目声明的`langchain-core==1.7.4`。没有修改系统Python。
 
 复现业务与交接检查的命令见[提交交接说明](submission-handoff.md)。附加共享检查可在装好团队依赖后运行：
 

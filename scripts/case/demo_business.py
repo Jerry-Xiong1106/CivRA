@@ -11,11 +11,11 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case  # noqa: E402
-from backend.case.contracts import (  # noqa: E402
-    BuildEvidenceDirectoryRequest, CheckEvidenceRequest, InvocationContext, UpdateCaseRequest,
-)
+from backend.case.materials.contracts import BuildEvidenceDirectoryRequest, CheckEvidenceRequest
+from backend.case.contracts import InvocationContext
+from backend.case.intake.contracts import UpdateCaseRequest
 from backend.case.models import CaseSnapshot  # noqa: E402
-from backend.case.runtime import RepositoryCasePort  # noqa: E402
+from backend.agent.case_adapter import RepositoryCasePort  # noqa: E402
 from demo_support import DEMO_REPLY, confirmed_demo_changes  # noqa: E402
 
 

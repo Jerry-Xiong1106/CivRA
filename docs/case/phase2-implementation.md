@@ -22,7 +22,7 @@
 在仓库根目录：
 
 ```powershell
-python -m pip install -r requirements-case.txt
+python -m pip install -r requirements.txt
 python scripts/case/demo_business.py
 python -m unittest discover -s tests/case -v
 ```
@@ -90,7 +90,7 @@ python scripts/case/demo_agent_business.py --output-dir var/member3-agent-demo
 
 ```python
 from backend.case import CaseService, SQLiteCaseRepository
-from backend.case.runtime import RepositoryCasePort
+from backend.agent.case_adapter import RepositoryCasePort
 from backend.tools.case_tools import register_case_tools
 from backend.tools.registry import ToolRegistry
 

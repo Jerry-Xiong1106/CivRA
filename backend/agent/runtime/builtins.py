@@ -1,86 +1,75 @@
-"""Control actions handled by the runtime itself, offered to the model as tools (contract §2.7)."""
-
-from __future__ import annotations
-
-from backend.common.schemas import ToolSpec
+"""Native control tools; middleware applies pause, route-choice and finish actions."""
+from langchain.tools import tool
+from backend.tools.policy import set_policy
 
 ROUTES = ["negotiation", "mediation", "litigation"]
 
-ASK_USER = ToolSpec(
-    name="ask_user",
-    description="向用户提出一个或多个具体问题，并暂停运行等待回答。用于补充影响后续分析的关键事实，或请用户确认存在冲突的信息；需要用户上传文件（如票据、认定书）时把 kind 设为 material_request。不要用来询问可以通过工具查到的内容。",
-    parameters={
-        "type": "object",
-        "properties": {
-            "kind": {"enum": ["clarification", "material_request"]},
-            "questions": {
-                "type": "array",
-                "minItems": 1,
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "question_id": {"type": "string"},
-                        "text": {"type": "string", "minLength": 1},
-                        "reason": {"type": "string"},
-                        "field": {"type": "string"},
-                    },
-                    "required": ["question_id", "text"],
+@tool(
+    'ask_user',
+    description='仅对完成本次任务必需的信息提出问题，并暂停等待回答；遵守本次任务的追问上限。一般规则和初步路线比较不收集完整案情，已跳过的问题保留未知。请求材料时kind为material_request，不询问工具可以查到的内容。',
+    args_schema={
+        'type': 'object', 'additionalProperties': False, 'required': ['questions'],
+        'properties': {
+            'kind': {'enum': ['clarification', 'material_request']},
+            'questions': {'type': 'array', 'minItems': 1, 'items': {
+                'type': 'object', 'required': ['question_id', 'text'],
+                'properties': {'question_id': {'type': 'string'},
+                               'text': {'type': 'string', 'minLength': 1},
+                               'reason': {'type': 'string'}, 'field': {'type': 'string'}},
+            }},
+        },
+    },
+)
+def ask_user(**args) -> dict:
+    return args
+
+set_policy(ask_user, owner='member4')
+
+@tool(
+    'request_route_choice',
+    description='用户需要选择处理方式时，展示协商和解、调解、诉讼等选项并暂停等待选择；不要求先收集完整案情或查全法规，未知费用可保留未知。各路线均可选，不预设先后顺序；用户选择后由程序保存路线。',
+    args_schema={
+        'type': 'object', 'additionalProperties': False, 'required': ['comparison', 'options'],
+        'properties': {
+            'comparison': {'type': 'string', 'minLength': 1},
+            'options': {'type': 'array', 'minItems': 1, 'items': {
+                'type': 'object', 'required': ['route', 'label'],
+                'properties': {'route': {'enum': ROUTES}, 'label': {'type': 'string'}},
+            }},
+        },
+    },
+)
+def request_route_choice(**args) -> dict:
+    return args
+
+set_policy(
+    request_route_choice,
+    owner='member4',
+    stages=['consultation', 'route_selection', 'negotiation', 'mediation', 'litigation'],
+)
+
+@tool(
+    'finish',
+    description='结束本次运行并交付当前任务的具体结果，不等于案件办结。路线或计划不能替代用户请求的实际准备成果；关键缺口仍需输入且追问额度允许时应使用ask_user。只列当前相关缺口，不声称已执行未执行的动作。',
+    args_schema={
+        'type': 'object', 'additionalProperties': False, 'required': ['answer'],
+        'properties': {
+            'answer': {'type': 'string', 'minLength': 1},
+            'open_issues': {'type': 'array', 'items': {'type': 'string'}},
+            'output_refs': {'type': 'array', 'items': {'type': 'string'}},
+            'citations': {
+                'description': '回答中依赖来源的句子或段落，以及对应的 source_id（来自工具返回的 data.matches[].source_ref）',
+                'type': 'array', 'items': {
+                    'type': 'object', 'required': ['source_id', 'location'],
+                    'properties': {'source_id': {'type': 'string'}, 'location': {'type': 'string'}},
                 },
             },
         },
-        "required": ["questions"],
-        "additionalProperties": False,
     },
-    owner="member4",
 )
+def finish(**args) -> dict:
+    return args
 
-REQUEST_ROUTE_CHOICE = ToolSpec(
-    name="request_route_choice",
-    description="完成法律咨询后，向用户展示协商和解、调解、诉讼等路线的比较，并暂停运行等待用户选择。各路线均为可选，不预设先后顺序。",
-    parameters={
-        "type": "object",
-        "properties": {
-            "comparison": {"type": "string", "minLength": 1},
-            "options": {
-                "type": "array",
-                "minItems": 1,
-                "items": {
-                    "type": "object",
-                    "properties": {"route": {"enum": ROUTES}, "label": {"type": "string"}},
-                    "required": ["route", "label"],
-                },
-            },
-        },
-        "required": ["comparison", "options"],
-        "additionalProperties": False,
-    },
-    owner="member4",
-    stages=["consultation", "route_selection", "negotiation", "mediation", "litigation"],
-)
+set_policy(finish, owner='member4')
 
-FINISH = ToolSpec(
-    name="finish",
-    description="结束本次运行，给出最终回答。列出仍未解决或需要用户确认的事项；没有依据的内容不要写成确定结论。",
-    parameters={
-        "type": "object",
-        "properties": {
-            "answer": {"type": "string", "minLength": 1},
-            "open_issues": {"type": "array", "items": {"type": "string"}},
-            "output_refs": {"type": "array", "items": {"type": "string"}},
-            "citations": {
-                "description": "回答中依赖来源的句子或段落，以及对应的 source_id（来自工具返回的 data.matches[].source_ref）",
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {"source_id": {"type": "string"}, "location": {"type": "string"}},
-                    "required": ["source_id", "location"],
-                },
-            },
-        },
-        "required": ["answer"],
-        "additionalProperties": False,
-    },
-    owner="member4",
-)
-
-BUILTINS: dict[str, ToolSpec] = {s.name: s for s in (ASK_USER, REQUEST_ROUTE_CHOICE, FINISH)}
+BUILTINS = {t.name: t for t in (ask_user, request_route_choice, finish)}

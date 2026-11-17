@@ -7,9 +7,11 @@ time as the real tools are registered.
 from __future__ import annotations
 
 from backend.agent.case_port import InMemoryCaseStore
-from backend.common.schemas import ToolContext, ToolResult, ToolSpec
-from backend.tools.knowledge_tools import SEARCH_STATUTES, to_tool_result
-from backend.tools.registry import ToolRegistry
+from backend.common.schemas import ToolContext, ToolResult
+from backend.tools.knowledge_tools import to_tool_result
+from langchain.tools import tool, ToolRuntime
+from langchain_core.tools import BaseTool
+from backend.tools.policy import set_policy
 
 CIVIL_CODE_1213 = {
     "provision_id": "civil_code_1213", "law_title": "中华人民共和国民法典",
@@ -27,104 +29,89 @@ REQUIRED_FACTS = {
     "insurance": "对方车辆的保险情况（交强险、商业险）",
 }
 
-VERIFY_OUTPUT = ToolSpec(
-    name="verify_output",
-    description="核验草稿或分析：引用是否存在、版本是否适用、原文是否支持结论、事实和金额是否与案件记录一致。返回发现的问题和修改建议。",
-    parameters={
-        "type": "object",
-        "properties": {"text": {"type": "string", "minLength": 1}},
-        "required": ["text"],
-        "additionalProperties": False,
-    },
-    owner="member3",
-    feedback_loop="retrieve_verify",
-)
+def create_mock_tools(cases: InMemoryCaseStore, *, statutes: bool = True,
+                      business: bool = True, case_updates: bool = True) -> list[BaseTool]:
+    """Build native demonstration tools, explicitly selected by the caller."""
 
-CHECK_EVIDENCE = ToolSpec(
-    name="check_evidence",
-    description="检查当前案件事实与证据是否齐全、是否冲突。返回缺失字段和建议向用户追问的问题；不直接向用户提问。",
-    parameters={
-        "type": "object",
-        "properties": {"claims": {"type": "array", "items": {"type": "string"}}},
-        "additionalProperties": False,
-    },
-    owner="member3",
-    stages=["consultation", "litigation"],
-)
+    @tool(
+        'search_statutes',
+        description='检索当前法律库中的完整条文、条号、版本及来源。query可以是问题或明确的法律名称＋条号。只返回候选，不判断依据充分性；不支持案例、日期或法域过滤。明确指定多条时不按top_k截断。',
+        args_schema={'type': 'object',
+         'properties': {'query': {'type': 'string', 'minLength': 1},
+                        'top_k': {'type': 'integer', 'minimum': 1, 'maximum': 20}},
+         'required': ['query'],
+         'additionalProperties': False},
+    )
+    def search_statutes(runtime: ToolRuntime[ToolContext], **args) -> dict:
+        result = to_tool_result({'status': 'ok', 'query': args['query'], 'results': [CIVIL_CODE_1213], 'warnings': ['模拟检索结果，仅用于开发联调。']})
+        result.summary = '模拟检索：' + result.summary
+        return result.model_dump(mode='json', exclude_none=True)
 
-UPDATE_CASE = ToolSpec(
-    name="update_case",
-    description="把用户确认的新事实写入案件记录，案件版本加 1。只写用户明确提供或确认的信息。",
-    parameters={
-        "type": "object",
-        "properties": {"facts": {"type": "object", "minProperties": 1}},
-        "required": ["facts"],
-        "additionalProperties": False,
-    },
-    owner="member3",
-    side_effects=True,
-)
+    set_policy(search_statutes, owner='member2', feedback_loop='retrieve_verify')
 
-DRAFT_DOCUMENT = ToolSpec(
-    name="draft_document",
-    description="根据确认的事实和法院示范文本生成起诉状草稿，未知字段保留为待补充。仅在用户选择诉讼后可用。",
-    parameters={
-        "type": "object",
-        "properties": {"template_id": {"type": "string"}},
-        "required": ["template_id"],
-        "additionalProperties": False,
-    },
-    owner="member3",
-    stages=["litigation"],
-)
-
-
-def register_mock_tools(reg: ToolRegistry, cases: InMemoryCaseStore, *,
-                        statutes: bool = True, business: bool = True, case_updates: bool = True) -> None:
-    """Register selected development tools; case updates use the in-memory store."""
-
-    def search_statutes(args: dict, ctx: ToolContext) -> ToolResult:
-        result = to_tool_result({
-            "status": "ok", "query": args["query"], "results": [CIVIL_CODE_1213],
-            "warnings": ["模拟检索结果，仅用于开发联调。"],
-        })
-        result.summary = "模拟检索：" + result.summary
-        return result
-
-
-    def check_evidence(args: dict, ctx: ToolContext) -> ToolResult:
-        facts = cases.get_snapshot(ctx.case_id).summary.get("facts", {})
-        missing = [{"field": k, "label": v, "question": f"请提供{v}。"} for k, v in REQUIRED_FACTS.items() if k not in facts]
+    @tool(
+        'check_evidence',
+        description='检查当前案件事实与证据是否齐全、是否冲突。返回缺失字段和建议向用户追问的问题；不直接向用户提问。',
+        args_schema={'type': 'object',
+         'properties': {'claims': {'type': 'array', 'items': {'type': 'string'}}},
+         'additionalProperties': False},
+    )
+    def check_evidence(runtime: ToolRuntime[ToolContext], **args) -> dict:
+        ctx = runtime.context
+        facts = cases.get_snapshot(ctx.case_id).summary.get('facts', {})
+        missing = [{'field': k, 'label': v, 'question': f'请提供{v}。'} for k, v in REQUIRED_FACTS.items() if k not in facts]
         if missing:
-            return ToolResult(
-                status="insufficient",
-                summary="缺少：" + "、".join(m["label"] for m in missing),
-                data={"missing": missing, "conflicts": []},
-            )
-        return ToolResult(status="ok", summary="必要事实已齐全（mock）。", data={"missing": [], "conflicts": []})
+            return ToolResult(status='insufficient', summary='缺少：' + '、'.join((m['label'] for m in missing)), data={'missing': missing, 'conflicts': []}).model_dump(mode='json', exclude_none=True)
+        return ToolResult(status='ok', summary='必要事实已齐全（mock）。', data={'missing': [], 'conflicts': []}).model_dump(mode='json', exclude_none=True)
 
-    def update_case(args: dict, ctx: ToolContext) -> ToolResult:
-        version = cases.update_facts(ctx.case_id, args["facts"])
-        return ToolResult(status="ok", summary=f"已更新 {len(args['facts'])} 项事实。", case_version=version)
+    set_policy(check_evidence, owner='member3', stages=['consultation', 'litigation'])
 
-    def verify_output(args: dict, ctx: ToolContext) -> ToolResult:
-        return ToolResult(status="ok", summary="未发现问题（mock）。", data={"issues": []})
+    @tool(
+        'update_case',
+        description='把用户确认的新事实写入案件记录，案件版本加 1。只写用户明确提供或确认的信息。',
+        args_schema={'type': 'object',
+         'properties': {'facts': {'type': 'object', 'minProperties': 1}},
+         'required': ['facts'],
+         'additionalProperties': False},
+    )
+    def update_case(runtime: ToolRuntime[ToolContext], **args) -> dict:
+        ctx = runtime.context
+        version = cases.update_facts(ctx.case_id, args['facts'])
+        return ToolResult(status='ok', summary=f"已更新 {len(args['facts'])} 项事实。", case_version=version).model_dump(mode='json', exclude_none=True)
 
-    def draft_document(args: dict, ctx: ToolContext) -> ToolResult:
-        return ToolResult(status="ok", summary="已生成起诉状草稿（mock）。", data={"output_id": "draft_mock_1"})
+    set_policy(update_case, owner='member3', side_effects=True)
 
+    @tool(
+        'verify_output',
+        description='核验草稿或分析：引用是否存在、版本是否适用、原文是否支持结论、事实和金额是否与案件记录一致。返回发现的问题和修改建议。',
+        args_schema={'type': 'object',
+         'properties': {'text': {'type': 'string', 'minLength': 1}},
+         'required': ['text'],
+         'additionalProperties': False},
+    )
+    def verify_output(runtime: ToolRuntime[ToolContext], **args) -> dict:
+        return ToolResult(status='ok', summary='未发现问题（mock）。', data={'issues': []}).model_dump(mode='json', exclude_none=True)
+
+    set_policy(verify_output, owner='member3', feedback_loop='retrieve_verify')
+
+    @tool(
+        'draft_document',
+        description='根据确认的事实和法院示范文本生成起诉状草稿，未知字段保留为待补充。仅在用户选择诉讼后可用。',
+        args_schema={'type': 'object',
+         'properties': {'template_id': {'type': 'string'}},
+         'required': ['template_id'],
+         'additionalProperties': False},
+    )
+    def draft_document(runtime: ToolRuntime[ToolContext], **args) -> dict:
+        return ToolResult(status='ok', summary='已生成起诉状草稿（mock）。', data={'output_id': 'draft_mock_1'}).model_dump(mode='json', exclude_none=True)
+
+    set_policy(draft_document, owner='member3', stages=['litigation'])
+
+    tools = []
     if case_updates:
-        reg.register(UPDATE_CASE, update_case)
+        tools.append(update_case)
     if statutes:
-        reg.register(SEARCH_STATUTES, search_statutes)
+        tools.append(search_statutes)
     if business:
-        reg.register(CHECK_EVIDENCE, check_evidence)
-        reg.register(VERIFY_OUTPUT, verify_output)
-        reg.register(DRAFT_DOCUMENT, draft_document)
-
-
-def build_mock_registry(cases: InMemoryCaseStore) -> ToolRegistry:
-    """Convenience entry point for offline demos and tests."""
-    registry = ToolRegistry()
-    register_mock_tools(registry, cases)
-    return registry
+        tools.extend([check_evidence, verify_output, draft_document])
+    return tools

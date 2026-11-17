@@ -15,7 +15,7 @@
 ## Python入口
 
 ```python
-from backend.case.intake import CaseIntakeService, FactReviewRequest
+from backend.case.intake.summary import CaseIntakeService, FactReviewRequest
 from backend.case.contracts import CaseRequest, InvocationContext
 
 intake = CaseIntakeService(repository)

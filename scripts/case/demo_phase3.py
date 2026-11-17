@@ -14,9 +14,10 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
 
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case
-from backend.case.contracts import InvocationContext, REQUEST_MODELS, RESULT_MODELS
-from backend.case.ocr import OcrEngineRegistry
-from backend.case.runtime import RepositoryCasePort
+from backend.case.contracts import InvocationContext
+from backend.case.operations import REQUEST_MODELS, RESULT_MODELS
+from backend.case.materials.ocr import OcrEngineRegistry
+from backend.agent.case_adapter import RepositoryCasePort
 from demo_support import DEMO_REPLY, confirmed_demo_changes
 
 

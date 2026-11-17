@@ -12,8 +12,8 @@ from backend.agent.model.llm import ScriptedLLM, tool_call
 from backend.agent.runner import AgentRunner, RunConflict, RunStateError
 from backend.agent.runtime.store import CURRENT_ENGINE, RunStore
 from backend.common.schemas import LLMResponse, RunConfig, ToolResult, ToolSpec, UserReply
-from backend.tools.mock_tools import build_mock_registry
-from backend.tools.registry import ToolRegistry
+from tests.native_tools import mock_tool_fixture
+from tests.native_tools import NativeTools
 
 CASE = "case_demo"
 
@@ -26,7 +26,8 @@ def cases():
 
 
 def make_runner(cases, tmp_path, script, **kw):
-    return AgentRunner(ScriptedLLM(script), build_mock_registry(cases), cases, RunStore(tmp_path), **kw)
+    kw.setdefault("default_config", RunConfig(conversation_route="case_work"))
+    return AgentRunner(ScriptedLLM(script), mock_tool_fixture(cases), cases, RunStore(tmp_path), **kw)
 
 
 def last_tool_result(messages) -> dict:
@@ -59,7 +60,7 @@ def test_tool_feedback_leads_to_question_then_resume_after_restart(cases, tmp_pa
     ]
     llm = ScriptedLLM(script)
     store = RunStore(tmp_path)
-    runner = AgentRunner(llm, build_mock_registry(cases), cases, store)
+    runner = AgentRunner(llm, mock_tool_fixture(cases), cases, store, default_config=RunConfig(conversation_route="case_work"))
 
     info = runner.start_run(CASE, "我的车被追尾了，想要对方赔偿维修费。")
     assert info.status == "waiting_user"
@@ -67,7 +68,7 @@ def test_tool_feedback_leads_to_question_then_resume_after_restart(cases, tmp_pa
     assert [q.question_id for q in info.wait.questions] == ["q1", "q2"]
 
     # Simulate a process restart: a new runner with the same store continues from the checkpoint.
-    runner2 = AgentRunner(llm, build_mock_registry(cases), cases, store)
+    runner2 = AgentRunner(llm, mock_tool_fixture(cases), cases, store, default_config=RunConfig(conversation_route="case_work"))
     info = runner2.resume_run(info.run_id, UserReply(answers={"q1": "对方全责", "q2": "交强险+商业三者险100万"}),
                               wait_id=info.wait.wait_id, expected_case_version=1)
 
@@ -162,7 +163,7 @@ def test_plain_text_answer_finishes_run(cases, tmp_path):
 
 def test_budget_exhausted(cases, tmp_path):
     script = [tool_call("search_statutes", query="q")] * 10
-    runner = make_runner(cases, tmp_path, script, default_config=RunConfig(max_tool_calls=2))
+    runner = make_runner(cases, tmp_path, script, default_config=RunConfig(conversation_route="case_work", max_tool_calls=2))
     info = runner.start_run(CASE, "查")
     assert info.status == "budget_exhausted"
     assert info.usage.tool_calls == 2 and info.final.open_issues
@@ -171,14 +172,14 @@ def test_budget_exhausted(cases, tmp_path):
 def test_token_budget(cases, tmp_path):
     # ScriptedLLM reports 120 tokens per call.
     script = [tool_call("search_statutes", query="q")] * 10
-    runner = make_runner(cases, tmp_path, script, default_config=RunConfig(max_total_tokens=300))
+    runner = make_runner(cases, tmp_path, script, default_config=RunConfig(conversation_route="case_work", max_total_tokens=300))
     info = runner.start_run(CASE, "查")
     assert info.status == "budget_exhausted" and info.usage.model_calls == 3
     assert "token" in info.final.open_issues[0]
 
 
 def _registry_with_failing_search(cases):
-    reg = build_mock_registry(cases)
+    reg = mock_tool_fixture(cases)
     reg._tools.pop("search_statutes")
     reg.register(
         ToolSpec(name="search_statutes", description="t", owner="m2", feedback_loop="retrieve_verify",
@@ -195,7 +196,8 @@ def test_retrieve_verify_round_limit(cases, tmp_path):
         return tool_call("finish", answer="依据不足", open_issues=["未找到直接相关条文"])
 
     script = [tool_call("search_statutes", query="q")] * 3 + [tool_call("search_statutes", query="q4"), expect_blocked]
-    runner = AgentRunner(ScriptedLLM(script), _registry_with_failing_search(cases), cases, RunStore(tmp_path))
+    runner = AgentRunner(ScriptedLLM(script), _registry_with_failing_search(cases), cases, RunStore(tmp_path),
+                         default_config=RunConfig(conversation_route="case_work", max_search_calls=4))
     info = runner.start_run(CASE, "查")
     assert info.status == "completed"
     assert info.usage.tool_calls == 4  # the 4th was recorded but not executed
@@ -208,7 +210,8 @@ def test_round_limit_resets_after_user_reply(cases, tmp_path):
         tool_call("search_statutes", query="q"),
         lambda m, t: tool_call("finish", answer="ok") if last_tool_result(m)["status"] == "empty" else None,
     ]
-    runner = AgentRunner(ScriptedLLM(script), _registry_with_failing_search(cases), cases, RunStore(tmp_path))
+    runner = AgentRunner(ScriptedLLM(script), _registry_with_failing_search(cases), cases, RunStore(tmp_path),
+                         default_config=RunConfig(conversation_route="case_work", max_search_calls=4))
     info = runner.start_run(CASE, "查")
     info = runner.resume_run(info.run_id, UserReply(answers={"q1": "上海"}), wait_id=info.wait.wait_id)
     assert info.status == "completed"
@@ -225,7 +228,7 @@ def test_stale_flag_after_case_update(cases, tmp_path):
 
 def test_long_history_is_compacted_but_stored_in_full(cases, tmp_path):
     big = "很长的条文内容" * 400
-    reg = build_mock_registry(cases)
+    reg = mock_tool_fixture(cases)
     reg._tools.pop("search_statutes")
     reg.register(
         ToolSpec(name="search_statutes", description="t", owner="m2",
@@ -238,14 +241,14 @@ def test_long_history_is_compacted_but_stored_in_full(cases, tmp_path):
         sizes.append(sum(len(json.dumps(m, ensure_ascii=False)) for m in messages))
         return tool_call("finish", answer="ok") if len(sizes) == 12 else tool_call("search_statutes", query="q")
 
-    cfg = RunConfig(max_context_chars=20_000, max_tool_calls=50, max_steps=60)
+    cfg = RunConfig(conversation_route="case_work", max_context_chars=20_000, max_tool_calls=50, max_steps=60, max_search_calls=None)
     runner = AgentRunner(ScriptedLLM([measure] * 12), reg, cases, RunStore(tmp_path), default_config=cfg)
     info = runner.start_run(CASE, "我的车被追尾了")
     assert info.status == "completed"
     assert max(sizes) <= 20_000
 
     sent = runner.llm.calls[-1]["messages"]
-    assert sent[2] == {"role": "user", "content": "我的车被追尾了"}  # first user message always kept
+    assert next(m for m in sent if m["role"] == "user") == {"role": "user", "content": "我的车被追尾了"}
     ids_called = {c["id"] for m in sent if m.get("tool_calls") for c in m["tool_calls"]}
     ids_answered = {m["tool_call_id"] for m in sent if m["role"] == "tool"}
     assert ids_called == ids_answered  # no orphaned tool_calls after compaction
@@ -276,9 +279,9 @@ def test_cancel_while_waiting_and_conflicts(cases, tmp_path):
 
 def test_one_running_run_per_case(cases, tmp_path):
     store = RunStore(tmp_path)
-    runner = AgentRunner(ScriptedLLM([]), build_mock_registry(cases), cases, store)
+    runner = AgentRunner(ScriptedLLM([]), mock_tool_fixture(cases), cases, store, default_config=RunConfig(conversation_route="case_work"))
     from backend.agent.runtime.store import Checkpoint
-    store.save_checkpoint(Checkpoint(run_id="run_x", engine=CURRENT_ENGINE, case_id=CASE, status="running", config=RunConfig(),
+    store.save_checkpoint(Checkpoint(run_id="run_x", engine=CURRENT_ENGINE, case_id=CASE, status="running", config=RunConfig(conversation_route="case_work", ),
                                      messages=[], case_version=1, stage="consultation"))
     with pytest.raises(RunConflict):
         runner.start_run(CASE, "hi")
@@ -299,7 +302,7 @@ def _spec(name, **kw):
 
 
 def test_registry_timeout_retries_then_reports():
-    reg = ToolRegistry()
+    reg = NativeTools()
     calls = []
 
     @reg.tool(_spec("slow", timeout_s=0.05, max_retries=1))
@@ -313,7 +316,7 @@ def test_registry_timeout_retries_then_reports():
 
 
 def test_registry_exception_becomes_internal_error_without_retry():
-    reg = ToolRegistry()
+    reg = NativeTools()
 
     @reg.tool(_spec("bad", max_retries=3))
     def bad(args, ctx):
@@ -324,7 +327,7 @@ def test_registry_exception_becomes_internal_error_without_retry():
 
 
 def test_registry_rejects_duplicates_and_unknown_tools():
-    reg = ToolRegistry()
+    reg = NativeTools()
     reg.register(_spec("a"), lambda a, c: ToolResult(status="ok"))
     with pytest.raises(ValueError):
         reg.register(_spec("a"), lambda a, c: ToolResult(status="ok"))
@@ -335,7 +338,7 @@ def test_registry_does_not_retry_side_effect_after_timeout():
     from threading import Event
     release = Event()
     calls = []
-    with ToolRegistry() as reg:
+    with NativeTools() as reg:
         @reg.tool(_spec("write", timeout_s=0.02, max_retries=3, side_effects=True))
         def write(args, ctx):
             calls.append(1)
@@ -354,7 +357,7 @@ def test_registry_does_not_retry_side_effect_after_timeout():
 def test_registry_expired_deadline_never_submits_handler():
     from datetime import datetime, timedelta, timezone
     calls = []
-    with ToolRegistry() as reg:
+    with NativeTools() as reg:
         reg.register(_spec("read"), lambda a, c: calls.append(1))
         ctx = _ctx().model_copy(update={"deadline": datetime.now(timezone.utc) - timedelta(seconds=1)})
         result = reg.execute("read", {}, ctx)
@@ -367,7 +370,7 @@ def test_registry_retry_shares_original_deadline():
     from threading import Event
     release = Event()
     calls = []
-    with ToolRegistry() as reg:
+    with NativeTools() as reg:
         @reg.tool(_spec("read", timeout_s=1, max_retries=3))
         def read(args, ctx):
             calls.append(ctx.deadline)

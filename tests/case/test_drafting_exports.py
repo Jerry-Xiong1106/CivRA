@@ -10,10 +10,10 @@ from unittest.mock import patch
 
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case
 from backend.case.models import CaseSnapshot, SourcePointer
-from backend.case.repository import VersionConflict
-from backend.case.drafting import MeteredLLMDraftingGateway
-from backend.case.document_exports import DraftBlock, markdown, pdf, word
-from backend.case.templates import CURRENT_VERSION, load_builtin_templates
+from backend.case.errors import VersionConflict
+from backend.case.drafting.documents import MeteredLLMDraftingGateway
+from backend.case.drafting.document_exports import DraftBlock, markdown, pdf, word
+from backend.case.drafting.templates import CURRENT_VERSION, load_builtin_templates
 
 
 class DraftExportTests(unittest.TestCase):
@@ -44,7 +44,7 @@ class DraftExportTests(unittest.TestCase):
         return gateway
 
     def assert_empty_storage(self):
-        with self.repo._connection() as connection:
+        with self.repo.connection() as connection:
             for table in ("case_outputs","case_artifacts"):
                 self.assertEqual(connection.execute("SELECT count(*) FROM "+table).fetchone()[0],0,table)
 

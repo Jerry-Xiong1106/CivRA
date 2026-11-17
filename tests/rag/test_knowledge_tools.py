@@ -1,6 +1,7 @@
 """search_statutes adapter: fake responses for the mapping, the real index when it has been built."""
 
 from __future__ import annotations
+from backend.common.schemas import RunConfig
 
 import json
 from datetime import datetime, timedelta, timezone
@@ -15,8 +16,9 @@ from backend.common.schemas import SourceLocator, SourceRef, ToolContext, ToolRe
 from backend.knowledge.config import RetrievalConfig, keyword_index_path
 from backend.knowledge.retrieval.service import RetrievalService
 from backend.knowledge.retrieval.results import no_results, to_result
-from backend.tools.knowledge_tools import register_knowledge_tools, to_tool_result
-from backend.tools.registry import ToolRegistry
+from tests.native_tools import register_knowledge_tools
+from backend.tools.knowledge_tools import to_tool_result
+from tests.native_tools import NativeTools
 
 CASE = "case_real"
 PROVISION = {
@@ -37,8 +39,8 @@ def ctx():
                        deadline=datetime.now(timezone.utc) + timedelta(seconds=30), stage="consultation")
 
 
-def registry_with(search) -> ToolRegistry:
-    reg = ToolRegistry()
+def registry_with(search) -> NativeTools:
+    reg = NativeTools()
     register_knowledge_tools(reg, search)
     return reg
 
@@ -133,7 +135,7 @@ def test_invalid_source_is_not_sent_to_model_or_collected(tmp_path):
     cases = InMemoryCaseStore()
     cases.create(CASE, {})
     runner = AgentRunner(ScriptedLLM([tool_call("search_statutes", query="q"), check_error]),
-                         reg, cases, RunStore(tmp_path))
+                         reg, cases, RunStore(tmp_path), default_config=RunConfig(conversation_route="case_work"))
     info = runner.start_run(CASE, "test")
     assert info.status == "completed" and info.final.source_refs == []
 
@@ -177,7 +179,7 @@ def test_real_retrieval_through_the_agent_loop(real_search, tmp_path):
                          citations=[{"source_id": source_id, "location": "依据检索到的条文作答。"}])
 
     llm = ScriptedLLM([tool_call("search_statutes", query="机动车交通事故 交强险 赔偿顺序", top_k=3), cite_first_hit])
-    runner = AgentRunner(llm, reg, cases, RunStore(tmp_path))
+    runner = AgentRunner(llm, reg, cases, RunStore(tmp_path), default_config=RunConfig(conversation_route="case_work"))
     info = runner.start_run(CASE, "交强险怎么赔？")
 
     assert info.status == "completed"

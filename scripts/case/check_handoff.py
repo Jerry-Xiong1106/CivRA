@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from backend.case import get_contract_manifest
-from backend.case.contracts import RESULT_MODELS
+from backend.case.operations import RESULT_MODELS
 from jsonschema import Draft202012Validator, ValidationError as SchemaValidationError
 from phase4_support import assert_expected, load_scenarios, prepare_scenario
 

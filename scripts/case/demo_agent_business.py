@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case  # noqa: E402
-from backend.case.runtime import RepositoryCasePort  # noqa: E402
+from backend.agent.case_adapter import RepositoryCasePort  # noqa: E402
 from demo_support import DEMO_REPLY, confirmed_demo_changes  # noqa: E402
 
 
@@ -20,15 +20,15 @@ def run_agent_demo(directory):
     from backend.agent.model.llm import ScriptedLLM, tool_call
     from backend.agent.runner import AgentRunner
     from backend.agent.runtime.store import RunStore
-    from backend.common.schemas import UserReply
-    from backend.tools.case_tools import register_case_tools
-    from backend.tools.registry import ToolRegistry
+    from backend.common.schemas import RunConfig, UserReply
+    from backend.tools.case_tools import create_case_tools
+
 
     directory = Path(directory)
     repository = SQLiteCaseRepository(directory / "cases.sqlite3")
     original = repository.create_case(load_development_case())
     service, port = CaseService(repository), RepositoryCasePort(repository)
-    registry = register_case_tools(ToolRegistry(), service)
+    tools = create_case_tools(service)
 
     def ask_from_actual_report(messages, tools):
         report = json.loads(messages[-1]["content"])
@@ -58,7 +58,10 @@ def run_agent_demo(directory):
         tool_call("finish", answer="已根据合成用户确认更新案件并生成证据目录草稿。",
                   open_issues=["证据真实性、法律证明力及法院具体材料要求仍需复核。"]),
     ])
-    runner = AgentRunner(llm, registry, port, RunStore(directory / "runs"))
+    # This historical fixture groups four evidence findings in one scripted turn;
+    # request that bounded batch explicitly, rather than bypass conversation policy.
+    runner = AgentRunner(llm, tools, port, RunStore(directory / "runs"),
+                         default_config=RunConfig(conversation_route="case_work", max_questions_per_round=4))
     info = runner.start_run(original.case_id, "请检查材料，问题确认后我希望准备诉讼。")
     if info.status != "waiting_user" or info.wait.kind != "clarification":
         raise AssertionError("Agent must pause on actual tool findings")

@@ -7,7 +7,7 @@ from tempfile import TemporaryDirectory
 
 from backend.case import CaseService, SQLiteCaseRepository
 from backend.case.contracts import CaseRequest, InvocationContext
-from backend.case.intake import CaseIntakeService, FactReviewAction, FactReviewRequest
+from backend.case.intake.summary import CaseIntakeService, FactReviewAction, FactReviewRequest
 from backend.case.models import CaseSnapshot, Confirmation, Evidence, Fact, MaterialRef, UserStatement
 
 

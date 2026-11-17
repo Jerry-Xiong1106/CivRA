@@ -39,7 +39,7 @@ def _text(content):
 
 
 def normalize_reply(reply: AIMessage) -> AIMessage:
-    """Keep malformed tool calls visible to the registry, in provider order."""
+    """Keep malformed tool calls visible to middleware validation, in provider order."""
     raw = reply.additional_kwargs.get("tool_calls")
     if raw:
         calls = [{"id": c.get("id") or f"call_{i}", "name": c["function"]["name"],

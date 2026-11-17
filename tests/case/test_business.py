@@ -13,12 +13,12 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case
-from backend.case.contracts import (
-    BuildEvidenceDirectoryRequest, CaseChanges, CheckEvidenceRequest, InvocationContext, UpdateCaseRequest,
-)
+from backend.case.materials.contracts import BuildEvidenceDirectoryRequest, CheckEvidenceRequest
+from backend.case.intake.contracts import CaseChanges, UpdateCaseRequest
+from backend.case.contracts import InvocationContext
 from backend.case.models import CaseSnapshot, Fact, UserStatement
-from backend.case.repository import CaseNotFound, VersionConflict
-from backend.case.runtime import RepositoryCasePort
+from backend.case.errors import CaseNotFound, VersionConflict
+from backend.agent.case_adapter import RepositoryCasePort
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts/case"))
 from demo_support import DEMO_REPLY, confirmed_demo_changes
@@ -73,7 +73,7 @@ class BusinessTests(unittest.TestCase):
 
     def test_rule_engine_does_not_read_expected_review(self):
         import inspect
-        import backend.case.evidence as module
+        import backend.case.materials.evidence as module
         self.assertNotIn("expected_review", inspect.getsource(module))
         payload = self.case.model_dump(mode="json")
         payload["facts"][0]["value"] = "2026-05-13"

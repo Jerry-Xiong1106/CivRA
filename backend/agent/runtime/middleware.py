@@ -1,26 +1,47 @@
 """CivRA hooks around create_agent; LangGraph owns history and sequential dispatch."""
 from __future__ import annotations
 
+import json
 import time
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
 from langchain.agents.middleware import AgentMiddleware, hook_config
-from langchain.tools import ToolRuntime
 from langchain_core.messages import AIMessage, ToolMessage
-from langchain_core.tools import StructuredTool
 
 from backend.agent.model.llm import latest_answer, message_dict, normalize_reply, response_from_message
 from backend.agent.model.prompts import assemble
 from backend.agent.runtime.builtins import BUILTINS
 from backend.agent.runtime.state import Checkpoint
 from backend.common.schemas import TERMINAL_STATUSES, SourceRef, ToolCall, ToolContext, ToolError, ToolResult, Wait
-from backend.tools.registry import validate_call
+from backend.agent.runtime.execution import ToolExecutor, validate_call
+from backend.tools.policy import policy_of
+from backend.agent.routing import tool_allowed
+
+
+def allowed(name, searches, rounds, config):
+    return ((name != "search_statutes" or config.max_search_calls is None or searches < config.max_search_calls)
+            and (name != "ask_user" or config.max_clarification_rounds is None
+                 or rounds < config.max_clarification_rounds))
+
+
+def limits(searches, rounds, config, route_selected=False):
+    """Expose runtime data; model behavior belongs to model/prompts.py."""
+    return {
+        "search_calls": searches,
+        "max_search_calls": config.max_search_calls,
+        "clarification_rounds": rounds,
+        "max_clarification_rounds": config.max_clarification_rounds,
+        "max_questions_per_round": config.max_questions_per_round,
+        "route_selected_this_run": route_selected,
+    }
 
 
 class RunMiddleware(AgentMiddleware):
-    def __init__(self, cp: Checkpoint, llm, registry, cases, store):
-        self.cp, self.llm, self.registry, self.cases, self.store = cp, llm, registry, cases, store
+    def __init__(self, cp: Checkpoint, llm, tools, cases, store):
+        self.cp, self.llm, self.cases, self.store = cp, llm, cases, store
+        self.business_tools = {t.name: t for t in tools}
+        self.executor = ToolExecutor()
         self.started_at = time.monotonic()
         self.model_step = 0
         self.last_answer = ""
@@ -62,10 +83,16 @@ class RunMiddleware(AgentMiddleware):
         cp, cfg = self.cp, self.cp.config
         snapshot = self.cases.get_snapshot(cp.case_id)
         cp.case_version, cp.stage = snapshot.case_version, snapshot.stage
-        tools = self.registry.available(cp.stage, cfg.enabled_tools) + [
-            spec for spec in BUILTINS.values() if cp.stage in spec.stages]
+        tools = [t for t in self.business_tools.values() if cp.stage in policy_of(t).stages
+                 and (cfg.enabled_tools is None or t.name in cfg.enabled_tools)] + [
+            t for t in BUILTINS.values() if cp.stage in policy_of(t).stages]
+        tools = [t for t in tools if tool_allowed(cp.conversation_route, t.name)
+                 and allowed(t.name, cp.search_calls, cp.clarification_rounds, cfg)]
         names = {spec.name for spec in tools}
-        messages = assemble(request.messages, snapshot, cfg.max_context_chars)
+        messages = assemble(
+            request.messages, snapshot, cfg.max_context_chars, route=cp.conversation_route,
+            runtime_context=limits(cp.search_calls, cp.clarification_rounds, cfg, cp.route_selected),
+        )
         params = {"model": cfg.model, "temperature": cfg.temperature,
                   "max_tokens": cfg.max_output_tokens, "seed": cfg.seed}
         with self.store.step(cp, "model_call", arguments=params) as step:
@@ -105,29 +132,45 @@ class RunMiddleware(AgentMiddleware):
         call = request.tool_call
         if self._cancelled_or_ended() or self.cp.wait is not None:
             return self._message(call["id"], call["name"], ToolResult(status="error", summary="未执行：运行已暂停或结束。"))
-        if request.tool is None:
-            return self.execute(ToolCall(id=call["id"], tool_name=call["name"], arguments=call["args"]))
-        return handler(request)
-
-    def execute(self, call: ToolCall) -> ToolMessage:
+        if reason := self.cp.budget_reason(time.monotonic() - self.started_at, before_tool=True):
+            self.stop("budget_exhausted", reason)
+            return self._message(call["id"], call["name"], ToolResult.fail("NOT_ALLOWED", reason))
+        call = ToolCall(id=call["id"], tool_name=call["name"], arguments=call["args"])
         snapshot = self.cases.get_snapshot(self.cp.case_id)
         self.cp.case_version, self.cp.stage = snapshot.case_version, snapshot.stage
-        result = self._control(call) if call.tool_name in BUILTINS else self._business_tool(call)
+        result = (self._control(call, request, handler) if call.tool_name in BUILTINS
+                  else self._business_tool(call, request, handler))
         return self._message(call.id, call.tool_name, result)
 
-    def _business_tool(self, call: ToolCall) -> ToolResult:
+    def _business_tool(self, call: ToolCall, request, handler) -> ToolResult:
         cp = self.cp
-        spec = self.registry.get_spec(call.tool_name)
-        loop, limit = spec.feedback_loop if spec else None, cp.config.max_feedback_rounds
+        native_tool = self.business_tools.get(call.tool_name)
+        policy = policy_of(native_tool) if native_tool is not None else None
+        loop, limit = policy.feedback_loop if policy else None, cp.config.max_feedback_rounds
         with self.store.step(cp, "tool_call", call.tool_name, call.arguments, self.model_step) as step:
             ctx = ToolContext(case_id=cp.case_id, run_id=cp.run_id, step_id=step.step_id,
                               case_version=cp.case_version, stage=cp.stage,
-                              deadline=datetime.now(timezone.utc) + timedelta(seconds=spec.timeout_s if spec else 30))
+                              deadline=datetime.now(timezone.utc) + timedelta(seconds=policy.timeout_s if policy else 30))
             refs, attempts = [], 0
-            if loop and cp.feedback_rounds.get(loop, 0) >= limit:
+            if not tool_allowed(cp.conversation_route, call.tool_name):
+                result = ToolResult.fail("NOT_ALLOWED", "咨询入口不执行案件办理操作；请回答当前问题，或由用户明确发起办理请求。")
+            elif loop and cp.feedback_rounds.get(loop, 0) >= limit:
                 result = ToolResult.fail("NOT_ALLOWED", f"{loop} 已达到 {limit} 轮上限，请停止重试，在 finish 的 open_issues 中说明缺口。")
+            elif not allowed(call.tool_name, cp.search_calls, cp.clarification_rounds, cp.config):
+                result = ToolResult.fail("NOT_ALLOWED", "已达对话检索次数上限；请交付已有结果并说明未知项，不继续检索。")
             else:
-                execution = self.registry.execute(call.tool_name, call.arguments, ctx, cp.config.enabled_tools)
+                if call.tool_name == "search_statutes":
+                    cp.search_calls += 1
+                # Per-call immutable snapshot: no shared mutable runtime state for
+                # timed-out workers. ToolNode injects this runtime into @tool.
+                tool_request = replace(request, runtime=replace(request.runtime, context=ctx))
+
+                def execute_native():
+                    message = handler(tool_request)
+                    return ToolResult.model_validate_json(message.content)
+
+                execution = self.executor.execute(native_tool, call.tool_name, call.arguments, ctx,
+                                                   execute_native, cp.config.enabled_tools)
                 result, attempts = execution.result, execution.attempts
                 try:
                     refs = [SourceRef.model_validate(match["source_ref"])
@@ -154,9 +197,22 @@ class RunMiddleware(AgentMiddleware):
             })
         return result
 
-    def _control(self, call: ToolCall) -> ToolResult:
+    def _control(self, call: ToolCall, request, handler) -> ToolResult:
         cp = self.cp
         result = validate_call(BUILTINS[call.tool_name], call.arguments, cp.stage)
+        if result is None and not allowed(call.tool_name, cp.search_calls, cp.clarification_rounds, cp.config):
+            result = ToolResult.fail("NOT_ALLOWED", "已达事实追问轮数上限；请根据已有信息回答并列出未知项，仍可提供路线选择。")
+        if result is None and call.tool_name == "ask_user":
+            questions = call.arguments.get("questions", [])
+            repeated = any(q["text"].strip() in cp.asked_questions for q in questions)
+            if len(questions) > cp.config.max_questions_per_round or repeated:
+                result = ToolResult.fail("INVALID_ARGS", f"每轮最多{cp.config.max_questions_per_round}个关键问题；已问过的问题不得原样重复，未知信息可保留后交付建议。")
+        if result is None:
+            # Native control tools return action arguments; state changes stay here.
+            try:
+                call.arguments = json.loads(handler(request).content)
+            except Exception as exc:
+                result = ToolResult.fail("INVALID_ARGS", f"Control tool failed ({type(exc).__name__})")
         if result is None and call.tool_name == "finish":
             self.finish(call.arguments, self.model_step)
             return ToolResult(status="ok", summary="运行结束。")
@@ -165,6 +221,9 @@ class RunMiddleware(AgentMiddleware):
             if result is None:
                 wait_kind = "clarification" if call.tool_name == "ask_user" else "route_selection"
                 cp.wait = Wait(wait_id=f"wait_{cp.run_id}_{step.step_id}", **{"kind": wait_kind, **call.arguments})
+                if call.tool_name == "ask_user":
+                    cp.clarification_rounds += 1
+                    cp.asked_questions.extend(q.text.strip() for q in cp.wait.questions)
                 step.status = "waiting"
                 step.result_summary = "；".join(question.text for question in cp.wait.questions) or "请用户选择处理路线"
                 result = ToolResult(status="ok", summary="已发送给用户，等待回复。")
@@ -182,9 +241,3 @@ class RunMiddleware(AgentMiddleware):
     def _message(call_id, name, result):
         return ToolMessage(content=result.model_dump_json(exclude_none=True), tool_call_id=call_id,
                            name=name, status="error" if result.status == "error" else "success")
-
-    def framework_tool(self, spec):
-        def run(runtime: ToolRuntime, **arguments):
-            return self.execute(ToolCall(id=runtime.tool_call_id, tool_name=spec.name, arguments=arguments))
-        return StructuredTool.from_function(func=run, name=spec.name, description=spec.description,
-                                            args_schema=spec.parameters)

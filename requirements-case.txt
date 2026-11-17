@@ -1,8 +1,0 @@
-# Member 3 contract layer; install alongside the other modules' requirements.
-pydantic>=2.7,<3
-pypdf>=6,<7
-pypdfium2>=4,<6
-Pillow>=11,<14
-python-docx>=1.1,<2
-lxml>=4.9,<7
-reportlab>=4.4,<5

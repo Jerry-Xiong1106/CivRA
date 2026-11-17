@@ -8,7 +8,7 @@ import unittest
 
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case
 from backend.case.models import CaseSnapshot
-from backend.case.outcomes import OutcomeAnalysisData, OutcomeAnalysisRequest
+from backend.case.research.outcomes import OutcomeAnalysisData, OutcomeAnalysisRequest
 
 
 class OutcomeAnalysisTests(unittest.TestCase):
@@ -225,7 +225,7 @@ class OutcomeAnalysisTests(unittest.TestCase):
     def test_no_new_agent_tool_registration_and_schemas_validate(self):
         from jsonschema import Draft202012Validator
         # The new Python entry is explicitly kept out of the shared ten-tool table.
-        from backend.case.contracts import REQUEST_MODELS
+        from backend.case.operations import REQUEST_MODELS
         self.assertEqual(len(REQUEST_MODELS), 10)
         self.assertNotIn("analyze_outcomes", REQUEST_MODELS)
         result = self.analyze(**self.inputs())

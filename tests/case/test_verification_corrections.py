@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 from backend.case.models import BusinessOutput, Finding, OutputLink, SourcePointer
-from backend.case.runtime import RepositoryCasePort
+from backend.agent.case_adapter import RepositoryCasePort
 from features10_13_support import FeatureFixture
 
 

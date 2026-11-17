@@ -11,7 +11,7 @@ from backend.agent.model.llm import ScriptedLLM, tool_call
 from backend.agent.runner import AgentRunner, RunStateError, StaleWait, VersionConflict
 from backend.agent.runtime.store import RunStore
 from backend.common.schemas import CostInfo, LLMResponse, RunConfig, TokenUsage, UserReply
-from backend.tools.mock_tools import build_mock_registry
+from tests.native_tools import mock_tool_fixture
 
 CASE = "eval-case-001"
 ASK = tool_call("ask_user", questions=[{"question_id": "q1", "text": "是否已经报保险？"}])
@@ -25,7 +25,8 @@ def cases():
 
 
 def runner_for(cases, tmp_path, script, **kw):
-    return AgentRunner(ScriptedLLM(script), build_mock_registry(cases), cases, RunStore(tmp_path), **kw)
+    kw.setdefault("default_config", RunConfig(conversation_route="case_work"))
+    return AgentRunner(ScriptedLLM(script), mock_tool_fixture(cases), cases, RunStore(tmp_path), **kw)
 
 
 # ---------------------------------------------------------------- continue_run safety
@@ -113,7 +114,7 @@ def test_run_deadline(cases, tmp_path):
         time.sleep(0.2)
         return tool_call("search_statutes", query="q")
 
-    runner = runner_for(cases, tmp_path, [slow] * 5, default_config=RunConfig(max_run_seconds=0.3))
+    runner = runner_for(cases, tmp_path, [slow] * 5, default_config=RunConfig(conversation_route="case_work", max_run_seconds=0.3))
     info = runner.start_run(CASE, "hi")
     assert info.status == "budget_exhausted" and info.final.completion_reason == "budget_exhausted"
     assert "时间上限" in info.final.open_issues[0]
@@ -122,7 +123,7 @@ def test_run_deadline(cases, tmp_path):
 # ---------------------------------------------------------------- model interface
 
 def test_run_config_model_params_reach_the_model(cases, tmp_path):
-    cfg = RunConfig(model="deepseek-chat", seed=7, temperature=0.2, max_output_tokens=800)
+    cfg = RunConfig(conversation_route="case_work", model="deepseek-chat", seed=7, temperature=0.2, max_output_tokens=800)
     runner = runner_for(cases, tmp_path, [tool_call("finish", answer="ok")], default_config=cfg)
     runner.start_run(CASE, "hi")
     call = runner.llm.calls[0]

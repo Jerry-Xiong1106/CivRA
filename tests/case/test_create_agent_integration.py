@@ -1,4 +1,5 @@
 """Current create_agent, real local retrieval and persistent business-tool integration."""
+from backend.common.schemas import RunConfig
 from copy import deepcopy
 from datetime import datetime, timezone
 import hashlib
@@ -8,15 +9,16 @@ from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import patch
 
+from backend.tools.policy import describe_tool
 from backend.agent.factory import build_runner
 from backend.agent.model.llm import ScriptedLLM, tool_call
 from backend.agent.runner import VersionConflict
 from backend.agent.runtime.store import RunStore
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case
-from backend.case.adapters import to_runtime_tool_result
-from backend.case.knowledge_bridge import CorpusSourceResolver
+from backend.tools.case_results import to_runtime_tool_result
+from backend.case.research.knowledge_bridge import CorpusSourceResolver
 from backend.case.models import BusinessResult, SourcePointer
-from backend.case.runtime import RepositoryCasePort
+from backend.agent.case_adapter import RepositoryCasePort
 from backend.common.schemas import ToolResult, UserReply
 from backend.knowledge.config import RetrievalConfig
 from backend.knowledge.keyword.bm25_index import build_index
@@ -42,9 +44,9 @@ class CreateAgentIntegrationTests(unittest.TestCase):
         self.service = CaseService(self.repository, source_resolver=self.resolver)
 
     def setup_runner(self, script):
-        setup = build_runner(llm=ScriptedLLM(script), case_service=self.service,
+        setup = build_runner(config=RunConfig(conversation_route="case_work"), llm=ScriptedLLM(script), case_service=self.service,
                              retrieval_service=self.retrieval, store=RunStore(self.directory/'runs'), dotenv=None)
-        self.addCleanup(setup.registry.close)
+
         return setup
 
     def test_factory_runs_real_business_and_local_rag_and_preserves_sources(self):
@@ -56,7 +58,7 @@ class CreateAgentIntegrationTests(unittest.TestCase):
                 'location':'已读取候选条文。'}]),
         ])
         self.assertIsInstance(setup.cases, RepositoryCasePort)
-        self.assertEqual(len(setup.registry.names()), 11)
+        self.assertEqual(len([t.name for t in setup.tools]), 11)
         info = setup.runner.start_run(self.case.case_id, '请核对证据并检索民法典第六百八十条。')
         self.assertEqual(info.status, 'completed')
         trace = setup.runner.get_trace(info.run_id)
@@ -90,13 +92,13 @@ class CreateAgentIntegrationTests(unittest.TestCase):
         self.assertIn('semantic_citation_support', result.data.checks_not_performed)
 
     def test_mock_statute_mode_keeps_the_ten_real_business_tools(self):
-        setup = build_runner(llm=ScriptedLLM([tool_call('check_evidence'), tool_call('finish', answer='done')]),
+        setup = build_runner(config=RunConfig(conversation_route="case_work"), llm=ScriptedLLM([tool_call('check_evidence'), tool_call('finish', answer='done')]),
                              case_service=self.service, real_statutes=False,
                              store=RunStore(self.directory/'runs'), dotenv=None)
-        self.addCleanup(setup.registry.close)
-        self.assertEqual(len(setup.registry.names()), 11)
-        self.assertEqual(setup.registry.get_spec('update_case').owner, 'member3')
-        self.assertIn('changes', setup.registry.get_spec('update_case').parameters['properties'])
+
+        self.assertEqual(len([t.name for t in setup.tools]), 11)
+        self.assertEqual(describe_tool(next(t for t in setup.tools if t.name == 'update_case')).owner, 'member3')
+        self.assertIn('changes', describe_tool(next(t for t in setup.tools if t.name == 'update_case')).parameters['properties'])
         self.assertEqual(setup.runner.start_run(self.case.case_id, '检查合成案件').status, 'completed')
 
     def test_start_resume_restart_and_retries_record_user_messages_once(self):

@@ -9,11 +9,11 @@ from tempfile import TemporaryDirectory
 import unittest
 
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case
-from backend.case.contracts import CompareRoutesRequest, CompareRoutesData
-from backend.case.fee_rules import PROPERTY_FEE_RULE_VERSION
+from backend.case.planning.contracts import CompareRoutesRequest, CompareRoutesData
+from backend.case.calculation.fee_rules import PROPERTY_FEE_RULE_VERSION
 from backend.case.models import CaseSnapshot, Money, SourcePointer
-from backend.case.route_models import COMPARISON_VERSION
-from backend.case.routes import compare_routes
+from backend.case.planning.route_models import COMPARISON_VERSION
+from backend.case.planning.routes import compare_routes
 
 
 class RouteComparisonTests(unittest.TestCase):
@@ -289,7 +289,7 @@ class RouteComparisonTests(unittest.TestCase):
         raw = request.model_dump(mode="json")
         raw.pop("source_bindings"); raw.pop("user_expenses")
         old_digest = hashlib.sha256(json.dumps(raw, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
-        self.assertEqual(self.service._digest(request), old_digest)
+        self.assertEqual(self.service.outputs.request_digest(request), old_digest)
         legacy = CompareRoutesData.model_validate({"options": [], "assumptions": [], "unresolved_items": []})
         self.assertEqual(legacy.implementation_version, "civil_comparison_v1")
         self.assertIsNone(legacy.case_context)

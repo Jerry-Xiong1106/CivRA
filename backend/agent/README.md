@@ -1,23 +1,24 @@
 # Agent 执行层
 
-2026-11-10：模型与工具循环已迁移到 LangChain create_agent。公共 start_run、resume_run、cancel_run、轨迹导出和RAG接口继续沿用。
+2026-11-16：工具定义迁移为 LangChain 原生 `@tool`，`create_agent` 直接接收工具列表。公共 start_run、resume_run、cancel_run、轨迹导出和RAG查询接口继续沿用。
 
 ## 当前执行路径
 
-用户输入 → create_agent → ChatOpenAI → 工具函数 → registry → 业务服务。
-模型/工具的反复调用和完整消息历史由框架管理。runtime/middleware.py直接实现项目钩子，runtime/store.py统一记录步骤；没有额外的execution转发层。
+用户输入 → create_agent/ChatOpenAI → middleware → LangChain ToolNode → 原生工具函数 → 业务服务。
+模型/工具循环和完整消息历史由框架管理。`runtime/middleware.py`统一处理阶段、预算、上下文和轨迹；`runtime/execution.py`仅执行超时和重试策略，通过框架提供的handler运行工具，不进行工具注册或名称分发。原`tools/registry.py`和`framework_tool`转换层已移除。
 
 工具回复中的引用只保存在data.matches[].source_ref，正文只保存在match.text。Runtime从这些匹配项派生轨迹和最终答案的source_refs，不再向模型重复发送顶层来源列表、excerpt或重复计时meta。
 
 | 文件 | 职责 |
 |---|---|
-| factory.py | 创建统一ChatOpenAI模型、工具注册表与AgentRunner |
+| factory.py | 创建统一ChatOpenAI模型、原生工具列表与AgentRunner |
 | runner.py | 生命周期接口与create_agent组装 |
 | case_port.py | 案件读取/阶段切换接口与内存实现 |
 | model/llm.py | 模型构造、回复/用量序列化、ScriptedLLM测试模型 |
 | model/prompts.py | 原生消息上的系统提示、案件状态和上下文压缩 |
 | runtime/middleware.py | 框架钩子、工具适配、案件刷新和追问/结束协调 |
-| runtime/builtins.py | ask_user、路线选择、finish的参数说明 |
+| runtime/execution.py | 一次drive内的执行线程、共同截止时间、重试及通用错误处理 |
+| runtime/builtins.py | 原生ask_user、路线选择、finish工具 |
 | runtime/state.py | 项目运行元数据、预算判断和最终输出规则 |
 | runtime/store.py | 框架检查点、元数据、步骤/事件记录和用量累计 |
 
@@ -27,8 +28,18 @@
 
 ## 配置与运行
 
+人工测试入口已集中到`scripts/agent/interactive.py`（默认空白案件）；两路由真实模型验收使用`scripts/agent/smoke_routes.py`。旧`var/ai-smoke-20261115/interactive.py`等一次性脚本已清理，历史结果保留。测试分组及命令见`tests/README.md`。
+
+2026-11-17两条主路由：`RunConfig.conversation_route`默认`auto`，新运行先通过同一模型的一次无工具JSON分类，区分`consultation`（咨询解答）和`case_work`（案件办理）。一般规则、概念及明确限定的解释使用咨询入口；用户描述现实纠纷并希望处理、追讨或了解眼前怎么办，即进入办理，不要求知道工具名称。明确请求检查材料、计算、比较路线或起草也属办理。`agent/routing.py`维护语义分类说明，无关键词规则。前端明确按钮可传`conversation_route="case_work"`跳过分类，咨询入口可显式传`consultation`。
+
+咨询入口只开放法条检索、必要追问、路线选择及结束，不能更新事实或生成成果；办理入口使用案件阶段和enabled_tools允许的业务工具。分类失败回退咨询，记录原因，不开放额外业务能力。分类调用及用量计入主模型预算和轨迹（purpose=conversation_routing）；类型及依据保存在检查点，`RunInfo.conversation_route`用于展示。追问回复不会重新分类。若咨询过程中用户明确在菜单选定路线，程序保存路线并将入口提升为案件办理；路线选择和生成办理清单仍是操作事件，没有route_choice/route_plan两个分类。新问题开始新运行并重新识别，不因案件已选诉讼就把所有后续问题当作办理。
+
+额度检查和动态计数整理位于 `runtime/middleware.py`。`RunConfig.max_search_calls=3`、`max_clarification_rounds=2`、`max_questions_per_round=2`适用于所有输入，包括材料/文书操作；不存在未匹配到任务就放宽限制的回退。前两个计数上限可设为None，但仍受全局预算限制。精确重复的追问会拒绝，语义改写的重复主要由提示约束。追问必要性和是否需要比较路线由当前用户目标及上下文判断，程序不按关键词替用户决定。路线比较允许依据和费用计算为空，未知项保留；自然语言明确选路线目前仍通过菜单提交确认，未实现直接提交动作。
+
+已检索次数、追问轮数、问题记录和本轮是否选过路线保存在检查点，resume不重置检索或追问额度。用户选路线不消耗事实追问额度，额度耗尽也不会关闭路线选择或其他业务工具。旧检查点中的task_type额外字段会被忽略，既有计数保留，缺少计数时按默认值读取。工具总预算仍在每次执行前检查；公共检索/追问额度耗尽后仍可交付已有结果。全局Token、时间和模型预算耗尽仍按原规则终止，尚未实现最终回答预留预算。
+
 ~~~powershell
-.\.venv-rag\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv-rag\Scripts\python.exe -m pip install -r requirements-dev.txt
 .\.venv-rag\Scripts\python.exe -B -m pytest tests -q -p no:cacheprovider
 .\.venv-rag\Scripts\python.exe scripts/agent/run_agent.py --dry-run --mock-statutes
 ~~~
@@ -47,9 +58,15 @@ setup.cases.create("case-1", {"facts": {}})
 info = setup.runner.start_run("case-1", "我的车被追尾了")
 ~~~
 
-knowledge_tools.py仍负责法条结果转换，registry.py仍负责业务工具校验、阶段、超时和重试。工具函数直接由create_agent使用，不再经过独立LangChain工具包装文件。真实业务能力未交付时仍可显式使用mock；mock结果不能作为业务核验结论。
+`knowledge_tools.py`负责法条结果转换。`tools/policy.py`定义ToolPolicy，阶段、副作用、超时和重试规则保存在原生工具的`metadata["civra"]`中；名称、说明和参数由`@tool`拥有。mock仍需显式选择，不能作为业务核验结论。
 
-factory接受`case_service`，从空注册表装配成员三十项真实业务工具与法规检索，使用同一repository的RepositoryCasePort。传入已初始化的`retrieval_service`可复用检索资源。未传case_service时沿用内存演示工具；关闭mock_business_tools保留演示update_case。注册表由创建方通过`close()`或上下文管理器释放，CLI在退出时关闭。
+factory接受`case_service`，装配十项真实业务工具与法规检索，使用同一repository的RepositoryCasePort。传入已初始化的`retrieval_service`可复用检索资源。未传case_service时沿用内存演示工具；关闭mock_business_tools保留演示update_case。`build_tools(...)`及`setup.tools`返回`list[BaseTool]`，`AgentRunner(llm, tools, cases, store)`直接接收此列表。原`build_registry`、`register_*_tools`和`setup.registry`入口已移除；改用`create_case_tools(service)`、`create_knowledge_tools(...)`和`create_mock_tools(cases, ...)`。每次drive/resume退出时释放执行池，无需调用registry.close。
+
+十项案件工具在`backend/tools/case_tools.py`的`create_case_tools`中逐项通过原生`@tool`定义，每项明确绑定`service.xxx`方法。参数由`backend/tools/case_contracts.py`从业务类型投影，隐藏可信上下文及用户消息写入字段；案件阶段限制由 backend/case/operations.py 提供，工具与客户端共用。`CASE_TOOL_SPECS`和`get_case_tool_contracts()`仅为从原生工具派生的业务契约导出视图，不参与Agent注册。
+
+十个案件工具共用一个绑定业务服务的执行适配，统一转换返回字典；运行策略在函数末尾集中声明，只读与核验反馈设置归工具层，案件阶段限制从业务层读取。RAG与演示工具直接在原生函数内调用业务并返回结果，控制工具保持原有JSON Schema约束的紧凑声明。`ToolPolicy`只保存配置，自动超时与重试仍只由运行时的`ToolExecutor`执行。
+
+middleware在每次调用前读取案件，创建独立的`ToolContext`，通过`ToolRuntime[ToolContext].context`传给原生工具。工具签名的runtime参数不暴露给模型，也不共享可被后续步骤改写的上下文。案件工具共用`_make_invocation`映射业务请求、`_execute_case_tool`处理业务回执、`to_case_tool_result`转换引用，最终返回`ToolResult.model_dump(...)`字典，由LangChain序列化成ToolMessage。RAG直接使用runtime.context.deadline。`CaseToolClient`保留业务请求、阶段、版本校验及案件活动记录，使固定流程调用也遵守业务约束；Agent轨迹和执行限制由middleware负责。工具结果仍使用现有结构，未改法律业务规则。
 
 普通工具和内置工具共用参数、阶段校验。有副作用的工具不自动重试；只读工具仅在可重试错误且deadline仍有余量时重试。Agent为一次逻辑工具调用分配timeout_s总时限，所有尝试共用；检索会将deadline传递给embedding HTTP请求。超时不代表工作线程已被强制终止。
 
@@ -97,3 +114,7 @@ SQLite与JSON元数据需要一起保留；缺少框架检查点时拒绝继续�
 ## 尚待业务联调
 
 成员三真实工具的create_agent装配已提供，接口与复现见`docs/case/submission-handoff.md`。真实生成/embedding效果、案例检索及最终答案的法律依据支持核验仍待联调。此前旧实现的DeepSeek试运行观察不能作为新实现的效果报告，也不能因迁移框架就宣称引用或法律结论得到改善。
+
+办理交付约束：路线比较与清单属于过程；用户只要求比较或清单时，它们才构成本次交付。用户希望继续处理时，根据原始目标准备可用内容或调用 ask_user 获取关键输入。选路线不自动触发 get_route_workflow；结构化清单或进度计划明确需要时再调用。未知事实不得猜测，未执行的保存、核验和追问不得写成已完成。上述是模型行为指引，离线脚本测试只能验证流程支持，需通过真实模型验收判断遵循效果。
+
+提示管理：角色与公共规则、入口分类、两路由提示及运行限制模板集中在 model/prompts.py。分类和业务调用均通过 LangChain ChatPromptTemplate 渲染；原生消息历史由 MessagesPlaceholder 保留。routing.py 只处理分类数据和工具开放范围，runtime/middleware.py 检查限制并提供动态计数。公共提示不包含特定纠纷案例或固定追问示例；不同纠纷放在 tests/agent/test_prompts.py 和 scripts/agent/smoke_routes.py 中验证。运行清单的 prompt_sha256 覆盖全部集中提示文本。模板离线测试验证数据与消息保真，不等于真实模型语义验收。

@@ -1,4 +1,4 @@
-"""One-call assembly of a runnable Agent: model client, tools, case store and run store.
+"""One-call assembly of a runnable Agent: native tools, case store and run store.
 
     setup = build_runner()                      # real model from .env, real search_statutes
     setup.cases.create("case-1", {"facts": {}})
@@ -25,9 +25,9 @@ from backend.agent.runner import AgentRunner
 from backend.agent.runtime.store import RunStore
 from backend.common.config import ROOT, load_dotenv
 from backend.common.schemas import RunConfig
-from backend.tools.knowledge_tools import Search, register_knowledge_tools
-from backend.tools.mock_tools import register_mock_tools
-from backend.tools.registry import ToolRegistry
+from backend.tools.knowledge_tools import Search, create_knowledge_tools
+from backend.tools.mock_tools import create_mock_tools
+from langchain_core.tools import BaseTool
 
 if TYPE_CHECKING:
     from backend.case import CaseService
@@ -67,7 +67,7 @@ def _use_certifi_bundle() -> None:
     os.environ.setdefault("SSL_CERT_FILE", certifi.where())
 
 
-def build_registry(
+def build_tools(
     cases: CaseStatePort,
     *,
     real_statutes: bool = True,
@@ -75,30 +75,24 @@ def build_registry(
     retrieval_service: RetrievalService | None = None,
     mock_business_tools: bool = True,
     case_service: CaseService | None = None,
-) -> ToolRegistry:
-    """Assemble one registry, selecting the persistent or demonstration business tools."""
-    registry = ToolRegistry()
-    try:
-        register_mock_tools(registry, cases, statutes=not real_statutes,
-                            business=mock_business_tools and case_service is None,
-                            case_updates=case_service is None)
-        if real_statutes:
-            register_knowledge_tools(registry, statute_search, retrieval_service=retrieval_service)
-        if case_service is not None:
-            from backend.tools.case_tools import register_case_tools
-
-            register_case_tools(registry, case_service)
-    except Exception:
-        registry.close(wait=False)
-        raise
-    return registry
+) -> list[BaseTool]:
+    """Assemble native tools, selecting persistent or demonstration business services."""
+    tools = create_mock_tools(cases, statutes=not real_statutes,
+                              business=mock_business_tools and case_service is None,
+                              case_updates=case_service is None)
+    if real_statutes:
+        tools.extend(create_knowledge_tools(statute_search, retrieval_service=retrieval_service))
+    if case_service is not None:
+        from backend.tools.case_tools import create_case_tools
+        tools.extend(create_case_tools(case_service))
+    return tools
 
 
 @dataclass
 class AgentSetup:
     runner: AgentRunner
     cases: CaseStatePort
-    registry: ToolRegistry
+    tools: list[BaseTool]
 
 
 def build_runner(
@@ -121,17 +115,13 @@ def build_runner(
         if case_service is None:
             cases = InMemoryCaseStore()
         else:
-            from backend.case.runtime import RepositoryCasePort
+            from backend.agent.case_adapter import RepositoryCasePort
 
             cases = RepositoryCasePort(case_service.repository)
-    registry = build_registry(cases, real_statutes=real_statutes, statute_search=statute_search,
-                              retrieval_service=retrieval_service,
-                              mock_business_tools=mock_business_tools, case_service=case_service)
-    try:
-        runner = AgentRunner(llm or llm_from_env(config.model if config else None), registry, cases,
-                             store or RunStore(), default_config=config,
-                             record_user_messages=case_service is not None)
-    except Exception:
-        registry.close(wait=False)
-        raise
-    return AgentSetup(runner=runner, cases=cases, registry=registry)
+    tools = build_tools(cases, real_statutes=real_statutes, statute_search=statute_search,
+                        retrieval_service=retrieval_service,
+                        mock_business_tools=mock_business_tools, case_service=case_service)
+    runner = AgentRunner(llm or llm_from_env(config.model if config else None), tools, cases,
+                         store or RunStore(), default_config=config,
+                         record_user_messages=case_service is not None)
+    return AgentSetup(runner=runner, cases=cases, tools=tools)

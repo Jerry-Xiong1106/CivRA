@@ -1,4 +1,5 @@
 """Run these checks after combining Member 4's branch in an integration checkout."""
+from backend.common.schemas import RunConfig
 
 import unittest
 from tempfile import TemporaryDirectory
@@ -33,7 +34,7 @@ class RuntimeCompatibilityTests(unittest.TestCase):
         from backend.agent.runner import AgentRunner
         from backend.agent.runtime.store import RunStore
         from backend.common.schemas import ToolSpec
-        from backend.tools.registry import ToolRegistry
+        from tests.native_tools import NativeTools
 
         snapshot = load_development_case()
 
@@ -46,7 +47,7 @@ class RuntimeCompatibilityTests(unittest.TestCase):
             def set_stage(self, case_id, stage):
                 raise AssertionError("contract validation must not change the user's route")
 
-        registry = ToolRegistry()
+        registry = NativeTools()
         spec = ToolSpec(name="validate_case_snapshot", description="Validate case structure only",
                         parameters={"type": "object", "additionalProperties": False}, owner="member3")
 
@@ -58,7 +59,7 @@ class RuntimeCompatibilityTests(unittest.TestCase):
 
         llm = ScriptedLLM([tool_call("validate_case_snapshot"), tool_call("finish", answer="Structure validated")])
         with TemporaryDirectory() as directory:
-            runner = AgentRunner(llm, registry, ReadOnlyCasePort(), RunStore(directory))
+            runner = AgentRunner(llm, registry, ReadOnlyCasePort(), RunStore(directory), default_config=RunConfig(conversation_route="case_work"))
             info = runner.start_run(snapshot.case_id, "Validate the development case structure")
             self.assertEqual(info.status, "completed")
             self.assertEqual(info.case_version, 1)

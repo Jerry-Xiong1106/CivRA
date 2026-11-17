@@ -49,13 +49,16 @@
 | 目录 | 内容 | 负责人 |
 |---|---|---|
 | `backend/knowledge/`、`backend/case/` | 工具背后的业务逻辑（检索、证据核对、文书生成等），可以单独调用和测试 | 成员2、成员3 |
-| `backend/tools/registry.py` | 工具注册表、参数校验、超时与重试 | 成员4 |
-| `backend/tools/<模块>_tools.py` | 每个工具一个薄适配函数：声明 `ToolSpec`，把参数转交给业务逻辑，再包装成 `ToolResult` | 工具负责人（成员2、成员3） |
+| `backend/agent/runtime/middleware.py`、`execution.py` | 原生工具的上下文、阶段校验、超时、重试和轨迹 | 成员4 |
+| `backend/tools/policy.py` | 原生工具metadata中的项目执行策略 | 成员4 |
+| `backend/tools/<模块>_tools.py` | 每个工具一个薄适配函数：通过原生 `@tool` 定义，把参数转交给业务逻辑，返回 `ToolResult` 的字典表示 | 工具负责人（成员2、成员3） |
 | `backend/common/` | `ToolSpec`、`ToolResult`、`SourceRef` 等跨模块结构 | 按第 1 节的负责人边界 |
 
 适配函数中不写业务逻辑，业务模块中不依赖 Runtime，这样业务功能可以脱离 Agent 独立测试，基线实验也可以直接复用。
 
-### 2.1 注册信息 `ToolSpec`
+### 2.1 原生工具定义和项目策略
+
+2026-11-16更新：工具名称、说明及参数由LangChain原生`@tool`定义；ToolPolicy负责阶段、超时、重试、副作用及反馈限制，通过`set_policy`附加到`tool.metadata["civra"]`。下列ToolSpec仅保留为契约/manifest导出结构，不再用于注册和执行。
 
 ```python
 class ToolSpec(BaseModel):
@@ -72,24 +75,31 @@ class ToolSpec(BaseModel):
 
 `search_statutes`、`search_cases` 和 `verify_output` 请设置 `feedback_loop="retrieve_verify"`，Runtime 据此限制检索—核验的重复轮数。
 
-注册方式：
+原生工具定义与装配示例（业务函数由调用方提供）：
 
 ```python
-# backend/tools/knowledge_tools.py
-from backend.tools.registry import register_tool
-from backend.knowledge import retrieval            # 成员2的业务模块
+from langchain.tools import tool, ToolRuntime
+from backend.common.schemas import ToolContext
+from backend.tools.policy import set_policy
 
-@registry.tool(SEARCH_STATUTES_SPEC)  # registry由装配入口显式传入
-def search_statutes(args: dict, ctx: ToolContext) -> ToolResult:
-    hits = retrieval.search_statutes(**args)        # 业务逻辑
-    return ToolResult(status="ok" if hits else "empty", ...)  # 包装为统一格式
+def create_tools(business_search):
+    @tool
+    def search_statutes(query: str, runtime: ToolRuntime[ToolContext]) -> dict:
+        """检索法律条文并返回候选来源。"""
+        result = business_search(query, deadline=runtime.context.deadline)
+        return result.model_dump(mode="json", exclude_none=True)
+
+    set_policy(search_statutes, owner="member2", feedback_loop="retrieve_verify")
+    return [search_statutes]
+
+# tools列表直接交给AgentRunner；runner把它与内置控制工具一起传给create_agent。
 ```
 
 `description` 会直接进入模型的提示词，写清楚三点：用途、典型输入、返回什么。不要写“必须调用”之类的流程指令，调用时机由 Agent 决定。
 
 ### 2.2 调用上下文 `ToolContext`
 
-Runtime 在调用工具时传入，工具不需要自己查找这些信息。
+Runtime在调用前创建下列上下文，通过框架注入的`ToolRuntime[ToolContext].context`传入；runtime不出现在模型参数Schema中。每次调用取得独立上下文快照。
 
 ```python
 class ToolContext(BaseModel):
@@ -105,7 +115,7 @@ class ToolContext(BaseModel):
 
 ### 2.3 返回结果 `ToolResult`
 
-所有工具统一返回这个结构，不直接抛出异常给 Runtime（未捕获的异常会被 Runtime 记为 `INTERNAL` 错误）。
+原生业务工具返回这个结构的`model_dump(mode="json", exclude_none=True)`字典，由LangChain包装为ToolMessage；不直接抛出异常给Runtime（未捕获的异常会被 Runtime 记为 `INTERNAL` 错误）。
 
 ```python
 class ToolResult(BaseModel):
@@ -130,7 +140,7 @@ class ToolError(BaseModel):
 | `insufficient` | 有结果，但工具判断依据不足或信息缺失 | 追问用户、补充检索，或在输出中标注缺口 |
 | `error` | 执行失败 | 可重试错误由 Runtime 重试；其余交给模型决定 |
 
-错误码中，`INVALID_ARGS`（参数不符合 Schema）、`NOT_ALLOWED`（当前阶段未开放该工具）和 `NOT_FOUND`（工具不存在）由 Runtime 在调用工具之前返回；`TIMEOUT` 由 Runtime 计时；工具未捕获的异常记为 `INTERNAL`。仅无副作用的工具在`retryable=True`、重试次数未耗尽且deadline仍有余量时自动重试。所有尝试共用ToolContext.deadline；Agent为一次逻辑工具调用分配ToolSpec.timeout_s总时限。超时后取消尚未开始的任务，已运行的线程不能强制终止。检索服务把deadline继续传递给embedding HTTP调用，注入的embedding客户端应支持可选deadline关键字参数。
+错误码中，`INVALID_ARGS`（参数不符合 Schema）、`NOT_ALLOWED`（当前阶段未开放该工具）和 `NOT_FOUND`（工具不存在）由 Runtime 在调用工具之前返回；`TIMEOUT` 由 Runtime 计时；工具未捕获的异常记为 `INTERNAL`。仅无副作用的工具在`retryable=True`、重试次数未耗尽且deadline仍有余量时自动重试。所有尝试共用ToolContext.deadline；Agent为一次逻辑工具调用分配ToolPolicy.timeout_s总时限。超时后取消尚未开始的任务，已运行的线程不能强制终止。检索服务把deadline继续传递给embedding HTTP调用，注入的embedding客户端应支持可选deadline关键字参数。
 
 工具只报告“缺什么、发现了什么问题”，**不直接决定追问用户**。是否追问由 Agent 决定（见第 6 节）。例如 `check_evidence` 发现缺少保险信息时，返回 `status="insufficient"`，并在 `data` 中列出缺失字段和建议问题。
 
@@ -383,6 +393,9 @@ class FinalOutput(BaseModel):
 
 ### 4.3 建议的 HTTP 映射（成员1负责实现和最终定稿）
 
+当前已实现会话式 HTTP 层，前端接入以 [API 文档](../backend/api/README.md) 为准。下表保留早期按 run 暴露接口的建议；实际接口由 conversation 协调 start/resume，并补齐上传、下载和持续历史，不逐项照搬下表。
+
+
 | 方法与路径 | 对应调用 |
 |---|---|
 | `POST /api/cases/{case_id}/runs` | `start_run` |
@@ -505,8 +518,8 @@ running ──► waiting_user ──(resume_run)──► running
 | 单次模型调用输出 token 上限 | 不限（使用模型默认值） | `max_output_tokens` |
 | 检索—核验循环 | 3 轮（与计划书一致） | `max_feedback_rounds` |
 | 发给模型的上下文长度 | 60,000 字符 | `max_context_chars` |
-| 单次工具超时 | 30 秒（工具可在 `ToolSpec` 中另设） | `ToolSpec.timeout_s` |
-| 可重试错误的重试次数 | 1 次 | `ToolSpec.max_retries` |
+| 单次工具超时 | 30 秒（工具可在 `ToolPolicy` 中另设） | `ToolPolicy.timeout_s` |
+| 可重试错误的重试次数 | 1 次 | `ToolPolicy.max_retries` |
 
 步数、工具调用、token 或执行时间达到上限时，运行进入 `budget_exhausted`，`FinalOutput.open_issues` 说明是哪项达到上限。
 
@@ -572,7 +585,7 @@ setup.cases.create(case_id, {"facts": {...}}) # 每次重复用新的 case_id
 result = AgentAdapter(setup.runner).run(case_id, user_message, cfg, exp_id, reply_to_wait)
 ```
 
-`evaluation.config.run_config_from_pilot` 把评测计划中的模型、`max_output_tokens` 和 `budgets`（`max_model_calls`、`max_tool_calls`、`max_total_tokens`、`max_active_seconds`）对应到 `RunConfig`。模型不重试，无副作用工具按`ToolSpec.max_retries`限制重试次数（默认最多1次），并受共同deadline约束。`build_runner(mock_business_tools=False)`保留真实检索和内存update_case，关闭模拟业务核验及文书工具。命令行试运行：`scripts/agent/run_agent.py`（`--dry-run --mock-statutes` 为全离线检查）。
+`evaluation.config.run_config_from_pilot` 把评测计划中的模型、`max_output_tokens` 和 `budgets`（`max_model_calls`、`max_tool_calls`、`max_total_tokens`、`max_active_seconds`）对应到 `RunConfig`。模型不重试，无副作用工具按`ToolPolicy.max_retries`限制重试次数（默认最多1次），并受共同deadline约束。`build_runner(mock_business_tools=False)`保留真实检索和内存update_case，关闭模拟业务核验及文书工具。命令行试运行：`scripts/agent/run_agent.py`（`--dry-run --mock-statutes` 为全离线检查）。
 
 Agent 模式的典型调用流程（由成员5的 adapter 实现，隐藏事实的披露也由成员5控制）：
 

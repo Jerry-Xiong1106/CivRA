@@ -10,11 +10,11 @@ from tempfile import TemporaryDirectory
 import unittest
 
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case
-from backend.case.contracts import RouteWorkflowRequest
+from backend.case.planning.contracts import RouteWorkflowRequest
 from backend.case.models import CaseSnapshot
-from backend.case.runtime import RepositoryCasePort
-from backend.case.routes import get_route_workflow
-from backend.case.workflow_models import WORKFLOW_VERSION
+from backend.agent.case_adapter import RepositoryCasePort
+from backend.case.planning.routes import get_route_workflow
+from backend.case.planning.workflow_models import WORKFLOW_VERSION
 
 
 class WorkflowProgressTests(unittest.TestCase):
@@ -247,7 +247,7 @@ class WorkflowProgressTests(unittest.TestCase):
         raw = request.model_dump(mode="json")
         for field in ("progress_version", "source_notes", "dates"): raw.pop(field)
         expected = hashlib.sha256(json.dumps(raw, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
-        self.assertEqual(self.service._digest(request), expected)
+        self.assertEqual(self.service.outputs.request_digest(request), expected)
         self.assertEqual(get_route_workflow(request).data.progress_version, 0)
         self.assertEqual(get_route_workflow(request.model_copy(update={"progress_version": 1})).status, "error")
 

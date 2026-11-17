@@ -8,7 +8,7 @@ import unittest
 
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case
 from backend.case.models import CaseSnapshot
-from backend.case.research import CaseResearchService
+from backend.case.research.sources import CaseResearchService
 
 
 class ResearchTests(unittest.TestCase):

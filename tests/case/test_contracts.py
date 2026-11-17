@@ -11,11 +11,12 @@ from backend.case import (
     get_contract_manifest, load_development_case, runtime_case_view,
     to_evaluation_result, to_runtime_tool_result, validate_case_snapshot,
 )
-from backend.case.api import DEVELOPMENT_CASE
-from backend.case.contracts import (
-    CheckEvidenceData, CheckEvidenceRequest, DraftDocumentRequest,
-    InvocationContext, UpdateCaseRequest, VerifyOutputRequest,
-)
+from scripts.case.fixtures import DEVELOPMENT_CASE
+from backend.case.materials.contracts import CheckEvidenceData, CheckEvidenceRequest
+from backend.case.drafting.contracts import DraftDocumentRequest
+from backend.case.contracts import InvocationContext
+from backend.case.intake.contracts import UpdateCaseRequest
+from backend.case.review.contracts import VerifyOutputRequest
 from backend.case.models import (
     BusinessError, BusinessOutput, BusinessResult, CaseSnapshot, MaterialRef, Money, SourcePointer,
 )

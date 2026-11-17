@@ -11,8 +11,8 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case
-from backend.case.field_extraction import FIELD_EXTRACTION_VERSION
-from backend.case.ocr import OcrEngineRegistry
+from backend.case.materials.field_extraction import FIELD_EXTRACTION_VERSION
+from backend.case.materials.ocr import OcrEngineRegistry
 
 
 LINES = ["事故日期：2026-05-12", "事故地点：测试路口", "原告姓名：甲某", "被告姓名：乙某",

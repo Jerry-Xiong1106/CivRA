@@ -36,7 +36,7 @@
 
 ```python
 from backend.case import CaseService, SQLiteCaseRepository
-from backend.case.ocr import OcrEngineRegistry
+from backend.case.materials.ocr import OcrEngineRegistry
 
 # 案件必须已经存在；应用先核验当前用户对case_id有访问权限。
 repo = SQLiteCaseRepository("var/cases.sqlite3")
@@ -111,4 +111,4 @@ python scripts/case/demo_documents.py --output-dir var/documents-demo-ocr --ocr-
 - 本机合成图片首次加载及处理约19.1秒，包含模型加载；单次结果不代表轻薄本速度或识别准确率。
 - 真实手写、歪斜/模糊、多列材料及独立评测仍未完成。
 
-相关代码：`backend/case/documents.py`、`backend/case/field_extraction.py`；测试：`tests/case/test_document_fields.py`；演示：`scripts/case/demo_documents.py`。
+相关代码：`backend/case/materials/documents.py`、`backend/case/materials/field_extraction.py`；测试：`tests/case/test_document_fields.py`；演示：`scripts/case/demo_documents.py`。

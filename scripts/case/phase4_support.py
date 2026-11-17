@@ -5,9 +5,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from backend.case import CaseService, CaseToolClient, SQLiteCaseRepository, ToolInvocation, load_development_case
-from backend.case.contracts import InvocationContext, UpdateCaseRequest
+from backend.case.contracts import InvocationContext
+from backend.case.intake.contracts import UpdateCaseRequest
 from backend.case.models import BusinessOutput, CaseSnapshot, OutputLink, SourcePointer
-from backend.case.runtime import RepositoryCasePort
+from backend.agent.case_adapter import RepositoryCasePort
 from demo_support import DEMO_REPLY, confirmed_demo_changes
 
 ROOT = Path(__file__).resolve().parents[2]

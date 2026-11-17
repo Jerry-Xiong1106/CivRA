@@ -22,7 +22,7 @@
 
 ```python
 from backend.case import CaseService, SQLiteCaseRepository
-from backend.case.templates import CURRENT_VERSION
+from backend.case.drafting.templates import CURRENT_VERSION
 
 repo = SQLiteCaseRepository("cases.db")
 service = CaseService(repo)  # 真实模型/来源读取器由调用方注入
@@ -51,7 +51,7 @@ else:
         print(fmt, item["filename"], item["media_type"], len(item["content"]))
 ```
 
-`export_formats` 省略时保留旧默认 `["md"]`，使用三格式须显式传入。原有10个工具名称和请求模型保持不变，不新增模型自行执行导出的工具。新依赖加入 `requirements-case.txt`。
+`export_formats` 省略时保留旧默认 `["md"]`，使用三格式须显式传入。原有10个工具名称和请求模型保持不变，不新增模型自行执行导出的工具。新依赖加入 `requirements.txt`。
 
 模板查询：`service.drafter.templates.list_templates(dispute_type)` 默认返回该类别最新注册的内置配置；`include_versions=True` 可查看历史。实际起草必须明确版本，不接受 `latest` 或自动回退。`civra-fields-v1` 配置继续可用；旧请求重放继续返回旧结果。
 
@@ -108,7 +108,7 @@ PDF运行依赖ReportLab和可嵌入的中文TrueType字体。Windows优先系�
 ## 验证与演示
 
 ```powershell
-python -m pip install -r requirements-case.txt
+python -m pip install -r requirements.txt
 python -m unittest discover -s tests/case -p "test_drafting_exports.py"
 python scripts/case/demo_drafting.py --output output/drafting-demo
 ```

@@ -5,8 +5,7 @@ import hashlib
 import json
 
 from .models import BusinessError, BusinessResult
-from .research import SourceReviewRequest
-from .repository import CaseNotFound, VersionConflict
+from .errors import CaseNotFound, VersionConflict
 
 
 def deadline(request):
@@ -34,26 +33,6 @@ def case_basis(snapshot):
     for field in ("case_version", "statements", "created_at", "updated_at"):
         raw.pop(field, None)
     return digest(raw)
-
-
-def review_sources(request, selections, reviewer):
-    """Return exact cards keyed by ID/version/kind/quote and retain per-source failures."""
-    if not selections:
-        return {}, []
-    if reviewer is None:
-        return {}, ["未接入精确版本原文读取器。"]
-    result = reviewer(SourceReviewRequest(context=request.context, case_version=request.case_version, selections=selections))
-    deadline(request)
-    if result.status == "error":
-        if result.error.code == "timeout":
-            raise TimeoutError(result.error.message)
-        if result.error.code == "version_conflict":
-            raise VersionConflict(request.case_version, result.case_version)
-        raise ValueError("source review failed: " + result.error.message)
-    cards = {(card.source_ref.source_id, card.source_ref.source_version, card.source_type, card.quote): card
-             for card in result.data.statutes + result.data.cases}
-    issues = [f"{item['source_ref']['source_id']}: {item['reason']}" for item in result.data.rejected]
-    return cards, issues
 
 
 def failure(case_id, version, exc):
