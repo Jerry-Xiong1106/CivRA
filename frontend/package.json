@@ -1,0 +1,24 @@
+{
+  "name": "civra-guided-workspace",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 8782 --strictPort",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 8782 --strictPort",
+    "test": "node --test tests/*.test.js"
+  },
+  "dependencies": {
+    "vue": "3.5.45",
+    "pinia": "2.3.1",
+    "vue-router": "4.6.4"
+  },
+  "devDependencies": {
+    "vite": "5.4.21",
+    "@vitejs/plugin-vue": "5.2.4"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}

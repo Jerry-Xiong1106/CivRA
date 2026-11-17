@@ -1,5 +1,7 @@
 # CivRA 第二版固定流程原型 · 两处参考案例补充
 
+> 本目录保留迁移前的 HTML 版本供对照。当前分支的默认前端入口已更新为 Vue，请从 [Vue 启动说明](../README.md) 开始，在 `frontend/` 执行 `npm ci` 和 `npm run dev`。以下是原 HTML 版本的说明。
+
 基于 `develop@922493e`。分支：`codex/guided-workflow-case-visuals`。
 
 按最新确认范围，恢复第二版整体布局，仅在以下两个页面补充参考案例：
