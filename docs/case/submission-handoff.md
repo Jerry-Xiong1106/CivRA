@@ -8,7 +8,7 @@ Python 3.12：
 
 ```powershell
 python -m venv .venv-case
-.\.venv-case\Scripts\python.exe -m pip install -r requirements.txt -r requirements-case-dev.txt
+.\.venv-case\Scripts\python.exe -m pip install -r requirements-dev.txt
 .\.venv-case\Scripts\python.exe -m unittest discover -s tests/case -v
 .\.venv-case\Scripts\python.exe scripts/case/check_handoff.py
 .\.venv-case\Scripts\python.exe scripts/case/demo_shared_tools.py
@@ -21,7 +21,7 @@ python -m venv .venv-case
 
 ```python
 from backend.case import CaseService, SQLiteCaseRepository
-from backend.case.knowledge_bridge import CorpusSourceResolver, executable_research_plan
+from backend.case.research.knowledge_bridge import CorpusSourceResolver, executable_research_plan
 from backend.agent.factory import build_runner
 
 repository = SQLiteCaseRepository("var/cases.sqlite3")  # 应用另行创建/读取真实案件

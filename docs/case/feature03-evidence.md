@@ -52,7 +52,7 @@
 
 边界：最多100份材料、每份原始文字20000字符、2000组比对、100条候选；达到上限、文字不足、原文不可核实或提取版本不明确时，在 `limitations` 说明。不会截断长文后假装比对完整原件。比较的是已保存且被证据引用的提取页，解析时遗漏的页面不在本次覆盖范围内。
 
-单独调用纯函数 `backend.case.evidence.check_evidence` 而未注入文字读取器时，只做结构化与哈希检查，并明确报告没有执行文字近似检测。`checks_performed` 中仅实际比较过符合条件的材料组合才包含 `saved_material_text_similarity_v1`。
+单独调用纯函数 `backend.case.materials.evidence.check_evidence` 而未注入文字读取器时，只做结构化与哈希检查，并明确报告没有执行文字近似检测。`checks_performed` 中仅实际比较过符合条件的材料组合才包含 `saved_material_text_similarity_v1`。
 
 ## Python调用与更新
 
@@ -60,7 +60,7 @@
 
 ```python
 from backend.case import CaseService, SQLiteCaseRepository
-from backend.case.evidence_rules import load_evidence_rules
+from backend.case.materials.evidence_rules import load_evidence_rules
 
 repo = SQLiteCaseRepository("var/cases.sqlite3")
 service = CaseService(repo, evidence_rules=load_evidence_rules())
@@ -113,4 +113,4 @@ python scripts/case/demo_evidence_review.py --output-dir var/evidence-review-dem
 
 剩余：真实照片/手写材料的独立重复识别评测、复杂语义关联、真实性和法律证明力判断、正式法律材料依据及真实应用联调。当前没有实现通用图片视觉去重或对所有民事纠纷的完整证据规则。
 
-代码：`backend/case/evidence.py`、`evidence_rules.py`、`evidence_similarity.py`、`service.py`。
+代码：`backend/case/materials/evidence.py`、`evidence_rules.py`、`evidence_similarity.py`、`service.py`。

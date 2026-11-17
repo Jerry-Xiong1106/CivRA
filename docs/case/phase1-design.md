@@ -14,7 +14,7 @@
 | 六个业务工具和案件更新的请求/返回结构 | 已定义，算法待实现 | `backend/case/contracts.py` |
 | 案件结构和内部引用校验 | 已实现 | `validate_case_snapshot()` |
 | Python 导入入口和实时 JSON Schema | 已实现 | `backend.case`、`get_contract_manifest()` |
-| Runtime v0.5 的案件视图和 ToolResult 转换 | 已实现；需集成分支联调 | `backend/case/adapters.py` |
+| Runtime v0.5 的案件视图和 ToolResult 转换 | 已实现；需集成分支联调 | `backend/tools/case_results.py` |
 | Evaluation v0.1 的外层调用结果转换 | 已实现；需成员五确认映射 | `to_evaluation_result()` |
 | 合成材料、案情、非法输入、人工开发预期 | 已实现 | `data/examples/member3/traffic_accident_v1/` |
 | 真实解析/OCR、证据检查、计算、文书与语义核验 | 本批未实现 | 下一批 |
@@ -22,12 +22,12 @@
 首轮演示不需要 API Key、网络、前端或数据库。在仓库根目录运行：
 
 ```powershell
-python -m pip install -r requirements-case.txt
+python -m pip install -r requirements.txt
 python scripts/case/demo_contracts.py
 python -m unittest discover -s tests/case -v
 ```
 
-后端使用 Python 3.11+、Pydantic 2。`requirements-case.txt` 与其他模块的依赖并列，避免覆盖各分支现有 `requirements.txt`。
+后端使用 Python 3.11+、Pydantic 2。运行依赖统一在 `requirements.txt`，测试依赖在 `requirements-dev.txt`，OCR 按需单独安装。
 
 ## 2. 为什么这样划分
 
@@ -96,7 +96,8 @@ python scripts/case/demo_contracts.py --schema
 
 ```python
 from backend.case import load_development_case, validate_case_snapshot, get_contract_manifest
-from backend.case.contracts import CheckEvidenceRequest, InvocationContext
+from backend.case.materials.contracts import CheckEvidenceRequest
+from backend.case.contracts import InvocationContext
 
 case = load_development_case()  # 同时校验样例材料哈希、字符位置和引用片段
 result = validate_case_snapshot(case.model_dump(mode="json"))

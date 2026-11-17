@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case
-from backend.case.ocr import OcrLine, OcrPage
+from backend.case.materials.ocr import OcrLine, OcrPage
 
 
 class PageEngine:
@@ -94,7 +94,7 @@ class DocumentFieldTests(unittest.TestCase):
         self.assert_sources(result)
 
     def test_invalid_amounts_never_become_partial_numbers(self):
-        from backend.case.field_extraction import extract_labelled_fields
+        from backend.case.materials.field_extraction import extract_labelled_fields
         self.put("维修费：1元")
         result = self.parse()
         segment = result.data.text_segments[0]
@@ -248,7 +248,7 @@ class DocumentFieldTests(unittest.TestCase):
         engine = PageEngine([["维修费：20元"], ["医疗费：30元"]])
         self.put(self.pdf(((300, 200), (300, 200))), "application/pdf")
         now = datetime.now(timezone.utc)
-        with patch("backend.case.documents.datetime") as clock:
+        with patch("backend.case.materials.documents.datetime") as clock:
             clock.now.side_effect = [now, now, now + timedelta(seconds=2)]
             result = self.parse(CaseService(self.repo, ocr=engine), deadline=now + timedelta(seconds=1))
         self.assertEqual(engine.calls, 1)

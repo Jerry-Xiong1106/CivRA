@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 
-from backend.case.contracts import CaseChanges
+from backend.case.intake.contracts import CaseChanges
 from backend.case.models import CaseSnapshot, Confirmation, Fact
 
 DEMO_REPLY = (

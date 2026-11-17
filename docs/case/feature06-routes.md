@@ -32,7 +32,7 @@ result = service.compare_routes(request)
 
 通过CaseService调用会核对数据库中的案件内容与版本，保存不可变输出，返回`output_refs`；重复相同请求复用输出，复用ID但改变参数会拒绝。需要新版比较时使用新`request_id`。历史请求的空扩展字段不改变摘要，历史比较结果仍可读取，`implementation_version`为`civil_comparison_v1`；不会偷偷用新算法改写历史输出。
 
-`backend.case.routes.compare_routes(request, ...)`仍可独立调用，但只有模型校验，不读取案件库、不保存结果；实际应用优先用CaseService。
+`backend.case.planning.routes.compare_routes(request, ...)`仍可独立调用，但只有模型校验，不读取案件库、不保存结果；实际应用优先用CaseService。
 
 ## 输出怎么显示
 

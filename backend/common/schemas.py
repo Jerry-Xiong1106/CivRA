@@ -160,6 +160,10 @@ TERMINAL_STATUSES = {"completed", "failed", "cancelled", "budget_exhausted"}
 
 
 class RunConfig(BaseModel):
+    conversation_route: Literal["auto", "consultation", "case_work"] = "auto"
+    max_search_calls: int | None = Field(default=3, ge=0)
+    max_clarification_rounds: int | None = Field(default=2, ge=0)
+    max_questions_per_round: int = Field(default=2, ge=1)
     mode: Literal["direct_llm", "rag", "fixed_workflow", "agent"] = "agent"
     model: str | None = None                 # None = the client's default model
     temperature: float = 0.0
@@ -239,6 +243,7 @@ class FinalOutput(BaseModel):
 
 
 class RunInfo(BaseModel):
+    conversation_route: Literal["consultation", "case_work"] = "consultation"
     schema_version: str = "0.5"
     run_id: str
     case_id: str

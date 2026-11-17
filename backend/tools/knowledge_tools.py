@@ -1,4 +1,4 @@
-"""Real statute tool adapter; factory and LangChain wrappers use the same registry.
+"""Native LangChain statute tool over the shared retrieval service.
 
 Default retrieval is exact-vector with metadata input. Only query/top_k are
 model-facing; case/date filtering and separate source lookup are not provided.
@@ -9,31 +9,14 @@ import os
 import threading
 from typing import Callable, TYPE_CHECKING
 
-from backend.common.schemas import ToolContext, ToolError, ToolResult, ToolSpec
+from backend.common.schemas import ToolContext, ToolError, ToolResult
 from backend.knowledge.retrieval.results import to_search_match
-from backend.tools.registry import ToolRegistry
+from langchain.tools import tool, ToolRuntime
+from langchain_core.tools import BaseTool
+from backend.tools.policy import describe_tool, set_policy
 
 if TYPE_CHECKING:
     from backend.knowledge.retrieval.service import RetrievalService
-
-SEARCH_STATUTES = ToolSpec(
-    name="search_statutes",
-    description=(
-        "检索当前法律库中的完整条文、条号、版本及来源。query可以是问题或明确的法律名称＋条号。"
-        "只返回候选，不判断依据充分性；不支持案例、日期或法域过滤。明确指定多条时不按top_k截断。"
-    ),
-    parameters={
-        "type": "object",
-        "properties": {
-            "query": {"type": "string", "minLength": 1},
-            "top_k": {"type": "integer", "minimum": 1, "maximum": 20},
-        },
-        "required": ["query"],
-        "additionalProperties": False,
-    },
-    owner="member2",
-    feedback_loop="retrieve_verify",
-)
 
 Search = Callable[..., dict]
 
@@ -76,36 +59,53 @@ def _lazy_service():
     return get_service
 
 
-def register_knowledge_tools(
-    registry: ToolRegistry, search: Search | None = None, *,
+def create_knowledge_tools(
+    search: Search | None = None, *,
     retrieval_service: RetrievalService | None = None,
-) -> None:
-    """Register real search; inject a service or a test callable, never both."""
+) -> list[BaseTool]:
+    """Build native real search; inject a service or a test callable, never both."""
     from backend.knowledge.vector.embedding import EmbeddingRequestError
 
     if search is not None and retrieval_service is not None:
         raise ValueError("Pass search or retrieval_service, not both")
     get_service = _lazy_service() if search is None and retrieval_service is None else lambda: retrieval_service
 
-    @registry.tool(SEARCH_STATUTES)
-    def search_statutes(args: dict, ctx: ToolContext) -> ToolResult:
+    @tool(
+        'search_statutes',
+        description='检索当前法律库中的完整条文、条号、版本及来源。query可以是问题或明确的法律名称＋条号。只返回候选，不判断依据充分性；不支持案例、日期或法域过滤。明确指定多条时不按top_k截断。',
+        args_schema={
+            'type': 'object',
+            'properties': {'query': {'type': 'string', 'minLength': 1},
+                           'top_k': {'type': 'integer', 'minimum': 1, 'maximum': 20}},
+            'required': ['query'], 'additionalProperties': False,
+        },
+    )
+    def search_statutes(runtime: ToolRuntime[ToolContext], **args) -> dict:
+        ctx = runtime.context
         try:
             service = get_service()
             if service is not None:
-                response = service.search(args["query"], args.get("top_k"), deadline=ctx.deadline)
+                response = service.search(args['query'], args.get('top_k'), deadline=ctx.deadline)
             else:
-                response = search(args["query"], args.get("top_k"))
-            return to_tool_result(
+                response = search(args['query'], args.get('top_k'))
+            result = to_tool_result(
                 response, source_metadata=service.source_metadata if service is not None else None,
                 knowledge_version=service.knowledge_version if service is not None else None,
             )
         except FileNotFoundError:
-            return ToolResult.fail("UPSTREAM", "检索索引或来源文件不存在；请按当前模式构建索引（scripts/rag/build_vector_index.py 或 build_bm25_index.py）。")
+            result = ToolResult.fail('UPSTREAM', '检索索引或来源文件不存在；请按当前模式构建索引（scripts/rag/build_vector_index.py 或 build_bm25_index.py）。')
         except TimeoutError:
-            return ToolResult.fail("TIMEOUT", "检索请求超时。", retryable=True)
+            result = ToolResult.fail('TIMEOUT', '检索请求超时。', retryable=True)
         except EmbeddingRequestError as exc:
-            return ToolResult(status="error", summary=str(exc), error=ToolError(
-                code="UPSTREAM", message=str(exc), retryable=exc.retryable,
-                details={"http_status": exc.status_code}))
+            result = ToolResult(status='error', summary=str(exc), error=ToolError(
+                code='UPSTREAM', message=str(exc), retryable=exc.retryable,
+                details={'http_status': exc.status_code}))
         except Exception:
-            return ToolResult.fail("INTERNAL", "检索执行失败，请检查服务配置和索引；未返回替代结果。")
+            result = ToolResult.fail('INTERNAL', '检索执行失败，请检查服务配置和索引；未返回替代结果。')
+        return result.model_dump(mode='json', exclude_none=True)
+
+    set_policy(search_statutes, owner='member2', feedback_loop='retrieve_verify')
+    return [search_statutes]
+
+
+SEARCH_STATUTES = describe_tool(create_knowledge_tools()[0])

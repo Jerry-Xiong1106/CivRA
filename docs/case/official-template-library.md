@@ -45,7 +45,7 @@ Agent扩展工具通过 `OfficialFormToolClient.contracts()` 获取JSON Schema�
 应用确认入口不注册为LLM工具。成员一在用户点击确认后，通过现有 `RepositoryCasePort.record_user_reply(...)` 保存服务返回的 `confirmation_text`，随后调用 `confirm_and_export`，传入新的案件版本和该消息ID。界面展示模板名称和完整拟填写内容，机器确认串可由应用保存，无须让用户复制哈希。普通的“同意”文本不能代替对明确版本预览的确认。
 
 ```python
-from backend.case.official_forms import OfficialFormToolClient
+from backend.tools.official_forms import OfficialFormToolClient
 
 tools = OfficialFormToolClient(service.official_forms)
 recommendation = tools.invoke(

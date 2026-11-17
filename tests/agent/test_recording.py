@@ -61,7 +61,7 @@ def test_terminal_checkpoint_saved_once_before_terminal_event(tmp_path, status):
     from backend.agent.model.llm import ScriptedLLM, tool_call
     from backend.agent.runner import AgentRunner
     from backend.common.schemas import TERMINAL_STATUSES, RunConfig
-    from backend.tools.mock_tools import build_mock_registry
+    from tests.native_tools import mock_tool_fixture
 
     class ObservedStore(RunStore):
         terminal_writes = 0
@@ -86,11 +86,11 @@ def test_terminal_checkpoint_saved_once_before_terminal_event(tmp_path, status):
               tool_call("finish", answer="done")]
     if status == "failed":
         script = [script[0], fail]
-    config = RunConfig(max_model_calls=0) if status == "budget_exhausted" else RunConfig()
+    config = RunConfig(conversation_route="case_work", max_model_calls=0) if status == "budget_exhausted" else RunConfig(conversation_route="case_work", )
     cases = InMemoryCaseStore()
     cases.create("c", {})
     store = ObservedStore(tmp_path)
-    with build_mock_registry(cases) as registry:
+    with mock_tool_fixture(cases) as registry:
         runner = AgentRunner(ScriptedLLM(script), registry, cases, store, config)
         info = runner.start_run("c", "hi")
     assert info.status == status and store.terminal_writes == 1
@@ -121,3 +121,101 @@ def test_compaction_serializes_each_message_view_once():
     answered = {message.tool_call_id for message in result if isinstance(message, ToolMessage)}
     assert called == answered
     assert len(json.loads(history[2].content)["data"]) == 2000
+
+
+def _checkpoint():
+    from backend.agent.runtime.state import Checkpoint
+    from backend.common.schemas import RunConfig
+    return Checkpoint(run_id="r", case_id="c", status="running",
+                      config=RunConfig(), case_version=1, stage="consultation")
+
+
+def test_checkpoint_recovers_from_windows_replace_contention(tmp_path):
+    from pathlib import Path
+
+    store = RunStore(tmp_path)
+    cp = _checkpoint()
+    store.save_checkpoint(cp)
+    cp.status = "waiting_user"
+    replace = Path.replace
+    busy = PermissionError("simulated Windows file contention")
+    busy.winerror = 5
+    attempts = []
+
+    def replace_once_busy(source, target):
+        attempts.append(source)
+        if len(attempts) < 3:
+            raise busy
+        return replace(source, target)
+
+    with patch.object(Path, "replace", replace_once_busy), patch(
+        "backend.agent.runtime.store.time.sleep"
+    ) as sleep:
+        store.save_checkpoint(cp)
+    assert len(attempts) == 3 and sleep.call_count == 2
+    assert store.load_checkpoint("r").status == "waiting_user"
+    assert not list((tmp_path / "r").glob("*.tmp"))
+
+
+def test_checkpoint_permanent_failure_preserves_previous_and_pending_state(tmp_path):
+    from pathlib import Path
+
+    store = RunStore(tmp_path)
+    cp = _checkpoint()
+    store.save_checkpoint(cp)
+    cp.status = "waiting_user"
+    busy = PermissionError("permanent Windows access failure")
+    busy.winerror = 5
+    with patch.object(Path, "replace", side_effect=busy) as replace, patch(
+        "backend.agent.runtime.store.time.sleep"
+    ):
+        with pytest.raises(PermissionError):
+            store.save_checkpoint(cp)
+    assert replace.call_count == 7
+    assert store.load_checkpoint("r").status == "running"
+    pending, = (tmp_path / "r").glob("*.tmp")
+    assert json.loads(pending.read_text(encoding="utf-8"))["status"] == "waiting_user"
+
+
+def test_progress_reads_and_checkpoint_writes_can_run_concurrently(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+
+    store = RunStore(tmp_path)
+    cp = _checkpoint()
+    store.save_checkpoint(cp)
+
+    def write():
+        for number in range(100):
+            cp.step_id = number
+            store.save_checkpoint(cp)
+
+    def read():
+        for _ in range(200):
+            assert store.load_checkpoint("r").run_id == "r"
+            assert [c.run_id for c in store.list_checkpoints()] == ["r"]
+
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        futures = [pool.submit(write), pool.submit(read), pool.submit(read)]
+        for future in futures:
+            future.result(timeout=30)
+    assert store.load_checkpoint("r").step_id == 99
+
+
+def test_real_windows_open_reader_retries_checkpoint_replace(tmp_path):
+    import sys
+    if sys.platform != "win32":
+        pytest.skip("Windows file sharing behavior")
+
+    store = RunStore(tmp_path)
+    cp = _checkpoint()
+    store.save_checkpoint(cp)
+    cp.status = "waiting_user"
+    # A separate reader with no delete-sharing reproduces the OS failure.
+    with (tmp_path / "r" / "checkpoint.json").open("rb") as reader:
+        def release_reader(_seconds):
+            reader.close()
+
+        with patch("backend.agent.runtime.store.time.sleep", side_effect=release_reader) as sleep:
+            store.save_checkpoint(cp)
+        assert sleep.call_count >= 1
+    assert store.load_checkpoint("r").status == "waiting_user"

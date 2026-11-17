@@ -1,4 +1,4 @@
-"""New tools against the previously saved real Member 4 ToolRegistry."""
+"""New tools against the previously saved real Member 4 NativeTools."""
 
 import unittest
 from datetime import datetime,timedelta,timezone
@@ -8,21 +8,21 @@ from tempfile import TemporaryDirectory
 from backend.case import CaseService,SQLiteCaseRepository,load_development_case,get_contract_manifest
 
 try:
-    from backend.tools.registry import ToolRegistry
+    from tests.native_tools import NativeTools
     from backend.common.schemas import ToolContext
 except ModuleNotFoundError:
-    ToolRegistry=None
+    NativeTools=None
 
 
-@unittest.skipIf(ToolRegistry is None,"requires the saved Member 4 runtime integration copy")
+@unittest.skipIf(NativeTools is None,"requires the saved Member 4 runtime integration copy")
 class Phase3RuntimeTests(unittest.TestCase):
     def setUp(self):
-        from backend.tools.case_tools import register_case_tools
+        from tests.native_tools import register_case_tools
         self.temp=TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
         self.repo=SQLiteCaseRepository(Path(self.temp.name)/"cases.db")
         self.case=self.repo.create_case(load_development_case())
         self.service=CaseService(self.repo)
-        self.registry=register_case_tools(ToolRegistry(),self.service)
+        self.registry=register_case_tools(NativeTools(),self.service)
 
     def context(self,step=1):
         return ToolContext(case_id=self.case.case_id,run_id="phase3-test",step_id=step,case_version=1,
@@ -67,8 +67,8 @@ class Phase3RuntimeTests(unittest.TestCase):
     def test_gateways_preserve_actual_runtime_usage_and_cost_models(self):
         import json
         from backend.common.schemas import LLMResponse,TokenUsage,CostInfo
-        from backend.case.drafting import MeteredLLMDraftingGateway
-        from backend.case.verification import MeteredLLMReviewGateway
+        from backend.case.drafting.documents import MeteredLLMDraftingGateway
+        from backend.case.review.verification import MeteredLLMReviewGateway
         from backend.case.models import BusinessOutput
         from backend.case.contracts import InvocationContext
         response=LLMResponse(content=json.dumps({"paragraphs":[{"text":"接口测试",

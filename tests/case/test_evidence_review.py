@@ -9,9 +9,9 @@ from tempfile import TemporaryDirectory
 import unittest
 
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case
-from backend.case.evidence import check_evidence, build_evidence_directory
-from backend.case.evidence_rules import EvidenceRules, load_evidence_rules
-from backend.case.evidence_similarity import inspect_text_similarity, read_material_text, SimilarityPolicy
+from backend.case.materials.evidence import check_evidence, build_evidence_directory
+from backend.case.materials.evidence_rules import EvidenceRules, load_evidence_rules
+from backend.case.materials.evidence_similarity import inspect_text_similarity, read_material_text, SimilarityPolicy
 from backend.case.models import CaseSnapshot, Evidence
 
 

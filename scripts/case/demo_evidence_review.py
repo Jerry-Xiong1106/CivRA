@@ -11,7 +11,7 @@ sys.path.insert(0, str(ROOT))
 
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case
 from backend.case.models import CaseSnapshot, Claim, Confirmation
-from backend.case.runtime import RepositoryCasePort
+from backend.agent.case_adapter import RepositoryCasePort
 
 
 REPAIR_TEXT = ("【合成开发材料，非真实票据】\n票据编号：SYN-REPAIR-001\n维修金额：3000.00元\n"

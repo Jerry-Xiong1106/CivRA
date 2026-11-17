@@ -9,7 +9,7 @@ import sys
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case
 from backend.case.models import CaseSnapshot
-from backend.case.templates import CURRENT_VERSION
+from backend.case.drafting.templates import CURRENT_VERSION
 
 
 def main():

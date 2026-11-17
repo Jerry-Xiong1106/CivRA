@@ -20,6 +20,13 @@ class Checkpoint(BaseModel):
     event_seq: int = 0
     case_version: int
     stage: str
+    conversation_route: str = "consultation"
+    routing_source: str = "default"
+    routing_reason: str = ""
+    route_selected: bool = False
+    clarification_rounds: int = 0
+    search_calls: int = 0
+    asked_questions: list[str] = Field(default_factory=list)
     usage: RunUsage = Field(default_factory=RunUsage)
     wait: Wait | None = None
     experiment_run_id: str | None = None
@@ -34,13 +41,14 @@ class Checkpoint(BaseModel):
     def info(self) -> RunInfo:
         return RunInfo(run_id=self.run_id, case_id=self.case_id, case_version=self.case_version,
                        experiment_run_id=self.experiment_run_id, status=self.status, wait=self.wait,
-                       final=self.final, usage=self.usage, error=self.error)
+                       final=self.final, usage=self.usage, error=self.error,
+                       conversation_route=self.conversation_route)
 
-    def budget_reason(self, active_seconds: float) -> str | None:
+    def budget_reason(self, active_seconds: float, *, before_tool: bool = False) -> str | None:
         usage, cfg = self.usage, self.config
         limits = (
             (usage.steps, cfg.max_steps, "步数"),
-            (usage.model_calls, cfg.max_model_calls, "模型调用"),
+            (usage.model_calls, None if before_tool else cfg.max_model_calls, "模型调用"),
             (usage.tool_calls, cfg.max_tool_calls, "工具调用"),
             (usage.prompt_tokens + usage.completion_tokens, cfg.max_total_tokens, "token"),
             (usage.duration_ms / 1000 + active_seconds, cfg.max_run_seconds, "时间"),

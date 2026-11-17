@@ -13,7 +13,7 @@ sys.path.insert(0, str(ROOT))
 from backend.case import CaseService, CaseToolClient, SQLiteCaseRepository, ToolInvocation, load_development_case
 from backend.case.contracts import InvocationContext
 from backend.case.models import CaseSnapshot
-from backend.case.runtime import RepositoryCasePort
+from backend.agent.case_adapter import RepositoryCasePort
 from demo_support import DEMO_REPLY, confirmed_demo_changes
 
 
@@ -107,11 +107,11 @@ def run_agent(directory):
     from backend.agent.runner import AgentRunner
     from backend.agent.runtime.store import RunStore
     from backend.common.schemas import RunConfig, UserReply
-    from backend.tools.case_tools import register_case_tools
-    from backend.tools.registry import ToolRegistry
+    from backend.tools.case_tools import create_case_tools
+
 
     repo, service, case_id = create_environment(directory, "agent")
-    registry = register_case_tools(ToolRegistry(), service)
+    tools = create_case_tools(service)
 
     def last_business_result(messages):
         return json.loads(messages[-1]["content"])["data"]
@@ -152,8 +152,10 @@ def run_agent(directory):
         tool_call("finish", answer="合成业务接入演示完成。",
                   open_issues=["原表字段待校对，语义模型待接入，费用及导出选型保留。"]),
     ]
-    runner = AgentRunner(ScriptedLLM(script), registry, RepositoryCasePort(repo),
-                         RunStore(Path(directory) / "runs"), default_config=RunConfig(max_steps=60))
+    runner = AgentRunner(ScriptedLLM(script), tools, RepositoryCasePort(repo),
+                         RunStore(Path(directory) / "runs"),
+                         # Four fixed evidence questions preserve this parity fixture.
+                         default_config=RunConfig(conversation_route="case_work", max_steps=60, max_questions_per_round=4))
     info = runner.start_run(case_id, "请核对材料，确认后比较路线并准备诉讼草稿。", experiment_run_id="phase4-agent")
     if info.status != "waiting_user" or info.wait.kind != "clarification":
         raise AssertionError(info)

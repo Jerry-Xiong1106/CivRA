@@ -10,12 +10,13 @@ from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case
-from backend.case.contracts import InvocationContext, UpdateCaseRequest
-from backend.case.drafting import DocumentTemplate, TemplateRegistry, MeteredLLMDraftingGateway
-from backend.case.templates import load_builtin_templates
+from backend.case.contracts import InvocationContext
+from backend.case.intake.contracts import UpdateCaseRequest
+from backend.case.drafting.documents import DocumentTemplate, TemplateRegistry, MeteredLLMDraftingGateway
+from backend.case.drafting.templates import load_builtin_templates
 from backend.case.models import BusinessOutput, CaseSnapshot, OutputLink, SourcePointer
-from backend.case.runtime import RepositoryCasePort
-from backend.case.verification import MeteredLLMReviewGateway
+from backend.agent.case_adapter import RepositoryCasePort
+from backend.case.review.verification import MeteredLLMReviewGateway
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/"scripts/case"))
 from demo_support import DEMO_REPLY, confirmed_demo_changes

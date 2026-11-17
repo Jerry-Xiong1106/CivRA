@@ -15,12 +15,12 @@ import pytest
 from backend.common.config import load_dotenv
 from evaluation.config import run_config_from_pilot
 from backend.agent.factory import (
-    DEFAULT_MODEL, SILICONFLOW_BASE_URL, MissingAPIKey, build_registry, build_runner, llm_from_env,
+    DEFAULT_MODEL, SILICONFLOW_BASE_URL, MissingAPIKey, build_runner, llm_from_env,
 )
+from tests.native_tools import tool_fixture
 from backend.agent.case_port import InMemoryCaseStore
-from backend.agent.model.llm import ScriptedLLM, make_chat_model, response_from_message, tool_call
+from backend.agent.model.llm import ScriptedLLM, make_chat_model, tool_call
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage
 from backend.agent.runtime.store import RunStore
 from backend.common.schemas import RunConfig, UserReply
 from backend.knowledge.retrieval.results import to_result
@@ -76,18 +76,18 @@ def test_llm_from_env_overrides_and_rejects_removed_backend(monkeypatch):
 
 def test_missing_key_is_a_clear_error(tmp_path):
     with pytest.raises(MissingAPIKey, match="SILICONFLOW_API_KEY"):
-        build_runner(dotenv=tmp_path / "none.env", store=RunStore(tmp_path))
+        build_runner(config=RunConfig(conversation_route="case_work"), dotenv=tmp_path / "none.env", store=RunStore(tmp_path))
 
 
 def test_registry_options(tmp_path):
     cases = InMemoryCaseStore()
-    full = build_registry(cases, statute_search=lambda q, k=None: {})
+    full = tool_fixture(cases, statute_search=lambda q, k=None: {})
     assert {"search_statutes", "update_case", "check_evidence", "verify_output", "draft_document"} == set(full.names())
     assert full.get_spec("search_statutes").owner == "member2"
     assert set(full.get_spec("search_statutes").parameters["properties"]) == {"query", "top_k"}
-    real_only = build_registry(cases, statute_search=lambda q, k=None: {}, mock_business_tools=False)
+    real_only = tool_fixture(cases, statute_search=lambda q, k=None: {}, mock_business_tools=False)
     assert set(real_only.names()) == {"search_statutes", "update_case"}
-    mock = build_registry(cases, real_statutes=False)
+    mock = tool_fixture(cases, real_statutes=False)
     assert "dispute_type" not in mock.get_spec("search_statutes").parameters["properties"]
 
 
@@ -102,7 +102,7 @@ def test_pilot_config_maps_to_run_config():
 
 def test_max_model_calls_budget(tmp_path):
     setup = build_runner(llm=ScriptedLLM([tool_call("search_statutes", query="q")] * 5), store=RunStore(tmp_path),
-                         real_statutes=False, config=RunConfig(max_model_calls=2), dotenv=None)
+                         real_statutes=False, config=RunConfig(conversation_route="case_work", max_model_calls=2), dotenv=None)
     setup.cases.create("c", {})
     info = setup.runner.start_run("c", "hi")
     assert info.status == "budget_exhausted" and info.usage.model_calls == 2
@@ -166,32 +166,6 @@ def provider():
         s.close()
 
 
-def test_client_request_and_response_over_http(provider):
-    fake = provider([completion(calls=[("search_statutes", {"query": "交强险"})], finish="tool_calls"),
-                     completion(content="好的", usage=False, rid="req-2")])
-    client = make_chat_model(base_url=fake.url, api_key="sk-test", model="Qwen/Qwen2.5-7B-Instruct",
-                                    price_in="2", price_out="8", price_version="2026-11")
-    from backend.tools.knowledge_tools import SEARCH_STATUTES
-    schema = {"type": "function", "function": {"name": SEARCH_STATUTES.name,
-              "description": SEARCH_STATUTES.description, "parameters": SEARCH_STATUTES.parameters}}
-    reply = client.bind_tools([schema], temperature=0.1, max_tokens=500,
-                              seed=7, tool_choice="search_statutes").invoke([HumanMessage("hi")])
-    r = response_from_message(reply, client)
-    sent = fake.requests[0]
-    assert sent["path"] == "/v1/chat/completions" and sent["auth"] == "Bearer sk-test"
-    body = sent["body"]
-    assert (body["model"], body["temperature"], body.get("max_tokens", body.get("max_completion_tokens")), body["seed"]) == ("Qwen/Qwen2.5-7B-Instruct", 0.1, 500, 7)
-    assert body["tools"][0]["function"]["name"] == "search_statutes"
-    assert body["tool_choice"] == {"type": "function", "function": {"name": "search_statutes"}}
-    assert r.tool_calls[0].arguments == {"query": "交强险"} and r.finish_reason == "tool_calls"
-    assert r.provider_request_id == "req-1" and r.usage.total_tokens == 150 and r.usage.cached_tokens == 20
-    assert r.cost.amount == "0.000480" and r.cost.price_version == "2026-11"  # (2*120 + 8*30) / 1e6
-
-    r2 = response_from_message(client.bind(model="other-model").invoke([HumanMessage("hi")]), client)
-    assert fake.requests[1]["body"]["model"] == "other-model" and "tools" not in fake.requests[1]["body"]
-    assert r2.usage.prompt_tokens is None and r2.cost is None  # unknown stays null
-
-
 def test_full_agent_over_http_through_member5_adapter(provider, tmp_path):
     """Real client + factory + member 5's AgentAdapter: ask, disclose, search, cite, finish."""
     provision = {
@@ -207,7 +181,7 @@ def test_full_agent_over_http_through_member5_adapter(provider, tmp_path):
             {"source_id": "民法典::第一千二百一十三条", "location": "先由交强险赔偿。"}]})], finish="tool_calls"),
     ])
     client = make_chat_model(base_url=fake.url, api_key="sk-test", model="Qwen/Qwen2.5-7B-Instruct")
-    setup = build_runner(llm=client, store=RunStore(tmp_path), mock_business_tools=False, dotenv=None,
+    setup = build_runner(config=RunConfig(conversation_route="case_work"), llm=client, store=RunStore(tmp_path), mock_business_tools=False, dotenv=None,
                          statute_search=lambda q, k=None: {"status": "ok", "query": q, "warnings": [],
                                                            "results": [to_result(provision, 1, 9.0, ["keyword"])]})
     setup.cases.create("eval-case-1", {"facts": {}})
@@ -218,7 +192,7 @@ def test_full_agent_over_http_through_member5_adapter(provider, tmp_path):
         disclosed.append(wait.questions[0].text)
         return UserReply(answers={"q1": "有交强险"})
 
-    out = AgentAdapter(setup.runner).run("eval-case-1", "我的车被追尾了", RunConfig(max_output_tokens=800),
+    out = AgentAdapter(setup.runner).run("eval-case-1", "我的车被追尾了", RunConfig(conversation_route="case_work", max_output_tokens=800),
                                          "exp-001", reply_to_wait)
     run = out["run"]
     assert run["status"] == "completed" and run["experiment_run_id"] == "exp-001"

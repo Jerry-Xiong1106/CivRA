@@ -8,7 +8,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case
-from backend.case.fee_rules import PROPERTY_FEE_RULE_VERSION
+from backend.case.calculation.fee_rules import PROPERTY_FEE_RULE_VERSION
 
 
 def main():

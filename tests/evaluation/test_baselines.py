@@ -9,7 +9,7 @@ from backend.agent.case_port import InMemoryCaseStore
 from backend.agent.runner import AgentRunner
 from backend.agent.runtime.store import RunStore
 from backend.common.schemas import LLMResponse, TokenUsage, UserReply, RunConfig
-from backend.tools.mock_tools import build_mock_registry
+from tests.native_tools import mock_tool_fixture
 from evaluation.adapters.team import ModelAdapter, RetrievalAdapter, AgentAdapter
 from evaluation.baselines.consultation import run_baseline
 from evaluation.schemas.tasks import load_public_tasks
@@ -102,8 +102,8 @@ class BaselineTests(unittest.TestCase):
         cases.create('adapter-case')
         script = [tool_call('ask_user', questions=[{'question_id':'q1','text':'Any repayment?'}]), tool_call('finish', answer='done')]
         with tempfile.TemporaryDirectory() as tmp:
-            runner = AgentRunner(ScriptedLLM(script), build_mock_registry(cases), cases, RunStore(Path(tmp)))
-            result = AgentAdapter(runner).run('adapter-case','question',RunConfig(),'adapter-exp',
+            runner = AgentRunner(ScriptedLLM(script), mock_tool_fixture(cases), cases, RunStore(Path(tmp)), default_config=RunConfig(conversation_route="case_work"))
+            result = AgentAdapter(runner).run('adapter-case','question',RunConfig(conversation_route="case_work", ),'adapter-exp',
                                              lambda wait: UserReply(answers={'q1':'yes'}))
             self.assertEqual(result['run']['status'],'completed')
             self.assertEqual(len(result['disclosures']),1)

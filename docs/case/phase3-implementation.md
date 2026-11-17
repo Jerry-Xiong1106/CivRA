@@ -24,7 +24,7 @@
 
 ```powershell
 python -m venv .venv-case
-.\.venv-case\Scripts\python.exe -m pip install -r requirements-case-dev.txt -r requirements-ocr.txt
+.\.venv-case\Scripts\python.exe -m pip install -r requirements-dev.txt -r requirements-ocr.txt
 $env:PADDLE_PDX_CACHE_HOME = "$PWD\var\ocr-models"
 $env:HF_HOME = "$PWD\var\hf-cache"
 .\.venv-case\Scripts\python.exe scripts/case/smoke_ocr.py --output-dir var/ocr-smoke-new
@@ -40,7 +40,7 @@ $env:HF_HOME = "$PWD\var\hf-cache"
 import json
 from pathlib import Path
 from backend.case import CaseService, SQLiteCaseRepository
-from backend.case.ocr import OcrEngineRegistry
+from backend.case.materials.ocr import OcrEngineRegistry
 
 config = json.loads(Path("data/config/member3_ocr.json").read_text(encoding="utf-8"))
 engine = OcrEngineRegistry().create(config["engine"], config["options"])
@@ -55,7 +55,8 @@ service = CaseService(repo, ocr=engine)
 应用先验证案件访问权限，再保存文件。SQLiteCaseRepository 与 CaseAssetStore 是本地参考实现；文件原始字节、提取文字、产物和输出存放在同一数据库，成员一可通过注入 assets 替换应用存储。上传哈希由实际字节计算，不信任客户端报送的哈希。
 
 ```python
-from backend.case.contracts import InvocationContext, ParseDocumentsRequest
+from backend.case.contracts import InvocationContext
+from backend.case.materials.contracts import ParseDocumentsRequest
 
 record = service.assets.put_file(
     case_id=case_id, file_id="upload-001", file_version="1", file_name="材料.png",
@@ -107,8 +108,8 @@ MaterialRef 新增 extraction_version 和 polygon。文字区间对应保存的�
 source_resolver(pointer) 返回同 ID、同版本的来源及全文。实质理由只接受标记为 statute（兼容 law、regulation）或 judicial_interpretation 的原文，模板目录不能冒充法律依据。
 
 ```python
-from backend.case.drafting import MeteredLLMDraftingGateway
-from backend.case.verification import MeteredLLMReviewGateway
+from backend.case.drafting.documents import MeteredLLMDraftingGateway
+from backend.case.review.verification import MeteredLLMReviewGateway
 
 # metered_call 必须绑定到当前 Runtime 运行的预算、模型、超时和轨迹。
 # 不应直接拿一个未计量的模型客户端冒充此回调。

@@ -4,7 +4,7 @@ from unittest.mock import patch
 import json
 import unittest
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case
-from backend.case.client import CaseToolClient
+from backend.tools.case_client import CaseToolClient
 from backend.case.models import CaseSnapshot
 from features10_13_support import FeatureFixture
 

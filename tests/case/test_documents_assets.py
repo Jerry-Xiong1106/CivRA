@@ -7,12 +7,14 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case
-from backend.case.assets import CaseAssetStore
-from backend.case.contracts import InvocationContext, ParseDocumentsRequest, UpdateCaseRequest, CaseChanges
+from backend.case.storage.assets import SQLiteAssetStore
+from backend.case.contracts import InvocationContext
+from backend.case.materials.contracts import ParseDocumentsRequest
+from backend.case.intake.contracts import UpdateCaseRequest, CaseChanges
 from backend.case.models import BusinessOutput
-from backend.case.ocr import OcrEngineRegistry, OcrLine, OcrPage, PaddleOcrConfig, PaddleOcrEngine
-from backend.case.repository import CaseNotFound, VersionConflict
-from backend.case.runtime import RepositoryCasePort
+from backend.case.materials.ocr import OcrEngineRegistry, OcrLine, OcrPage, PaddleOcrConfig, PaddleOcrEngine
+from backend.case.errors import CaseNotFound, VersionConflict
+from backend.agent.case_adapter import RepositoryCasePort
 
 
 class OfflineEngine:

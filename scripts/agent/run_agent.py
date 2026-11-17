@@ -37,9 +37,11 @@ def main() -> int:
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8")
     args = parse_args()
-    config = RunConfig()
+    config = RunConfig(conversation_route="case_work" if args.dry_run else args.conversation_route)
     if args.pilot_config:
         config = run_config_from_pilot(json.loads(args.pilot_config.read_text(encoding="utf-8")))
+        if args.dry_run or args.conversation_route != "auto":
+            config = config.model_copy(update={"conversation_route": "case_work" if args.dry_run else args.conversation_route})
     if args.model:
         config = config.model_copy(update={"model": args.model})
 
@@ -61,30 +63,27 @@ def main() -> int:
         print(e)
         return 2
 
-    try:
-        facts = dict(f.split("=", 1) for f in args.fact)
-        summary = {"facts": facts} | ({"dispute_type": args.dispute_type} if args.dispute_type else {})
-        case_id = f"cli-{time.strftime('%Y%m%d-%H%M%S')}"  # one case per invocation, so runs never collide
-        setup.cases.create(case_id, summary)
-        runner = setup.runner
-        model = config.model or getattr(runner.llm, "model_name", "?")
-        tools = ", ".join(sorted(setup.registry.names()))
-        print(f"模型：{model}{'（脚本，dry-run）' if args.dry_run else ''}\n工具：{tools}\n")
+    facts = dict(f.split("=", 1) for f in args.fact)
+    summary = {"facts": facts} | ({"dispute_type": args.dispute_type} if args.dispute_type else {})
+    case_id = f"cli-{time.strftime('%Y%m%d-%H%M%S')}"  # one case per invocation, so runs never collide
+    setup.cases.create(case_id, summary)
+    runner = setup.runner
+    model = config.model or getattr(runner.llm, "model_name", "?")
+    tools = ", ".join(sorted(t.name for t in setup.tools))
+    print(f"模型：{model}{'（脚本，dry-run）' if args.dry_run else ''}\n工具：{tools}\n")
 
-        message = args.message or input("请描述你的问题：").strip()
-        progress = Progress(runner, case_id)
-        info = progress.run(lambda: runner.start_run(case_id, message))
-        while info.status == "waiting_user":
-            reply = ask_user(info.wait, args.auto_reply)
-            if reply is None:
-                info = runner.cancel_run(info.run_id)
-                break
-            info = progress.run(lambda: runner.resume_run(
-                info.run_id, reply, wait_id=info.wait.wait_id, expected_case_version=info.case_version))
-        report(runner, info)
-        return 0 if info.status == "completed" else 1
-    finally:
-        setup.registry.close(wait=False)
+    message = args.message or input("请描述你的问题：").strip()
+    progress = Progress(runner, case_id)
+    info = progress.run(lambda: runner.start_run(case_id, message))
+    while info.status == "waiting_user":
+        reply = ask_user(info.wait, args.auto_reply)
+        if reply is None:
+            info = runner.cancel_run(info.run_id)
+            break
+        info = progress.run(lambda: runner.resume_run(
+            info.run_id, reply, wait_id=info.wait.wait_id, expected_case_version=info.case_version))
+    report(runner, info)
+    return 0 if info.status == "completed" else 1
 
 
 def parse_args() -> argparse.Namespace:
@@ -92,6 +91,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--message", help="first message; asked interactively when omitted")
     p.add_argument("--dry-run", action="store_true", help="scripted model, no API key or network for the model")
     p.add_argument("--model", help="override the model, e.g. a stronger tool-calling model")
+    p.add_argument("--conversation-route", choices=["auto", "consultation", "case_work"], default="auto",
+                   help="semantic routing by default, or explicit consultation/business entry")
     p.add_argument("--pilot-config", type=Path, help="use budgets from evaluation/configs/*.json")
     p.add_argument("--fact", action="append", default=[], metavar="KEY=VALUE", help="initial confirmed fact")
     p.add_argument("--dispute-type", help="e.g. traffic_accident")
@@ -193,6 +194,7 @@ def ask_user(wait: Wait, auto_reply: str | None) -> UserReply | None:
 
 
 def report(runner: AgentRunner, info: RunInfo) -> None:
+    print(f"\n对话入口：{info.conversation_route}")
     print(f"\n状态：{info.status}")
     if info.error:
         print(f"错误：{info.error}")

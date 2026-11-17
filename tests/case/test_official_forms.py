@@ -11,8 +11,9 @@ import unittest
 from lxml import etree
 from backend.case import CaseService, SQLiteCaseRepository, load_development_case
 from backend.case.models import CaseSnapshot
-from backend.case.official_forms import OfficialTemplateLibrary, OfficialFormToolClient, W
-from backend.case.runtime import RepositoryCasePort
+from backend.case.drafting.official_forms import OfficialTemplateLibrary, W
+from backend.tools.official_forms import OfficialFormToolClient
+from backend.agent.case_adapter import RepositoryCasePort
 
 
 class OfficialFormsTests(unittest.TestCase):

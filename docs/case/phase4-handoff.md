@@ -16,11 +16,11 @@
 
 ## 安装与独立检查
 
-已验证环境为 Windows、Python 3.12、Pydantic 2。普通材料解析和工具接入检查使用 requirements-case-dev.txt，其中包含业务依赖、pytest 和 jsonschema。
+已验证环境为 Windows、Python 3.12、Pydantic 2。普通材料解析和工具接入检查使用 requirements-dev.txt，其中包含业务依赖、pytest 和 jsonschema。
 
 ```powershell
 python -m venv .venv-case
-.\.venv-case\Scripts\python.exe -m pip install -r requirements-case-dev.txt
+.\.venv-case\Scripts\python.exe -m pip install -r requirements-dev.txt
 .\.venv-case\Scripts\python.exe scripts/case/check_handoff.py
 .\.venv-case\Scripts\python.exe -m pytest tests/case -q
 ```

@@ -2,6 +2,28 @@
 
 An agentic AI system for evidence-grounded civil law assistance.
 
+## Installation
+
+Use the existing virtual environment or create a Python virtual environment, then install from the repository root:
+
+```powershell
+# Backend runtime: Agent, retrieval and case services
+.\.venv-rag\Scripts\python.exe -m pip install -r requirements.txt
+
+# Development and tests (includes runtime dependencies)
+.\.venv-rag\Scripts\python.exe -m pip install -r requirements-dev.txt
+
+# Optional local OCR; install in the environment running OCR
+.\.venv-rag\Scripts\python.exe -m pip install -r requirements-ocr.txt
+```
+
+`jsonschema` is a runtime dependency for tool argument validation. `pytest` is development-only.
+OCR dependencies remain optional because they are large and require a supported inference environment.
+
+## Frontend HTTP API
+
+See [API setup and frontend contract](backend/api/README.md). The API provides persistent conversations, background Agent execution, resumable questions and route choices, SSE events, material upload and generated document downloads. It is currently a single-process, single-workspace integration; the frontend is not yet implemented.
+
 ## Member 3 case tools
 
 The case business layer includes versioned facts/evidence, local storage, document parsing,
