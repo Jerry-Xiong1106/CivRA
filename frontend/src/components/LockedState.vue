@@ -12,7 +12,7 @@ const { go } = useNavigation();
   <div class="empty-state">
     <div class="empty-symbol"><LockIcon /></div>
     <h2>{{ title }}</h2>
-    <p>完成下列事项后，就可以继续这一步。法律查询和材料上传仍可使用。</p>
+    <p>先确认本次输出所依据的信息。你仍可继续对话、查依据或整理材料。</p>
     <ul class="missing-list">
       <li v-for="reason in reasons" :key="reason">{{ reason }}</li>
     </ul>

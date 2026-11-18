@@ -9,7 +9,7 @@ const props = defineProps({ statistics: Boolean }),
 const filters = reactive({ region: 'all', court: 'all', year: 'all' }),
   limit = ref(6);
 const all = computed(() =>
-  REF.samples.filter((s) => s.domain === store.current.fields.dispute?.value)
+  store.apiMode ? [] : REF.samples.filter((s) => s.domain === store.current.fields.dispute?.value)
 );
 const samples = computed(() =>
   props.statistics ? R.filterCases(all.value, filters) : all.value.slice(0, 3)
@@ -49,12 +49,12 @@ function reset() {
     class="panel case-reference-section"
   >
     <summary v-if="statistics">
-      参考案例与样本统计 <span class="note">展开查看</span>
+      参考案例与样本统计 <span class="note cu-expand-label">展开查看</span><span class="note cu-collapse-label">收起</span>
     </summary>
-    <h3 v-else>参考案例</h3>
+    <div v-else class="cu-panel-head"><h2>参考案例</h2><span>结合裁判理由，核对本案差异</span></div>
     <div :class="{ 'reference-body': statistics }">
       <p class="reference-note">
-        以下为模拟案例，用于演示参考方式，真实案例检索待接入。案例差异需结合本案核对，样本比例不表示胜诉概率。
+        {{ store.apiMode ? '当前后端尚未提供真实类案检索，本案不混入模拟案例。待接入案号、法院、日期及原文后，在这里展示。' : '以下为模拟案例，用于演示参考方式，真实案例检索待接入。案例差异需结合本案核对，样本比例不表示胜诉概率。' }}
       </p>
       <template v-if="statistics"
         ><div class="reference-filters">
@@ -82,35 +82,36 @@ function reset() {
           </p>
           <button class="link" @click="reset">重置筛选</button>
         </div>
-        <div v-if="samples.length" class="reference-chart">
-          <h3>模拟样本结果分布</h3>
-          <div v-for="row in rows" :key="row.label" class="reference-bar">
-            <div class="row between">
-              <span>{{ row.label }}</span
-              ><span>{{ row.count }} 条 · {{ row.percent.toFixed(1) }}%</span>
-            </div>
-            <div class="reference-track">
-              <span :style="{ width: `${row.percent}%` }"></span>
-            </div>
-          </div>
-        </div>
       </template>
       <template v-if="samples.length"
-        ><div class="reference-cards">
+        ><div class="cu-reference-layout" :class="{ 'has-statistics': statistics }">
+        <aside v-if="statistics" class="reference-chart">
+          <h3>模拟样本结果分布</h3>
+          <div class="cu-sample-count"><strong>{{ samples.length }}</strong><span>条匹配样本</span></div>
+          <div v-for="row in rows" :key="row.label" class="reference-bar">
+            <div class="row between">
+              <span>{{ row.label }}</span><span>{{ row.count }} 条 · {{ row.percent.toFixed(1) }}%</span>
+            </div>
+            <div class="reference-track"><span :style="{ width: `${row.percent}%` }"></span></div>
+          </div>
+          <p class="reference-note">仅描述当前筛选样本，不代表本案结果或胜诉概率。</p>
+        </aside>
+        <div class="cu-reference-list">
+        <div v-if="statistics" class="cu-reference-list-head"><h3>相似案例参考</h3><span>{{ Math.min(limit, samples.length) }} / {{ samples.length }} 条</span></div>
+        <div class="reference-cards">
           <article
             v-for="sample in samples.slice(0, statistics ? limit : 3)"
             :key="sample.id"
             class="reference-card"
           >
-            <div class="row between wrap">
-              <span class="pill warn">模拟案例</span
-              ><small>{{ sample.id }}</small>
+            <div class="cu-reference-title">
+              <h3>{{ sample.issue }}</h3><span class="pill">{{ sample.outcome }}</span>
             </div>
-            <h3>{{ sample.issue }}</h3>
-            <p>{{ sample.facts }}</p>
             <div class="reference-meta">
               {{ sample.region }} · {{ sample.court }} · {{ sample.year }} 年
+              <span class="cu-synthetic-label">模拟案例 · {{ sample.id }}</span>
             </div>
+            <p>{{ sample.facts }}</p>
             <button
               class="link"
               @click="store.openDialog('reference', { id: sample.id })"
@@ -121,7 +122,7 @@ function reset() {
         </div>
         <div v-if="statistics && samples.length > limit" class="footer-action">
           <button class="button small" @click="limit += 6">查看更多案例</button>
-        </div></template
+        </div></div></div></template
       >
       <div v-else class="reference-empty">
         {{

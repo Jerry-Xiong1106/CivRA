@@ -44,7 +44,8 @@ const rows = computed(() => {
   />
   <div class="panel">
     <h3>可查看的记录</h3>
-    <div v-for="[label, detail, view] in rows" :key="label" class="task-row">
+    <template v-if="store.apiMode"><div v-for="output in store.current.server?.outputs || []" :key="output.output_id + ':' + output.output_version" class="task-row"><span>{{ output.output_type }}</span><span>{{ output.text || '结构化成果' }} · 案情版本 {{ output.case_version }}</span></div><div v-for="artifact in store.artifacts" :key="artifact.id" class="task-row"><span>{{ artifact.format.toUpperCase() }}</span><span>{{ artifact.stale ? '历史案情版本，请核对后使用' : '当前案情版本' }}</span><button class="button small" @click="store.downloadArtifact(artifact.id)">下载</button></div><p v-if="!store.current.server?.outputs?.length">尚未保存后端成果。</p></template>
+    <div v-for="[label, detail, view] in (store.apiMode ? [] : rows)" :key="label" class="task-row">
       <span>{{ label }}</span
       ><span>{{ detail }}</span
       ><button class="button small" @click="go(view)">查看</button>

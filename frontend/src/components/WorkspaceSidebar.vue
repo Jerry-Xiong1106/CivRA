@@ -6,6 +6,10 @@ import P from '../domain/policy.js';
 import { routeName } from '../domain/presentation.js';
 const store = useWorkspaceStore();
 const { isConsult, selectCase, consult } = useNavigation();
+function demo() {
+  const item = store.loadDemoCases();
+  selectCase(item.id);
+}
 const cases = computed(() =>
   store.state.cases.filter((c) => c.title.includes(store.ui.search))
 );
@@ -46,7 +50,7 @@ const cases = computed(() =>
           ><small
             ><span class="status-dot"></span
             >{{
-              P.assess(c, store.state.rules).intakeConfirmed
+              c.routeIntent || P.assess(c, store.state.rules).intakeConfirmed
                 ? routeName(c)
                 : '案情收集中'
             }}</small
@@ -56,15 +60,16 @@ const cases = computed(() =>
       </div>
     </div>
     <div class="sidebar-foot">
-      <button class="button small" @click="store.openDialog('rules')">
-        ⚙　调整收集规则
+      <button class="button small" @click="demo">▷　体验完整演示</button>
+      <button class="button small" @click="store.apiMode ? store.refreshCase() : store.openDialog('rules')">
+        {{ store.apiMode ? '↻　同步案件记录' : '⚙　调整收集规则' }}
       </button>
-      <div>本地交互原型 · v2<br />示例数据，尚未连接后端</div>
+      <div>对话式工作区<br />{{ store.apiMode ? '后端案件 · 按需调用工具' : '本地记录保留 · 新建案件连接后端' }}</div>
     </div>
     <div class="profile">
       <b>U</b>
       <div>
-        我的工作台<br /><small class="muted">固定步骤 · 逐项确认</small>
+        我的工作台<br /><small class="muted">随时沟通 · 按需整理</small>
       </div>
     </div>
   </aside>

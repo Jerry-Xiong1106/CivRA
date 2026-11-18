@@ -5,8 +5,9 @@ import { displayFact } from '../domain/presentation.js';
 import PageHeading from '../components/PageHeading.vue';
 const store = useWorkspaceStore(),
   { go } = useNavigation();
-function confirm() {
-  if (store.confirmIntake()) go('workflow');
+async function confirm() {
+  const id = store.current.id;
+  if (await store.confirmIntake() && store.current.id === id) go('workflow');
 }
 </script>
 <template>
@@ -20,10 +21,10 @@ function confirm() {
     {{
       store.readiness.blockers.length
     }}
-    项未满足进入条件。请补充或确认后，再选择维权路径。
+    项信息待补充或确认。法律咨询、材料整理和路径比较都可以继续；生成本案文书前再完成核对。
   </div>
   <div v-else class="notice">
-    必答项已处理。{{
+    {{ store.apiMode ? '这里显示后端已记录的事实。' : '必答项已处理。' }}{{
       store.readiness.intakeConfirmed
         ? '本版摘要已经确认。'
         : '请确认以下内容与自己的陈述一致。'
@@ -41,7 +42,7 @@ function confirm() {
       <tr v-for="f in store.readiness.items" :key="f.id">
         <td>{{ f.label }}</td>
         <td>
-          {{ displayFact(f, f.fact) }}<br /><small
+          {{ store.apiMode ? f.fact.value : displayFact(f, f.fact) }}<br /><small
             :class="{ muted: f.satisfied }"
             >{{
               f.satisfied
@@ -64,13 +65,13 @@ function confirm() {
     <button class="button" @click="go('chat')">继续沟通</button
     ><button
       class="button primary"
-      :disabled="!!store.readiness.blockers.length"
+      :disabled="store.apiMode ? store.busy || !store.readiness.items.length : !!store.readiness.blockers.length"
       @click="confirm"
     >
       {{
         store.readiness.intakeConfirmed
-          ? '进入维权路径'
-          : '确认本版案情，进入路径选择'
+          ? '查看处理方向'
+          : '确认案情记录'
       }}
       →
     </button>

@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useWorkspaceStore } from './stores/workspace.js';
 import { TABS } from './domain/presentation.js';
+import { PANEL_TITLES } from './domain/conversation.js';
 import CaseWorkspace from './views/CaseWorkspace.vue';
 import ConsultationView from './views/ConsultationView.vue';
 export function createWorkspaceRouter(pinia) {
@@ -24,8 +25,11 @@ export function createWorkspaceRouter(pinia) {
     store.closeDialog();
     if (to.name !== 'case') return;
     if (!store.selectCase(String(to.params.caseId))) return home();
+    if (Object.hasOwn(PANEL_TITLES, to.params.section)) {
+      return { name: 'case', params: { caseId: to.params.caseId, section: 'chat' }, query: { panel: to.params.section } };
+    }
     if (
-      ![...TABS.map((t) => t[0]), 'review', 'results'].includes(
+      !TABS.map((t) => t[0]).includes(
         to.params.section
       )
     )

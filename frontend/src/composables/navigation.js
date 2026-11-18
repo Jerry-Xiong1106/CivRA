@@ -12,7 +12,11 @@ export function useNavigation() {
     store.closeDialog();
     return router.push(path);
   }
-  const go = (view) => navigate(`/cases/${store.state.activeId}/${view}`);
+  const go = (view) => navigate(
+    ['chat', 'visuals'].includes(view)
+      ? `/cases/${store.state.activeId}/${view}`
+      : `/cases/${store.state.activeId}/chat?panel=${encodeURIComponent(view)}`
+  );
   const selectCase = (id) => navigate(`/cases/${id}/chat`);
   const consult = () => navigate('/consult');
   return { isConsult, section, go, selectCase, consult, route };

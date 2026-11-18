@@ -20,8 +20,16 @@ export function loadWorkspace(storage = globalThis.localStorage) {
         c.audit ||= [];
         c.tasks ||= [];
         c.draftForm ||= {};
+        // Transient browser locks must not survive a reload. Persisted pending
+        // runs/outboxes are reconciled with the server, never blindly replayed.
+        if (c.server) { c.server.sending = false; c.server.syncing = false; c.server.uploading = false; }
       }
       data.rules ||= {};
+      if (data.consultation?.server) {
+        data.consultation.server.sending = false;
+        data.consultation.server.syncing = false;
+        data.consultation.server.uploading = false;
+      }
       if (!data.cases.some((c) => c.id === data.activeId))
         data.activeId = data.cases[0].id;
       return data;

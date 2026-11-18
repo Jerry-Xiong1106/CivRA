@@ -4,19 +4,29 @@ import { storeToRefs } from 'pinia';
 import { useWorkspaceStore } from './stores/workspace.js';
 import { useNavigation } from './composables/navigation.js';
 import P from './domain/policy.js';
-import { TABS, tabLocked } from './domain/presentation.js';
+import { TABS } from './domain/presentation.js';
 import WorkspaceSidebar from './components/WorkspaceSidebar.vue';
-import WorkflowSteps from './components/WorkflowSteps.vue';
 import WorkspaceDialogs from './components/WorkspaceDialogs.vue';
-import LockIcon from './components/LockIcon.vue';
 const store = useWorkspaceStore();
 const { current: c, readiness: r } = storeToRefs(store);
 const { route, isConsult, section, go } = useNavigation();
 const upload = ref(null),
   content = ref(null);
 provide('openUpload', () => upload.value?.click());
-function register(event) {
-  store.registerFiles(Array.from(event.target.files));
+async function register(event) {
+  const files = Array.from(event.target.files);
+  if (!files.length) return;
+  const caseId = store.current.id, apiMode = store.apiMode;
+  const result = await store.registerFiles(files);
+  event.target.value = '';
+  if (store.current.id !== caseId) return;
+  if (apiMode) {
+    go('evidence');
+    if (result?.length && !store.wait?.kind?.includes('route_selection')) await store.sendConversation('请解析我刚上传的材料，整理内容并检查重复、冲突和缺失；不确定的信息请让我核对。');
+    else if (result?.length) store.notify('材料已上传，先确认助手提供的处理方向，再继续解析。');
+    return;
+  }
+  store.addWorkCard('evidence', `已登记 ${files.length} 份材料，可以在这里查看并补充。当前预览尚未解析文件内容。`);
   event.target.value = '';
   go('evidence');
 }
@@ -30,7 +40,7 @@ watch(
 </script>
 
 <template>
-  <div class="layout" :class="{ 'menu-open': store.ui.menu }">
+  <div class="layout conversation-workspace" :class="{ 'menu-open': store.ui.menu }">
     <button
       class="backdrop"
       aria-label="收起案件列表"
@@ -60,7 +70,9 @@ watch(
             </div>
           </div>
         </div>
-        <span class="pill">本地设计预览</span
+        <span class="pill">{{
+          isConsult || store.apiMode ? '后端对话' : c.synthetic ? '虚构案件演示' : '本地历史预览'
+        }}</span
         ><button
           class="button small"
           @click="go(isConsult ? 'chat' : 'review')"
@@ -75,24 +87,21 @@ watch(
             :key="id"
             class="tab"
             :class="{
-              active: section === id || (id === 'chat' && section === 'review'),
-              locked: tabLocked(id, r)
+              active: section === id
             }"
-            :title="tabLocked(id, r) ? '点击查看进入条件' : undefined"
             @click="go(id)"
           >
-            {{ title }}<LockIcon v-if="tabLocked(id, r)" />
+            {{ title }}
           </button>
         </nav>
-        <WorkflowSteps />
       </template>
-      <div id="content" ref="content" class="content"><RouterView /></div>
+      <div id="content" ref="content" class="content" :class="{ 'is-conversation': !isConsult && section === 'chat' }"><RouterView /></div>
     </main>
   </div>
   <input
     ref="upload"
     type="file"
-    accept=".pdf,.png,.jpg,.jpeg,.docx,.txt"
+    accept=".pdf,.png,.jpg,.jpeg,.webp,.docx,.txt"
     multiple
     hidden
     @change="register"

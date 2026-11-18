@@ -10,7 +10,7 @@ const store = useWorkspaceStore(),
   dialog = ref(null);
 const config = computed(() => store.ui.dialog);
 const field = computed(() =>
-  P.applicable(store.current, store.state.rules).find(
+  (store.apiMode ? store.readiness.items : P.applicable(store.current, store.state.rules)).find(
     (f) => f.id === config.value?.id
   )
 );
@@ -58,7 +58,7 @@ watch(
     Object.assign(form, {
       title: '',
       domain: 'traffic',
-      value: store.current.fields[value.id]?.value || '',
+      value: (store.apiMode ? field.value?.fact?.value : store.current.fields[value.id]?.value) || '',
       reason: store.current.fields[value.id]?.reason || '',
       feedback: '',
       rules: Object.fromEntries(
@@ -74,7 +74,7 @@ watch(
 function close() {
   store.closeDialog();
 }
-function submit() {
+async function submit() {
   const value = config.value;
   if (!value || value.caseId !== store.current.id) {
     close();
@@ -90,7 +90,7 @@ function submit() {
     return;
   }
   if (value.kind === 'field')
-    success = store.changeFact(value.id, form.value, {
+    success = await store.changeFact(value.id, form.value, {
       unknown: !!value.unknown,
       reason: form.reason
     });
@@ -99,9 +99,9 @@ function submit() {
     success = true;
   }
   if (value.kind === 'task')
-    success = store.recordFeedback(value.index, form.feedback);
+    success = await store.recordFeedback(value.index, form.feedback);
   if (value.kind === 'route') {
-    success = store.confirmRoute(value.id);
+    success = await store.confirmRoute(value.id);
     if (success) {
       close();
       go('workflow');
@@ -109,7 +109,7 @@ function submit() {
       return;
     }
   }
-  if (success) close();
+  if (success && store.current.id === value.caseId && store.ui.dialog === value) close();
 }
 function backdrop(event) {
   if (event.target !== dialog.value) return;
@@ -160,7 +160,7 @@ function backdrop(event) {
             </option>
           </select>
           <p class="note">
-            新案件从案情收集开始。必答信息处理并确认后，再选择维权路径。
+            新案件连接后端。可以先咨询、上传材料或比较路径；需要的信息由助手按当前目标追问。
           </p>
         </form>
         <form

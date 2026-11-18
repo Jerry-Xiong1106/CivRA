@@ -1,11 +1,6 @@
 import P from './policy.js';
 export const TABS = [
   ['chat', '案情沟通'],
-  ['research', '法律依据'],
-  ['workflow', '维权路径'],
-  ['evidence', '证据材料'],
-  ['outcomes', '结果分析'],
-  ['draft', '起诉状草稿'],
   ['visuals', '案情图谱']
 ];
 export const displayFact = (field, fact) =>
@@ -13,6 +8,7 @@ export const displayFact = (field, fact) =>
     ? `暂不清楚 · ${fact.reason}`
     : field.options?.[fact?.value] || fact?.value || '待补充';
 export function routeName(c) {
+  if (c.routeIntent) return { negotiation: '协商解决', mediation: '调解解决', litigation: '诉讼准备' }[c.routeIntent] || '尚未选择';
   return (
     P.routeOptions(c).find((r) => r.id === c.route)?.title ||
     { mediation: '调解', negotiation: '协商', litigation: '诉讼事项' }[

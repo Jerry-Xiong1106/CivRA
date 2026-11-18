@@ -14,6 +14,39 @@ const reasons = computed(() => [
   ...r.value.blockers.map((f) => `${f.label} · ${f.reason}`),
   '确认本版案情摘要'
 ]);
+const stepInfo = {
+  evidence: {
+    description: '核对主体、金额和材料，确认哪些信息已经知道、哪些仍需补充。',
+    actor: '由你核实本案信息',
+    materials: '与请求有关的合同、票据、记录及已有说明。',
+    condition: '按当前请求逐项核对材料，缺少的内容补充或解释。',
+    link: '前往证据材料'
+  },
+  research: {
+    description: '围绕当前请求查阅法律依据，核实办理渠道及其适用条件。',
+    actor: '相关受理机构与具体要求需结合本案核验',
+    materials: '已确认的案情摘要、当前请求和待核实的问题。',
+    condition: '结合实际程序阶段核验办理条件，不把选择路径视为已经提交申请。',
+    link: '前往法律依据'
+  },
+  draft: {
+    description: '按纠纷类型核对模板，先确认正式表述，再生成并核对草稿。',
+    actor: '由你核对当事人信息与拟填写内容',
+    materials: '当事人信息、诉讼请求、事实经过及对应材料。',
+    condition: '满足起诉状工作台的进入条件，未知信息继续保留为待补充。',
+    link: '前往起诉状草稿'
+  },
+  feedback: {
+    description: '保留沟通与办理结果。未达成一致或情况变化时，可重新比较可用路径。',
+    actor: '由你记录实际发生的情况',
+    materials: '沟通记录、办理反馈及需要后续核对的内容。',
+    condition: '反馈只保存实际记录，不会自动将案件标为办结。',
+    link: '前往结果分析'
+  }
+};
+const steps = computed(() => routeTasks(c.value).map((task) => ({
+  ...task, ...stepInfo[task.view || 'feedback']
+})));
 </script>
 <template>
   <template v-if="!r.canSelectRoute"
@@ -74,29 +107,48 @@ const reasons = computed(() => [
       <h3>案件已处理完毕</h3>
       <p>可以查看历史成果和记录。有新的程序进展时，请先更新实际阶段。</p>
     </div>
-    <div v-if="r.routeConfirmed" class="panel">
-      <div class="row between">
-        <h3>{{ routeName(c) }} · 当前待办</h3>
-        <span class="pill good">由你确认</span>
-      </div>
-      <div v-for="(task, i) in routeTasks(c)" :key="i" class="task-row">
-        <span>0{{ i + 1 }}</span
-        ><span>{{ task.text }}</span
-        ><button
-          class="button small"
-          @click="
-            task.view ? go(task.view) : store.openDialog('task', { index: i })
-          "
-        >
-          {{
-            task.view
-              ? '前往处理'
-              : c.tasks.includes(`${c.route}:${i}`)
-                ? '已记录反馈'
-                : '记录实际反馈'
-          }}
-        </button>
-      </div>
+    <div v-if="r.routeConfirmed" class="classic-ui cu-workflow-columns">
+      <section class="cu-panel cu-route-plan">
+        <div class="cu-panel-head"><h2>{{ routeName(c) }} · 准备步骤</h2><span>由你确认</span></div>
+        <ol class="cu-route-steps">
+          <li v-for="(task, i) in steps" :key="`${c.route}:${i}`">
+            <span class="cu-route-node" aria-hidden="true">{{ i + 1 }}</span>
+            <div class="cu-route-copy">
+              <div class="cu-route-step-head">
+                <h3>{{ task.text }}</h3>
+                <button class="link" @click="store.openDialog('task', { index: i })">{{ c.tasks.includes(`${c.route}:${i}`) ? '已记录反馈' : '记录反馈' }}</button>
+              </div>
+              <p>{{ task.description }}</p>
+              <p class="cu-route-actor">办理方 · {{ task.actor }}</p>
+              <details class="cu-step-details">
+                <summary>材料、条件、依据与期限</summary>
+                <dl>
+                  <div><dt>材料</dt><dd>{{ task.materials }}</dd></div>
+                  <div><dt>条件</dt><dd>{{ task.condition }}</dd></div>
+                  <div><dt>依据</dt><dd>需结合本案核对适用条款及原文出处。<button class="link" @click="go('research')">查看法律依据 ↗</button></dd></div>
+                  <div><dt>期限</dt><dd>向实际受理机构核验具体期限，本页不自动推定。</dd></div>
+                </dl>
+              </details>
+              <button class="link cu-step-link" @click="go(task.view || 'outcomes')">{{ task.link }} ↗</button>
+            </div>
+          </li>
+        </ol>
+      </section>
+      <aside class="cu-route-aside">
+        <section class="cu-panel">
+          <div class="cu-panel-head"><h2>出发前需要核验</h2></div>
+          <ul class="cu-check-list">
+            <li>材料是否完整，费用是否对应本案</li>
+            <li>办理机构、受理条件与具体期限</li>
+            <li>所在地及案件情况对应的管辖信息</li>
+          </ul>
+        </section>
+        <section class="cu-route-reminder">
+          <h3>情况变化后，仍可调整路径</h3>
+          <p>协商无果或收到新反馈时，可以重新比较当前可用的路径。事实或程序阶段有变化时，先更新案情并重新确认。</p>
+          <p class="note">选择路径和记录反馈都不会自动改变实际程序阶段。</p>
+        </section>
+      </aside>
     </div>
     <details class="details">
       <summary>为什么开庭后仍有调解选项？</summary>
