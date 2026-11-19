@@ -48,3 +48,26 @@ def test_template_preserves_braces_and_native_tool_call_pair():
     assert isinstance(AGENT_TEMPLATE, ChatPromptTemplate)
     assert view[-3] is human and view[-2] is call and view[-1] is reply
     assert "{history} is literal data" in view[1].content
+
+
+def test_case_work_asks_to_record_stated_facts_with_canonical_fields():
+    from backend.agent.model.prompts import ROUTE_INSTRUCTIONS
+    from backend.case.drafting.templates import COMMON_FIELDS, PROFILES
+
+    case_work, consultation = ROUTE_INSTRUCTIONS["case_work"], ROUTE_INSTRUCTIONS["consultation"]
+    assert "update_case" in case_work and "statement_refs" in case_work
+    assert 'provenance="user_statement"' in case_work and 'confirmation_status="unconfirmed"' in case_work
+    # Field names stay in sync with the drafting templates rather than a copied list.
+    for name in [*COMMON_FIELDS, *(field for profile in PROFILES for field in profile[3])]:
+        assert name + "=" in case_work, name
+    assert "repair_amount=" in case_work
+    assert "update_case" not in consultation
+
+
+def test_case_work_fact_guide_reaches_rendered_prompt_literally():
+    snapshot = InMemoryCaseStore().create("c", {"statements": [{"message_id": "m1", "text": "事故在10月8日"}]})
+    view = assemble([HumanMessage(content="帮我处理")], snapshot, route="case_work",
+                    runtime_context=limits(0, 0, RunConfig(), False))
+    rendered = "\n".join(str(message.content) for message in view)
+    assert '{"amount":"8000","currency":"CNY"}' in rendered
+    assert "accident_date=事故日期" in rendered
