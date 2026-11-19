@@ -22,7 +22,21 @@ OCR dependencies remain optional because they are large and require a supported 
 
 ## Frontend HTTP API
 
-See [API setup and frontend contract](backend/api/README.md). The API provides persistent conversations, background Agent execution, resumable questions and route choices, SSE events, material upload and generated document downloads. It is currently a single-process, single-workspace integration; the frontend is not yet implemented.
+See [API setup and frontend contract](backend/api/README.md). The API provides persistent conversations, background Agent execution, resumable questions and route choices, SSE events, material upload and generated document downloads. It is currently a single-process, single-workspace integration; the Vue frontend in this branch currently runs as a local interaction prototype and is not yet connected to this API.
+
+## Vue frontend preview
+
+The guided case workspace is now implemented with Vue 3, Pinia, Vue Router and Vite. Its seven feature tabs, fixed confirmation steps and two reference-case sections preserve the approved HTML design.
+
+From the repository root, run:
+
+```powershell
+cd frontend
+npm ci
+npm run dev
+```
+
+Open <http://localhost:8782/>. See [frontend setup and integration boundaries](frontend/README.md) and [migration validation](frontend/验收记录.md). The earlier HTML prototype remains in `frontend/guided-workflow-prototype/` for comparison; the default development entry is now the Vue application in `frontend/`.
 
 ## Member 3 case tools
 
