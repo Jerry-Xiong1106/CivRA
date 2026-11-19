@@ -37,11 +37,9 @@ def main() -> int:
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8")
     args = parse_args()
-    config = RunConfig(conversation_route="case_work" if args.dry_run else args.conversation_route)
+    config = RunConfig()
     if args.pilot_config:
         config = run_config_from_pilot(json.loads(args.pilot_config.read_text(encoding="utf-8")))
-        if args.dry_run or args.conversation_route != "auto":
-            config = config.model_copy(update={"conversation_route": "case_work" if args.dry_run else args.conversation_route})
     if args.model:
         config = config.model_copy(update={"model": args.model})
 
@@ -73,15 +71,12 @@ def main() -> int:
     print(f"模型：{model}{'（脚本，dry-run）' if args.dry_run else ''}\n工具：{tools}\n")
 
     message = args.message or input("请描述你的问题：").strip()
-    progress = Progress(runner, case_id)
-    info = progress.run(lambda: runner.start_run(case_id, message))
-    while info.status == "waiting_user":
-        reply = ask_user(info.wait, args.auto_reply)
-        if reply is None:
-            info = runner.cancel_run(info.run_id)
-            break
-        info = progress.run(lambda: runner.resume_run(
-            info.run_id, reply, wait_id=info.wait.wait_id, expected_case_version=info.case_version))
+    info = converse(runner, case_id, lambda: runner.start_run(case_id, message), args.auto_reply)
+    if args.route and info.status == "completed":
+        print(f"\n—— 选择路线：{args.route} ——")
+        previous = info.run_id
+        info = converse(runner, case_id, lambda: runner.select_route(case_id, args.route, history_run_id=previous),
+                        args.auto_reply)
     report(runner, info)
     return 0 if info.status == "completed" else 1
 
@@ -91,8 +86,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--message", help="first message; asked interactively when omitted")
     p.add_argument("--dry-run", action="store_true", help="scripted model, no API key or network for the model")
     p.add_argument("--model", help="override the model, e.g. a stronger tool-calling model")
-    p.add_argument("--conversation-route", choices=["auto", "consultation", "case_work"], default="auto",
-                   help="semantic routing by default, or explicit consultation/business entry")
+    p.add_argument("--route", choices=["negotiation", "mediation", "litigation"],
+                   help="after the first answer, pick this route as the interface entry would")
     p.add_argument("--pilot-config", type=Path, help="use budgets from evaluation/configs/*.json")
     p.add_argument("--fact", action="append", default=[], metavar="KEY=VALUE", help="initial confirmed fact")
     p.add_argument("--dispute-type", help="e.g. traffic_accident")
@@ -111,13 +106,26 @@ def dry_run_llm() -> ScriptedLLM:
     ])
 
 
+def converse(runner: AgentRunner, case_id: str, start, auto_reply) -> RunInfo:
+    """Run until the Agent stops waiting for the user (or the user cancels)."""
+    info = Progress(runner, case_id).run(start)
+    while info.status == "waiting_user":
+        reply = ask_user(info.wait, auto_reply)
+        if reply is None:
+            return runner.cancel_run(info.run_id)
+        wait = info.wait
+        info = Progress(runner, case_id, info.run_id).run(lambda: runner.resume_run(
+            info.run_id, reply, wait_id=wait.wait_id, expected_case_version=info.case_version))
+    return info
+
+
 class Progress:
     """Runs a blocking start/resume in a thread and prints each step once as it finishes."""
 
-    def __init__(self, runner: AgentRunner, case_id: str) -> None:
+    def __init__(self, runner: AgentRunner, case_id: str, run_id: str | None = None) -> None:
         self.runner, self.case_id = runner, case_id
-        self.run_id: str | None = None
-        self.cursor = 0
+        self.run_id = run_id
+        self.cursor = len(runner.get_trace(run_id)) if run_id else 0
 
     def run(self, call) -> RunInfo:
         result: dict = {}
@@ -138,12 +146,14 @@ class Progress:
             time.sleep(0.3)
         if "error" in result:
             raise result["error"]
+        if self.run_id is None:  # finished before the first poll saw it running
+            self.run_id = result["info"].run_id
+            self._print_new_steps()
         return result["info"]
 
     def _print_new_steps(self) -> None:
         if self.run_id is None:
-            self.run_id = next((cp.run_id for cp in self.runner.store.list_checkpoints()
-                                if cp.case_id == self.case_id), None)
+            self.run_id = self.runner.store.running_run(self.case_id)
             if self.run_id is None:
                 return
         while True:
@@ -165,18 +175,22 @@ def ask_user(wait: Wait, auto_reply: str | None, *, read=None) -> UserReply | No
     """None means the user cancelled."""
     print()
     read = read or input
-    if wait.kind == "route_selection":
-        print(f"Agent 请你选择处理路线：\n{wait.comparison}")
-        for i, option in enumerate(wait.options, 1):
-            print(f"  {i}. {option.label}（{option.route}）")
+    if wait.message:
+        print(wait.message)
+    if wait.kind == "step_confirmation":
+        print(f"\nAgent 请你确认这一步（{wait.step_id}）：{wait.summary}")
         if auto_reply is not None:
-            return UserReply(route_choice=wait.options[0].route)
+            print("  （自动回答）完成")
+            return UserReply(step_decision="done")
         while True:
-            choice = read("输入编号（q 取消）：").strip()
-            if choice.lower() == "q":
+            choice = read("这一步完成了吗？y 完成 / n 还要修改 / q 取消：").strip().lower()
+            if choice == "q":
                 return None
-            if choice.isdigit() and 1 <= int(choice) <= len(wait.options):
-                return UserReply(route_choice=wait.options[int(choice) - 1].route)
+            if choice == "y":
+                return UserReply(step_decision="done")
+            if choice == "n":
+                note = read("  需要怎么改：").strip()
+                return UserReply(step_decision="revise", text=note or None)
 
     label = "Agent 请你补充材料" if wait.kind == "material_request" else "Agent 追问"
     answers = {}
@@ -195,7 +209,6 @@ def ask_user(wait: Wait, auto_reply: str | None, *, read=None) -> UserReply | No
 
 
 def report(runner: AgentRunner, info: RunInfo) -> None:
-    print(f"\n对话入口：{info.conversation_route}")
     print(f"\n状态：{info.status}")
     if info.error:
         print(f"错误：{info.error}")
@@ -211,17 +224,9 @@ def report(runner: AgentRunner, info: RunInfo) -> None:
         elif final.source_refs:
             print("\n检索到的来源：" + "、".join(f"{s.title}{s.locator}" for s in final.source_refs))
         if final.open_issues:
-            from backend.agent.tasks import current
-            task = current(info.tasks) or next((t for t in reversed(info.tasks) if t.delivery_run_id == info.run_id), None)
-            kinds = task.missing_kinds if task else {}
-            titles = {"user_input": "用户可补充", "material": "待补或待读材料", "verification": "待核验",
-                      "external": "等待外部反馈", None: "其他未解决事项" if kinds else "未解决事项"}
-            for kind, title in titles.items():
-                issues = [i for i in final.open_issues if kinds.get(i) == kind]
-                if issues:
-                    print(f"\n{title}：")
-                    for issue in issues:
-                        print(f"  · {issue}")
+            print("\n未解决事项：")
+            for issue in final.open_issues:
+                print(f"  · {issue}")
     u = info.usage
     cost = f"{u.estimated_cost} {u.cost_currency}" if u.estimated_cost is not None else "未知（未配置单价）"
     tokens = f"{u.prompt_tokens + u.completion_tokens}" + ("" if u.tokens_complete else "（部分调用未报告）")

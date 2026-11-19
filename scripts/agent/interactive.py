@@ -14,7 +14,6 @@ sys.path.insert(0,str(ROOT))
 sys.path.insert(0,str(ROOT/'scripts/agent'))
 from backend.common.config import load_dotenv
 from backend.agent.factory import build_runner
-from backend.agent.litigation import EVENTS
 from backend.case.materials.upload import MAX_UPLOAD_BYTES, UPLOAD_TYPES
 from backend.agent.model.llm import make_chat_model,response_from_message
 from backend.agent.runtime.store import RunStore
@@ -26,7 +25,7 @@ from backend.case.drafting.documents import MeteredLLMDraftingGateway
 from backend.case.review.verification import MeteredLLMReviewGateway
 from backend.knowledge.retrieval.service import RetrievalService
 from langchain_core.messages import convert_to_messages
-from run_agent import Progress,ask_user,report
+from run_agent import converse, report
 
 
 def upload_local(assets, case_id, raw_path):
@@ -43,17 +42,6 @@ def upload_local(assets, case_id, raw_path):
     print(f"已上传 {record.file_name}（{record.file_id}），可在本案中读取。")
     return record.file_id
 
-
-def parse_feedback(command):
-    parts = command.split(maxsplit=2)
-    if len(parts) != 3 or parts[1] not in EVENTS or len(parts[2]) > 1500:
-        raise ValueError("用法：/feedback <事件> <具体说明>。事件：" +
-                         "、".join(f"{k}（{v[2]}）" for k, v in EVENTS.items()))
-    return parts[1], f"{EVENTS[parts[1]][2]}：{parts[2]}"
-
-
-class WaitCommand(Exception):
-    pass
 
 def create_blank_case(repo):
     stamp=datetime.now(timezone.utc)
@@ -101,11 +89,10 @@ def main():
     case_id=None
     print('Real tools: '+', '.join(t.name for t in setup.tools))
     print('Records: '+str(directory))
-    print('可用命令：/route litigation、/upload <路径>、/feedback <事件> <说明>、/state、/new、/exit')
+    print('可用命令：/route negotiation|mediation|litigation、/upload <路径>、/state、/new、/exit')
     try:
         while True:
             if case_id is None:
-                last_run_id = None
                 conversation_id = "conv_" + uuid.uuid4().hex
                 case=create_blank_case(repo)
                 case_id=case.case_id
@@ -115,10 +102,8 @@ def main():
             if question=='/exit':break
             if question=='/new':case_id=None;continue
             if question=='/state':
-                latest = setup.runner.get_run(last_run_id) if last_run_id else None
                 print(json.dumps({"case": repo.get_case(case_id).model_dump(mode="json"),
-                                  "tasks": [t.model_dump() for t in latest.tasks] if latest else [],
-                                  "route_progress": setup.runner.litigation_progress(case_id, latest)},
+                                  "route_progress": setup.runner.route_progress(case_id)},
                                  ensure_ascii=False, indent=2))
                 continue
             if question.startswith("/upload"):
@@ -128,71 +113,14 @@ def main():
                     print(exc)
                 continue
             gateway_calls.clear()
-            progress=Progress(setup.runner,case_id)
-            # Progress must follow the new run rather than the case's previous run.
-            existing={cp.run_id for cp in setup.runner.store.list_checkpoints()}
-            original_print=progress._print_new_steps
-            def print_new():
-                if progress.run_id is None:
-                    progress.run_id=next((cp.run_id for cp in setup.runner.store.list_checkpoints()
-                        if cp.case_id==case_id and cp.run_id not in existing),None)
-                    if progress.run_id is None:return
-                    print('正在识别咨询或办理入口；检索和追问受公共限制。',flush=True)
-                original_print()
-            progress._print_new_steps=print_new
             try:
-                if question == "/route litigation":
-                    info = progress.run(lambda: setup.runner.enter_litigation(
-                        case_id, conversation_id=conversation_id, actor_id="synthetic_user"))
+                if question.startswith("/route"):
+                    route = question.removeprefix("/route").strip()
+                    info = converse(setup.runner, case_id, lambda: setup.runner.select_route(
+                        case_id, route, conversation_id=conversation_id, actor_id="synthetic_user"), None)
                 else:
-                    event = None
-                    if question.startswith("/feedback"):
-                        event, question = parse_feedback(question)
-                        if repo.get_case(case_id).stage != "litigation":
-                            raise ValueError("请先进入诉讼路线。")
-                    info=progress.run(lambda:setup.runner.start_run(case_id,question,actor_id='synthetic_user',
-                                      conversation_id=conversation_id, litigation_feedback=event))
-                last_run_id = info.run_id
-                while info.status=='waiting_user':
-                    uploaded = []
-                    def read_wait(prompt):
-                        while True:
-                            value = input(prompt).strip()
-                            if value.startswith("/upload"):
-                                try:
-                                    uploaded.append(upload_local(service.assets, case_id, value.removeprefix("/upload")))
-                                    print("可继续回答，或直接回车把材料交给 Agent。")
-                                except (ValueError, OSError) as exc:
-                                    print(exc)
-                            elif value == "/route litigation" or value.startswith("/feedback"):
-                                raise WaitCommand(value)
-                            else:
-                                return value
-                    event = None
-                    try:
-                        reply=ask_user(info.wait,None,read=read_wait)
-                    except WaitCommand as command:
-                        if str(command) == "/route litigation":
-                            if repo.get_case(case_id).stage != "litigation" and info.wait.kind != "route_selection":
-                                if input("保留原任务并切换至诉讼？[y/N] ").strip().lower() != "y":
-                                    continue
-                            info = setup.runner.enter_litigation(case_id, conversation_id=conversation_id,
-                                switch_wait_id=info.wait.wait_id, actor_id="synthetic_user")
-                            last_run_id = info.run_id
-                            continue
-                        try:
-                            if info.wait.kind == "route_selection" or repo.get_case(case_id).stage != "litigation":
-                                raise ValueError("先选择诉讼路线，再提交办理反馈。")
-                            event, text = parse_feedback(str(command))
-                        except ValueError as exc:
-                            print(exc)
-                            continue
-                        from backend.common.schemas import UserReply
-                        reply = UserReply(text=text)
-                    if reply is None:info=setup.runner.cancel_run(info.run_id);break
-                    reply.file_ids.extend(uploaded)
-                    info=progress.run(lambda:setup.runner.resume_run(info.run_id,reply,wait_id=info.wait.wait_id,
-                        expected_case_version=info.case_version,actor_id='synthetic_user', litigation_feedback=event))
+                    info = converse(setup.runner, case_id, lambda: setup.runner.start_run(
+                        case_id, question, actor_id="synthetic_user", conversation_id=conversation_id), None)
                 report(setup.runner,info)
                 (directory/(info.run_id+'-gateway.json')).write_text(json.dumps(gateway_calls,ensure_ascii=False,indent=2),encoding='utf-8')
                 print('本次额外起草/审查模型调用：'+str(len(gateway_calls))+'；与上方主Agent用量分开统计。')

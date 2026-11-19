@@ -1,10 +1,10 @@
+from backend.case.intake.updates import set_case_stage
 from copy import deepcopy
 import hashlib
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 from backend.case.models import BusinessOutput, Finding, OutputLink, SourcePointer
-from backend.agent.case_adapter import RepositoryCasePort
 from features10_13_support import FeatureFixture
 
 
@@ -60,7 +60,7 @@ class VerificationCorrectionTests(FeatureFixture,unittest.TestCase):
         self.assertTrue(any(f.output_location=="structured_data.source_cards" for f in result.data.findings))
 
     def test_draft_field_and_export_manifest_tampering_detected(self):
-        RepositoryCasePort(self.repo).set_stage(self.case.case_id,"litigation")
+        set_case_stage(self.repo, self.case.case_id,"litigation")
         draft=self.service.draft_document(self.request("draft",route="litigation",confirmed_fact_ids=["f_claimant"],
             template_id="cn_complaint_traffic_accident",template_version="civra-fields-v2",source_refs=[]))
         forged=draft.data.model_copy(deep=True)

@@ -62,7 +62,7 @@ class RuntimeCompatibilityTests(unittest.TestCase):
 
         llm = ScriptedLLM([tool_call("validate_case_snapshot"), tool_call("finish", answer="Structure validated")])
         with TemporaryDirectory() as directory:
-            runner = AgentRunner(llm, registry, ReadOnlyCasePort(), RunStore(directory), default_config=RunConfig(conversation_route="case_work"))
+            runner = AgentRunner(llm, registry, ReadOnlyCasePort(), RunStore(directory), default_config=RunConfig())
             info = runner.start_run(snapshot.case_id, "Validate the development case structure")
             self.assertEqual(info.status, "completed")
             self.assertEqual(info.case_version, 1)

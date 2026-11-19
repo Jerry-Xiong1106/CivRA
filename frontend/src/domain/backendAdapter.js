@@ -42,9 +42,17 @@ export function panelsForFinal(final, outputs) {
 }
 export function currentWait(c) { return !c.server?.pending && c.server?.run?.status === 'waiting_user' ? c.server.run.wait : null; }
 function replyText(input) {
+  if (input.route) return '我选择「' + (ROUTE_LABELS[input.route] || input.route) + '」';
   if (input.text) return input.text;
   const reply = input.reply || {};
-  return reply.text || (reply.route_choice ? '我选择：' + (ROUTE_LABELS[reply.route_choice] || reply.route_choice) : Object.values(reply.answers || {}).join('\n'));
+  const decision = { done: '这一步完成了。', revise: '这一步还需要修改。' }[reply.step_decision] || '';
+  const body = reply.text || Object.values(reply.answers || {}).join('\n');
+  return [decision, body].filter(Boolean).join('\n') || '（已回复）';
+}
+function waitText(wait) {
+  if (wait.kind === 'step_confirmation') return wait.message || wait.summary || '请确认这一步是否完成。';
+  const questions = (wait.questions || []).map(q => q.text + (q.reason ? '\n' + q.reason : '')).join('\n\n');
+  return [wait.message, questions].filter(Boolean).join('\n\n');
 }
 export function transcript(view) {
   const turns = [];
@@ -55,9 +63,8 @@ export function transcript(view) {
     const run = message.run;
     if (run?.wait && !seenWait.has(run.wait.wait_id)) {
       seenWait.add(run.wait.wait_id);
-      turns.push({ id: run.wait.wait_id, role: 'assistant',
-        text: run.wait.kind === 'route_selection' ? (run.wait.comparison || '请确认希望准备的处理路径。') : run.wait.questions.map(q => q.text + (q.reason ? '\n' + q.reason : '')).join('\n\n'),
-        panel: run.wait.kind === 'route_selection' ? 'workflow' : '', wait: run.wait, at: message.created_at });
+      turns.push({ id: run.wait.wait_id, role: 'assistant', text: waitText(run.wait),
+        panel: run.wait.kind === 'step_confirmation' ? 'workflow' : '', wait: run.wait, at: message.created_at });
     }
     // A single resumed run can appear in several historical receipts.
     if (run?.final && !seenFinal.has(run.run_id)) {
@@ -79,6 +86,7 @@ export function applyConversation(c, view) {
   if ((c.server.snapshot?.case_version || 0) > view.case.case_version) return false;
   Object.assign(c.server, { conversationId: view.conversation_id, caseId: view.case_id,
     snapshot: view.case, run: view.run, pending: view.pending, outputs: view.outputs || [],
+    routeProgress: view.route_progress || null,
     submissions: view.messages || [], inventoryTruncated: view.inventory_truncated || false,
     loadedAt: new Date().toISOString() });
   c.title = view.title;

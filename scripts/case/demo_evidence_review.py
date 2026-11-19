@@ -10,9 +10,9 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from backend.case import CaseService, SQLiteCaseRepository
+from backend.case.intake.updates import set_case_stage, record_user_statement  # noqa: E402
 from scripts.case.fixtures import load_development_case
 from backend.case.models import CaseSnapshot, Claim, Confirmation
-from backend.agent.case_adapter import RepositoryCasePort
 
 
 REPAIR_TEXT = ("【合成开发材料，非真实票据】\n票据编号：SYN-REPAIR-001\n维修金额：3000.00元\n"
@@ -81,7 +81,7 @@ def run_demo(directory):
     upload("clinical_record", "medical_record", "【合成诊疗记录，非真实病历】\n事故日期：2026-05-12\n诊疗内容仅用于程序演示。\n")
     clinical = parse("parse-supplement", ["clinical_record"])
     save("save-supplement", {"upsert_evidence": clinical.documents, "upsert_facts": clinical.extracted_facts}, "synthetic user supplements clinical record")
-    reply = RepositoryCasePort(repo).record_user_reply(case_id=case.case_id, expected_case_version=current().case_version,
+    reply = record_user_statement(repo, case_id=case.case_id, expected_case_version=current().case_version,
         request_id="record-explicit-review", message_id="msg_feature03_review", actor_id="synthetic_user",
         text="合成确认：repair_a和repair_b是同一张票据，保留repair_a，排除repair_b；把已上传医疗票据及新增诊疗记录关联到医疗费诉求。",
         created_at=datetime.now(timezone.utc))
@@ -99,7 +99,7 @@ def run_demo(directory):
     after = check("check-after")
     unchanged_after_check = current() == reviewed
 
-    RepositoryCasePort(repo).set_stage(case.case_id, "litigation")  # Synthetic explicit route selection.
+    set_case_stage(repo, case.case_id, "litigation")  # Synthetic explicit route selection.
     litigation = current()
     directory_result = service.build_evidence_directory({"context": context("directory"),
         "case_version": litigation.case_version, "case_snapshot": litigation})

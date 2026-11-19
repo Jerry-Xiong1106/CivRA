@@ -140,7 +140,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     return true;
   }
   function confirmRoute(id) {
-    if (apiMode.value) return bridge.submit(current.value, '', { routeChoice: id });
+    if (apiMode.value) return bridge.selectRoute(current.value, id);
     if (
       !readiness.value.canSelectRoute ||
       !options.value.some((o) => o.id === id)
@@ -191,7 +191,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     persist();
   }
   function setRouteIntent(id) {
-    if (apiMode.value) return bridge.submit(current.value, '', { routeChoice: id });
+    if (apiMode.value) return bridge.selectRoute(current.value, id);
     const guide = ROUTE_GUIDES.find((item) => item.id === id);
     if (!guide) return false;
     if (current.value.routeIntent === id) return true;
@@ -321,10 +321,12 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     if (currentWait(c)) return bridge.submit(c, value);
     return bridge.submit(c, '仅咨询法律，请检索适用条款并说明原文出处、条款编号、来源版本与链接；无需推进具体案件办理。问题：' + value);
   }
-  function replyRoute(id, c = current.value) { return bridge.submit(c, '', { routeChoice: id }); }
+  // Answer a step_confirmation wait: "done" records the step and moves on; "revise" keeps working.
+  function decideStep(decision, note = '', c = current.value) { return bridge.submit(c, note.trim(), { stepDecision: decision }); }
+  const routeProgress = computed(() => current.value.server?.routeProgress || null);
   return {
     state,
-    apiMode, busy, wait, sources, artifacts, refreshCase, retryMessage, downloadArtifact, searchLegal, replyRoute,
+    apiMode, busy, wait, sources, artifacts, refreshCase, retryMessage, downloadArtifact, searchLegal, decideStep, routeProgress,
     ui,
     current,
     readiness,

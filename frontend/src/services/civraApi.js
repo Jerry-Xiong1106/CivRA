@@ -68,6 +68,7 @@ export function createCivraApi({ base = '/api', fetchImpl = globalThis.fetch, ti
     async create(title) { return (await request('/conversations', { method: 'POST', json: { title } })).json(); },
     async get(id) { return (await request(path(id))).json(); },
     async send(id, payload) { return (await request(path(id, '/messages'), { method: 'POST', json: payload })).json(); },
+    async selectRoute(id, payload) { return (await request(path(id, '/route'), { method: 'POST', json: payload })).json(); },
     async upload(id, file) {
       const types = { pdf: 'application/pdf', txt: 'text/plain', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' };
       const type = types[file.name.split('.').pop().toLowerCase()];

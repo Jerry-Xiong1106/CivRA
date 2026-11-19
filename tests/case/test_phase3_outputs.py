@@ -1,5 +1,6 @@
 """Costs, route choices, drafting and verification using isolated case stores."""
 
+from backend.case.intake.updates import set_case_stage, record_user_statement
 import json
 import sys
 import unittest
@@ -16,7 +17,6 @@ from backend.case.intake.contracts import UpdateCaseRequest
 from backend.case.drafting.documents import DocumentTemplate, TemplateRegistry, MeteredLLMDraftingGateway
 from backend.case.drafting.templates import load_builtin_templates
 from backend.case.models import BusinessOutput, CaseSnapshot, OutputLink, SourcePointer
-from backend.agent.case_adapter import RepositoryCasePort
 from backend.case.review.verification import MeteredLLMReviewGateway
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/"scripts/case"))
@@ -46,12 +46,11 @@ class OutputsTests(unittest.TestCase):
             "calculation_type":kind,"rule_version":version,"inputs":inputs or {"amounts":[{"amount":"0.1","currency":"CNY"},{"amount":"0.2","currency":"CNY"}]}})
 
     def litigation(self):
-        RepositoryCasePort(self.repo).set_stage(self.case.case_id,"litigation")
+        set_case_stage(self.repo, self.case.case_id,"litigation")
 
     def resolve(self):
-        port=RepositoryCasePort(self.repo)
         case=self.repo.get_case(self.case.case_id)
-        port.record_user_reply(case_id=case.case_id,expected_case_version=case.case_version,request_id="reply",
+        record_user_statement(self.repo, case_id=case.case_id,expected_case_version=case.case_version,request_id="reply",
             message_id="msg_demo_reply",actor_id="synthetic_user",text=DEMO_REPLY,created_at=datetime.now(timezone.utc))
         case=self.repo.get_case(case.case_id)
         result=self.service.update_case(UpdateCaseRequest(context=self.context("resolve"),expected_case_version=case.case_version,

@@ -19,7 +19,7 @@ from backend.tools.policy import parameters_of, set_policy
 def make_runner(tmp_path, tools, script):
     cases = InMemoryCaseStore()
     cases.create("native-case", {})
-    return AgentRunner(ScriptedLLM(script), tools, cases, RunStore(tmp_path), default_config=RunConfig(conversation_route="case_work"))
+    return AgentRunner(ScriptedLLM(script), tools, cases, RunStore(tmp_path), default_config=RunConfig())
 
 
 def test_native_toolnode_invocation_preserves_callbacks_and_injects_runtime(tmp_path):
@@ -117,7 +117,7 @@ def test_timed_out_native_write_is_not_retried_or_reported_as_completed(tmp_path
 
 
 def test_factory_returns_native_tools_without_registration_layer(tmp_path):
-    setup = build_runner(config=RunConfig(conversation_route="case_work"), llm=ScriptedLLM([]), real_statutes=False, store=RunStore(tmp_path), dotenv=None)
+    setup = build_runner(config=RunConfig(), llm=ScriptedLLM([]), real_statutes=False, store=RunStore(tmp_path), dotenv=None)
     assert isinstance(setup.tools, list)
     assert all(isinstance(t, BaseTool) for t in setup.tools)
     assert not hasattr(setup, "registry")

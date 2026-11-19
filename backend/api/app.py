@@ -20,8 +20,7 @@ from backend.agent.runner import RunConflict, RunStateError, VersionConflict
 from backend.case.errors import CaseNotFound
 from backend.common.config import ROOT, load_dotenv
 from .conversations import CapacityError, Conflict, Conversations
-from .schemas import ConversationView, CreateConversation, LitigationEntry, LitigationFeedback, MessageReceipt, MessageRequest, Reply, RouteSubmission
-from backend.agent.litigation import ENTRY_TEXT, EVENTS
+from .schemas import ConversationView, CreateConversation, MessageReceipt, MessageRequest, RouteRequest
 
 from backend.case.materials.upload import MAX_UPLOAD_BYTES, UPLOAD_TYPES
 
@@ -126,17 +125,9 @@ def create_app(conversations: Conversations | None = None, *, token: str | None 
     def message(conversation_id: str, body: MessageRequest, service=Depends(authorized)):
         return service.submit(conversation_id, body)
 
-    @app.post("/api/conversations/{conversation_id}/routes/litigation/enter", status_code=202, response_model=MessageReceipt)
-    def enter_litigation(conversation_id: str, body: LitigationEntry, service=Depends(authorized)):
-        return service.submit(conversation_id, RouteSubmission(
-            **body.model_dump(), operation="enter_litigation", text=ENTRY_TEXT))
-
-    @app.post("/api/conversations/{conversation_id}/routes/litigation/feedback", status_code=202, response_model=MessageReceipt)
-    def litigation_feedback(conversation_id: str, body: LitigationFeedback, service=Depends(authorized)):
-        text = f"{EVENTS[body.event][2]}：{body.note}"
-        content = {"reply": Reply(text=text)} if body.wait_id else {"text": text}
-        return service.submit(conversation_id, RouteSubmission(
-            **body.model_dump(exclude={"note"}), **content, operation="litigation_feedback"))
+    @app.post("/api/conversations/{conversation_id}/route", status_code=202, response_model=MessageReceipt)
+    def select_route(conversation_id: str, body: RouteRequest, service=Depends(authorized)):
+        return service.submit(conversation_id, body)
 
     @app.get("/api/conversations/{conversation_id}/events")
     async def events(

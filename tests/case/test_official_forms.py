@@ -1,3 +1,4 @@
+from backend.case.intake.updates import record_user_statement
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
@@ -14,7 +15,6 @@ from scripts.case.fixtures import load_development_case
 from backend.case.models import CaseSnapshot
 from backend.case.drafting.official_forms import OfficialTemplateLibrary, W
 from backend.tools.official_forms import OfficialFormToolClient
-from backend.agent.case_adapter import RepositoryCasePort
 
 
 class OfficialFormsTests(unittest.TestCase):
@@ -71,7 +71,7 @@ class OfficialFormsTests(unittest.TestCase):
 
     def confirm(self, preview, text=None):
         case = self.repo.get_case(self.case_id)
-        reply = RepositoryCasePort(self.repo).record_user_reply(case_id=self.case_id, expected_case_version=case.case_version,
+        reply = record_user_statement(self.repo, case_id=self.case_id, expected_case_version=case.case_version,
             request_id="confirm-reply", message_id="confirm-message", actor_id="test-user",
             text=text or preview.structured_data["confirmation_text"], created_at=datetime.now(timezone.utc))
         self.assertNotEqual(reply.status, "error", reply.error)

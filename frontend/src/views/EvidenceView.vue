@@ -62,7 +62,7 @@ const review = computed(() => store.apiMode ? evidenceStatus(store.current) : ev
     >
     <p v-else>尚未登记材料。没有材料时，也可以先说明案情。</p>
   </div>
-  <p v-if="store.apiMode && store.current.server?.pendingAttachments?.length" class="notice">有 {{ store.current.server.pendingAttachments.length }} 份材料等待随消息交给助手。<button class="link" :disabled="store.busy || store.wait?.kind === 'route_selection'" @click="store.sendConversation('请解析待处理材料并检查重复、冲突和缺失。')">继续解析与检查 →</button></p>
+  <p v-if="store.apiMode && store.current.server?.pendingAttachments?.length" class="notice">有 {{ store.current.server.pendingAttachments.length }} 份材料等待随消息交给助手。<button class="link" :disabled="store.busy || store.wait?.kind === 'step_confirmation'" @click="store.sendConversation('请解析待处理材料并检查重复、冲突和缺失。')">继续解析与检查 →</button></p>
   <div class="notice warn" style="margin-top: 20px">
     {{
       store.current.fields.dispute?.value === 'traffic'

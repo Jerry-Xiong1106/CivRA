@@ -1,4 +1,5 @@
 """Current create_agent, real local retrieval and persistent business-tool integration."""
+from backend.case.intake.updates import record_user_statement
 from backend.common.schemas import RunConfig
 from copy import deepcopy
 from datetime import datetime, timezone
@@ -45,7 +46,7 @@ class CreateAgentIntegrationTests(unittest.TestCase):
         self.service = CaseService(self.repository, source_resolver=self.resolver)
 
     def setup_runner(self, script):
-        setup = build_runner(config=RunConfig(conversation_route="case_work"), llm=ScriptedLLM(script), case_service=self.service,
+        setup = build_runner(config=RunConfig(), llm=ScriptedLLM(script), case_service=self.service,
                              retrieval_service=self.retrieval, store=RunStore(self.directory/'runs'), dotenv=None)
 
         return setup
@@ -59,8 +60,7 @@ class CreateAgentIntegrationTests(unittest.TestCase):
             tool_call("finish", answer="已核对本轮检索结果。"),
         ])
         info = setup.runner.start_run(self.case.case_id, "请检索本案所需条文。",
-                                     config=RunConfig(conversation_route="case_work", max_search_calls=1,
-                                                      max_feedback_rounds=1))
+                                     config=RunConfig(max_search_calls=1, max_tool_failures=3))
         searches = [s for s in setup.runner.get_trace(info.run_id) if s.tool_name == "search_statutes"]
         assert info.status == "completed"
         assert [s.error.code if s.error else s.status for s in searches] == [
@@ -100,19 +100,19 @@ class CreateAgentIntegrationTests(unittest.TestCase):
             "provenance": "user_statement", "confirmation_status": "unconfirmed", "statement_refs": ["missing"],
         }]})
 
-        def after_second_failure(messages, tools):
+        def after_third_failure(messages, tools):
             assert "update_case" not in {tool.name for tool in tools}
             return invalid
 
         setup = self.setup_runner([
-            invalid, invalid, after_second_failure,
+            invalid, invalid, invalid, after_third_failure,
             tool_call("finish", answer="基于目前陈述先准备调解方案。"),
         ])
         info = setup.runner.start_run(self.case.case_id, "我要准备调解方案。")
         assert info.status == "completed"
         steps = [step for step in setup.runner.get_trace(info.run_id) if step.tool_name == "update_case"]
-        assert [step.error.code for step in steps] == ["INVALID_ARGS", "INVALID_ARGS", "NOT_ALLOWED"]
-        assert steps[1].error.details["next_action"]
+        assert [step.error.code for step in steps] == ["INVALID_ARGS", "INVALID_ARGS", "INVALID_ARGS", "NOT_ALLOWED"]
+        assert steps[2].error.details["next_action"]
         assert steps[0].error.details["issues"][0]["message"]
         assert info.final.answer == "基于目前陈述先准备调解方案。"
 
@@ -160,7 +160,7 @@ class CreateAgentIntegrationTests(unittest.TestCase):
         self.assertIn('semantic_citation_support', result.data.checks_not_performed)
 
     def test_mock_statute_mode_keeps_the_ten_real_business_tools(self):
-        setup = build_runner(config=RunConfig(conversation_route="case_work"), llm=ScriptedLLM([tool_call('check_evidence'), tool_call('finish', answer='done')]),
+        setup = build_runner(config=RunConfig(), llm=ScriptedLLM([tool_call('check_evidence'), tool_call('finish', answer='done')]),
                              case_service=self.service, real_statutes=False,
                              store=RunStore(self.directory/'runs'), dotenv=None)
 
@@ -197,8 +197,7 @@ class CreateAgentIntegrationTests(unittest.TestCase):
         self.assertEqual(self.repository.get_case(self.case.case_id).case_version, 2)
 
     def test_application_recorded_message_is_not_written_twice(self):
-        port = RepositoryCasePort(self.repository)
-        port.record_user_reply(case_id=self.case.case_id, expected_case_version=1, request_id='app-saved',
+        record_user_statement(self.repository, case_id=self.case.case_id, expected_case_version=1, request_id='app-saved',
             message_id='app-message', actor_id='authenticated-user', text='已保存输入', created_at=datetime.now(timezone.utc))
         setup = self.setup_runner([tool_call('finish', answer='done')])
         info = setup.runner.start_run(self.case.case_id, '已保存输入', message_id='app-message')

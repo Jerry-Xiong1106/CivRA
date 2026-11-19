@@ -104,7 +104,7 @@ def create_knowledge_tools(
             result = ToolResult.fail('INTERNAL', '检索执行失败，请检查服务配置和索引；未返回替代结果。')
         return result.model_dump(mode='json', exclude_none=True)
 
-    set_policy(search_statutes, owner='member2', feedback_loop='retrieve_verify', invalid_args_limit=3)
+    set_policy(search_statutes, owner='member2')
     return [search_statutes]
 
 

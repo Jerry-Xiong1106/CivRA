@@ -22,6 +22,7 @@ from .review.verification import OutputVerifier
 from .presentation.visualization import build_visualization
 from .drafting.templates import load_builtin_templates
 from .planning.workflow import CaseWorkflowService
+from .planning.guide import RouteGuide
 from .business_support import failure
 from .research.outcomes import OutcomeAnalyzer, OutcomeAnalysisRequest, OutcomeAnalysisData
 from .review.corrections import CorrectionService
@@ -62,6 +63,7 @@ class CaseService:
         self.intake=CaseIntakeService(repository)
         self.statistics=CaseStatistics(repository,self.get_source)
         self.activity=activity_store if activity_store is not None else SQLiteActivityStore(repository) if isinstance(repository, SQLiteCaseRepository) else None
+        self.routes=RouteGuide(self)
 
     def check_evidence(self, request):
         return check_evidence(request,rules=self.evidence_rules,text_reader=self._read_evidence_text)

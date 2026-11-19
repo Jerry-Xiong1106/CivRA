@@ -10,12 +10,12 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from backend.case import CaseService, SQLiteCaseRepository
+from backend.case.intake.updates import record_user_statement  # noqa: E402
 from scripts.case.fixtures import load_development_case
 from backend.tools.case_results import to_runtime_tool_result
 from backend.case.calculation.cost_summary import MATERIAL_SUMMARY_VERSION
 from backend.case.calculation.fee_rules import PROPERTY_FEE_RULE_VERSION
 from backend.case.models import BusinessOutput
-from backend.agent.case_adapter import RepositoryCasePort
 from demo_support import DEMO_REPLY, confirmed_demo_changes
 
 
@@ -37,7 +37,7 @@ def run_demo(directory):
     service = CaseService(repo, source_resolver=resolver)
     def context(key):
         return {"request_id": key, "case_id": case.case_id, "experiment_run_id": "synthetic-features04-05", "deadline_at": None}
-    reply = RepositoryCasePort(repo).record_user_reply(case_id=case.case_id, expected_case_version=1,
+    reply = record_user_statement(repo, case_id=case.case_id, expected_case_version=1,
         request_id="synthetic-reply", message_id="msg_demo_reply", actor_id="synthetic_user", text=DEMO_REPLY,
         created_at=datetime.now(timezone.utc))
     if reply.status != "ok":
@@ -75,7 +75,7 @@ def run_demo(directory):
         "excluded_copy_remains_visible": detail.data.rows[1].state == "excluded",
         "fee_is_separate_50": fee.data.amounts["fee_estimate"].amount == "50.00" and "total" not in fee.data.amounts,
         "statute_and_synthetic_case_separated": len(sources.data.statutes) == len(sources.data.cases) == 1,
-        "fee_source_available_to_runtime_adapter": bool(to_runtime_tool_result(fee, source_resolver=service.get_source)["source_refs"]),
+        "fee_source_available_to_runtime_adapter": bool((to_runtime_tool_result(fee, source_resolver=service.get_source)["data"] or {}).get("matches")),
         "calculations_replay_without_calculation_finding": not any(item.category == "calculation" for item in verified.data.findings),
         "semantic_review_stays_unperformed": "semantic_fact_faithfulness" in verified.data.checks_not_performed,
         "case_snapshot_unchanged": repo.get_case(case.case_id) == current,

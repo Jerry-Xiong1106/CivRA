@@ -1,5 +1,6 @@
 """Integration checks requiring Member 4's actual NativeTools and AgentRunner."""
 
+from backend.case.intake.updates import set_case_stage
 import sys
 import unittest
 from datetime import datetime, timedelta, timezone
@@ -70,8 +71,7 @@ class BusinessRuntimeTests(unittest.TestCase):
         self.assertEqual(result.error.code, "NOT_ALLOWED")
 
     def test_registry_rejects_stale_case_context(self):
-        from backend.agent.case_adapter import RepositoryCasePort
-        RepositoryCasePort(self.repo).set_stage(self.case.case_id, "route_selection")
+        set_case_stage(self.repo, self.case.case_id, "route_selection")
         result = self.registry.execute("check_evidence", {}, self.context()).result
         self.assertEqual(result.error.details["business_code"], "version_conflict")
         self.assertEqual(result.case_version, 2)

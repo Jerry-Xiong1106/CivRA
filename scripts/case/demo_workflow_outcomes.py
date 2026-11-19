@@ -8,9 +8,9 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from backend.case import CaseService, SQLiteCaseRepository
+from backend.case.intake.updates import set_case_stage, record_user_statement  # noqa: E402
 from scripts.case.fixtures import load_development_case
 from backend.case.models import CaseSnapshot
-from backend.agent.case_adapter import RepositoryCasePort
 
 
 def synthetic_source(pointer):
@@ -31,8 +31,7 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     repository = SQLiteCaseRepository(output / "cases.db")
     case = repository.create_case(load_development_case())
-    port = RepositoryCasePort(repository)
-    port.set_stage(case.case_id, "litigation")  # Explicit synthetic user's choice, not a tool decision.
+    set_case_stage(repository, case.case_id, "litigation")  # Explicit synthetic user's choice, not a tool decision.
     service = CaseService(repository, source_resolver=synthetic_source)
     def context(identity):
         return dict(request_id=identity, case_id=case.case_id, experiment_run_id="synthetic-features07-08", deadline_at=None)
@@ -43,7 +42,7 @@ def main():
     assert plan.status == "insufficient", plan.error
     current = repository.get_case(case.case_id)
     quote = "我已完成本次管辖信息核对，实际受理及其他程序条件仍待核实。"
-    reply = port.record_user_reply(case_id=case.case_id, expected_case_version=current.case_version,
+    reply = record_user_statement(repository, case_id=case.case_id, expected_case_version=current.case_version,
         request_id="save-demo-feedback", message_id="workflow-feedback", actor_id="synthetic_user", text=quote,
         created_at=max(datetime.now(timezone.utc), current.updated_at))
     assert reply.status == "ok", reply.error

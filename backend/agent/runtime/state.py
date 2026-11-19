@@ -7,7 +7,7 @@ from backend.common.schemas import (
     Citation, FinalOutput, RunConfig, RunInfo, RunStatus, RunUsage, SourceRef, Wait,
 )
 
-CURRENT_ENGINE = "langchain-create-agent-v2"
+CURRENT_ENGINE = "langchain-create-agent-v3"
 
 
 class Checkpoint(BaseModel):
@@ -22,22 +22,19 @@ class Checkpoint(BaseModel):
     event_seq: int = 0
     case_version: int
     stage: str
-    conversation_route: str = "consultation"
-    routing_source: str = "default"
-    routing_reason: str = ""
-    route_selected: bool = False
     clarification_rounds: int = 0
-    intake_wait_id: str | None = None
     search_calls: int = 0
     asked_questions: list[str] = Field(default_factory=list)
-    asked_gap_labels: dict[str, list[str]] = Field(default_factory=dict)
+    tool_failures: dict[str, int] = Field(default_factory=dict)
     usage: RunUsage = Field(default_factory=RunUsage)
+    # Usage at the latest user reply: budgets apply to the work done since then,
+    # so a long guided route is not squeezed into one envelope.
+    budget_base: RunUsage = Field(default_factory=RunUsage)
     wait: Wait | None = None
     experiment_run_id: str | None = None
     start_request_id: str | None = None
     applied_requests: list[str] = Field(default_factory=list)
     source_refs: list[SourceRef] = Field(default_factory=list)
-    feedback_rounds: dict[str, int] = Field(default_factory=dict)
     limit_notes: list[str] = Field(default_factory=list)
     final: FinalOutput | None = None
     error: str | None = None
@@ -45,17 +42,31 @@ class Checkpoint(BaseModel):
     def info(self) -> RunInfo:
         return RunInfo(run_id=self.run_id, case_id=self.case_id, case_version=self.case_version,
                        experiment_run_id=self.experiment_run_id, status=self.status, wait=self.wait,
-                       final=self.final, usage=self.usage, error=self.error,
-                       conversation_route=self.conversation_route)
+                       final=self.final, usage=self.usage, error=self.error)
+
+    def used_since_reply(self) -> dict:
+        usage, base = self.usage, self.budget_base
+        return {
+            "steps": usage.steps - base.steps,
+            "model_calls": usage.model_calls - base.model_calls,
+            "tool_calls": usage.tool_calls - base.tool_calls,
+            "tokens": usage.prompt_tokens + usage.completion_tokens - base.prompt_tokens - base.completion_tokens,
+            "seconds": (usage.duration_ms - base.duration_ms) / 1000,
+        }
+
+    def start_reply_budget(self) -> None:
+        """A user reply opens a fresh budget and gives withdrawn tools another chance."""
+        self.budget_base = self.usage.model_copy()
+        self.tool_failures = {}
 
     def budget_reason(self, active_seconds: float, *, before_tool: bool = False) -> str | None:
-        usage, cfg = self.usage, self.config
+        used, cfg = self.used_since_reply(), self.config
         limits = (
-            (usage.steps, cfg.max_steps, "步数"),
-            (usage.model_calls, None if before_tool else cfg.max_model_calls, "模型调用"),
-            (usage.tool_calls, cfg.max_tool_calls, "工具调用"),
-            (usage.prompt_tokens + usage.completion_tokens, cfg.max_total_tokens, "token"),
-            (usage.duration_ms / 1000 + active_seconds, cfg.max_run_seconds, "时间"),
+            (used["steps"], cfg.max_steps, "步数"),
+            (used["model_calls"], None if before_tool else cfg.max_model_calls, "模型调用"),
+            (used["tool_calls"], cfg.max_tool_calls, "工具调用"),
+            (used["tokens"], cfg.max_total_tokens, "token"),
+            (used["seconds"] + active_seconds, cfg.max_run_seconds, "时间"),
         )
         return next((f"达到{label}上限（{limit}）" for used, limit, label in limits
                      if limit is not None and used >= limit), None)

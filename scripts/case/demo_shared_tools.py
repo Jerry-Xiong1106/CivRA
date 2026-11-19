@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT))
 
 from evaluation.adapters.case_results import evaluate_case_tool
 from backend.case import CaseService, SQLiteCaseRepository
+from backend.case.intake.updates import set_case_stage, record_user_statement  # noqa: E402
 from backend.tools.case_client import CaseToolClient
 from backend.tools.case_contracts import ToolInvocation
 from scripts.case.fixtures import load_development_case
@@ -38,7 +39,7 @@ def create_environment(directory, mode):
 
 def save_reply(repo, case_id):
     case = repo.get_case(case_id)
-    result = RepositoryCasePort(repo).record_user_reply(
+    result = record_user_statement(repo, 
         case_id=case_id, expected_case_version=case.case_version, request_id="shared-demo-reply",
         message_id="msg_demo_reply", actor_id="synthetic_user", text=DEMO_REPLY,
         created_at=datetime(2026, 11, 2, 8, tzinfo=timezone.utc),
@@ -107,7 +108,7 @@ def run_fixed(directory):
     call("check_evidence")
     calculation = call("calculate_costs", CALCULATION_ARGUMENTS)
     call("compare_routes", {"available_authorities": [], "calculations": [calculation["data"]], "user_goals": []})
-    RepositoryCasePort(repo).set_stage(case_id, "litigation")  # Fixed synthetic user's explicit route choice.
+    set_case_stage(repo, case_id, "litigation")  # Fixed synthetic user's explicit route choice.
     call("get_route_workflow", {"route": "litigation"})
     call("build_evidence_directory")
     draft = call("draft_document", draft_arguments(repo, case_id))
@@ -144,10 +145,9 @@ def run_agent(directory):
         calculation = last_business_result(messages)["data"]
         return tool_call("compare_routes", available_authorities=[], calculations=[calculation], user_goals=[])
 
-    def ask_route(messages, tools):
+    def suggest_route(messages, tools):
         comparison = last_business_result(messages)["summary"]
-        return tool_call("request_route_choice", comparison=comparison,
-                         options=[{"route": "litigation", "label": "诉讼准备"}])
+        return tool_call("finish", answer=comparison + "\n可以在界面上选择「诉讼准备」继续。")
 
     def draft_from_confirmed_facts(messages, tools):
         return tool_call("draft_document", **draft_arguments(repo, case_id))
@@ -160,16 +160,18 @@ def run_agent(directory):
         tool_call("parse_documents", file_ids=["shared_material"]),
         tool_call("check_evidence"), ask_from_report, update_from_reply,
         tool_call("check_evidence"), tool_call("calculate_costs", **CALCULATION_ARGUMENTS),
-        compare_from_calculation, ask_route, tool_call("get_route_workflow", route="litigation"),
+        compare_from_calculation, suggest_route,
+        # The user then picks the litigation entry; a new run guides that route.
+        tool_call("get_route_workflow", route="litigation"),
         tool_call("build_evidence_directory"), draft_from_confirmed_facts, verify_last_draft,
         tool_call("build_visualization", chart_type="timeline"),
         tool_call("finish", answer="合成业务接入演示完成。",
                   open_issues=["原表字段待校对，语义模型待接入，费用及导出选型保留。"]),
     ]
-    runner = AgentRunner(ScriptedLLM(script), tools, RepositoryCasePort(repo),
+    runner = AgentRunner(ScriptedLLM(script), tools, RepositoryCasePort(service),
                          RunStore(Path(directory) / "runs"),
                          # Four fixed evidence questions preserve this parity fixture.
-                         default_config=RunConfig(conversation_route="case_work", max_steps=60, max_questions_per_round=4))
+                         default_config=RunConfig(max_steps=60, max_questions_per_round=4))
     info = runner.start_run(case_id, "请核对材料，确认后比较路线并准备诉讼草稿。", experiment_run_id="phase4-agent")
     if info.status != "waiting_user" or info.wait.kind != "clarification":
         raise AssertionError(info)
@@ -177,17 +179,17 @@ def run_agent(directory):
     case = repo.get_case(case_id)
     info = runner.resume_run(info.run_id, UserReply(text=DEMO_REPLY), wait_id=info.wait.wait_id,
                              expected_case_version=case.case_version, request_id="shared-demo-confirmation")
-    if info.status != "waiting_user" or info.wait.kind != "route_selection":
+    if info.status != "completed":
         raise AssertionError(info)
-    info = runner.resume_run(info.run_id, UserReply(route_choice="litigation"), wait_id=info.wait.wait_id,
-                             expected_case_version=info.case_version, request_id="shared-demo-route")
+    consultation = info.run_id
+    info = runner.select_route(case_id, "litigation", history_run_id=consultation, request_id="shared-demo-route")
     if info.status != "completed":
         raise AssertionError(info)
     steps = []
-    for step in runner.get_trace(info.run_id):
+    for run_id, step in [(run, step) for run in (consultation, info.run_id) for step in runner.get_trace(run)]:
         if step.step_type != "tool_call":
             continue
-        record = runner.get_step_result(info.run_id, step.result_ref)
+        record = runner.get_step_result(run_id, step.result_ref)
         result = record["result"]
         if result["status"] == "error":
             raise AssertionError(record)

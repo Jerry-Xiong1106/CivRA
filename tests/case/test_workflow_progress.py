@@ -1,5 +1,6 @@
 """Persistent task lifecycle, provenance, stale basis and compatibility checks."""
 
+from backend.case.intake.updates import set_case_stage, record_user_statement
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
@@ -13,7 +14,6 @@ from backend.case import CaseService, SQLiteCaseRepository
 from scripts.case.fixtures import load_development_case
 from backend.case.planning.contracts import RouteWorkflowRequest
 from backend.case.models import CaseSnapshot
-from backend.agent.case_adapter import RepositoryCasePort
 from backend.case.planning.routes import get_route_workflow
 from backend.case.planning.workflow_models import WORKFLOW_VERSION
 
@@ -23,8 +23,7 @@ class WorkflowProgressTests(unittest.TestCase):
         self.temp = TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
         self.repo = SQLiteCaseRepository(Path(self.temp.name) / "cases.db")
         self.case = self.repo.create_case(load_development_case())
-        self.port = RepositoryCasePort(self.repo)
-        self.port.set_stage(self.case.case_id, "litigation")
+        set_case_stage(self.repo, self.case.case_id, "litigation")
         self.service = CaseService(self.repo)
         self.count = 0
 
@@ -47,7 +46,7 @@ class WorkflowProgressTests(unittest.TestCase):
         snapshot = self.repo.get_case(self.case.case_id)
         self.message_id = f"reply-{self.count}"
         self.quote = "我确认已核对管辖，材料准备仍有问题；后续以我的明确反馈更新。"
-        result = self.port.record_user_reply(case_id=snapshot.case_id, expected_case_version=snapshot.case_version,
+        result = record_user_statement(self.repo, case_id=snapshot.case_id, expected_case_version=snapshot.case_version,
             request_id="save-" + self.message_id, message_id=self.message_id, actor_id="synthetic_user", text=self.quote,
             created_at=max(datetime.now(timezone.utc), snapshot.updated_at))
         self.assertEqual(result.status, "ok", result.error)

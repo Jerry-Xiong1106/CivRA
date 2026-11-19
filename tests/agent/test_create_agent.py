@@ -84,7 +84,7 @@ def test_malformed_tool_arguments_reach_the_registry_as_invalid(provider):
     reply = completion(calls=[("search_statutes", {})], finish="tool_calls")
     reply["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"] = '{"query": "交强'  # broken JSON
     fake = provider([reply, completion(calls=[("finish", {"answer": "corrected"})], finish="tool_calls")])
-    setup = build_runner(config=RunConfig(conversation_route="case_work"), llm=lc_client(fake.url), real_statutes=False, dotenv=None)
+    setup = build_runner(config=RunConfig(), llm=lc_client(fake.url), real_statutes=False, dotenv=None)
     setup.cases.create("malformed", {})
     with __import__("tempfile").TemporaryDirectory() as tmp:
         setup.runner.store = RunStore(tmp)
@@ -109,11 +109,11 @@ def test_full_agent_with_langchain_client_through_member5_adapter(provider, tmp_
         completion(calls=[("finish", {"answer": "先由交强险赔偿。", "citations": [
             {"source_id": "民法典::第一千二百一十三条", "location": "先由交强险赔偿。"}]})], finish="tool_calls"),
     ])
-    setup = build_runner(config=RunConfig(conversation_route="case_work"), llm=lc_client(fake.url), store=RunStore(tmp_path), mock_business_tools=False, dotenv=None,
+    setup = build_runner(config=RunConfig(), llm=lc_client(fake.url), store=RunStore(tmp_path), mock_business_tools=False, dotenv=None,
                          statute_search=lambda q, k=None: {"status": "ok", "query": q, "warnings": [],
                                                            "results": [to_result(provision, 1, 9.0, ["keyword"])]})
     setup.cases.create("eval-1", {"facts": {}})
-    out = AgentAdapter(setup.runner).run("eval-1", "被追尾了", RunConfig(conversation_route="case_work", ), "exp-lc",
+    out = AgentAdapter(setup.runner).run("eval-1", "被追尾了", RunConfig(), "exp-lc",
                                          lambda wait: UserReply(answers={"q1": "有"}))
     run = out["run"]
     assert run["status"] == "completed" and run["final"]["citations"]
@@ -140,7 +140,7 @@ def test_native_tools_execute_through_create_agent(tmp_path):
         return tool_call("update_case", facts={"x": 1})
 
     model = ScriptedLLM([tool_call("search_statutes", query="q"), check_empty, tool_call("finish", answer="done")])
-    runner = AgentRunner(model, registry, cases, RunStore(tmp_path), default_config=RunConfig(conversation_route="case_work"))
+    runner = AgentRunner(model, registry, cases, RunStore(tmp_path), default_config=RunConfig())
     assert runner.start_run("c", "hi").status == "completed"
     assert cases.get_snapshot("c").case_version == 2
 
@@ -152,12 +152,12 @@ def test_pause_skips_later_side_effect_and_resumes_new_runner(tmp_path):
     update = tool_call("update_case", facts={"unconfirmed": "must not write"})
     model = ScriptedLLM([LLMResponse(tool_calls=ask.tool_calls + update.tool_calls)])
     store = RunStore(tmp_path)
-    first = AgentRunner(model, tool_fixture(cases, real_statutes=False), cases, store, default_config=RunConfig(conversation_route="case_work"))
+    first = AgentRunner(model, tool_fixture(cases, real_statutes=False), cases, store, default_config=RunConfig())
     info = first.start_run("c", "hi")
     assert info.status == "waiting_user" and cases.get_snapshot("c").case_version == 1
     assert (tmp_path / "agent.sqlite3").exists()
     second_model = ScriptedLLM([tool_call("finish", answer="done")])
-    second = AgentRunner(second_model, tool_fixture(cases, real_statutes=False), cases, RunStore(tmp_path), default_config=RunConfig(conversation_route="case_work"))
+    second = AgentRunner(second_model, tool_fixture(cases, real_statutes=False), cases, RunStore(tmp_path), default_config=RunConfig())
     info = second.resume_run(info.run_id, UserReply(text="yes"), wait_id=info.wait.wait_id)
     assert info.status == "completed" and len(second_model.calls) == 1
     assert cases.get_snapshot("c").case_version == 1
@@ -170,7 +170,7 @@ def test_finish_skips_later_side_effect(tmp_path):
     finish = tool_call("finish", answer="done")
     update = tool_call("update_case", facts={"late": "must not write"})
     model = ScriptedLLM([LLMResponse(tool_calls=finish.tool_calls + update.tool_calls)])
-    runner = AgentRunner(model, tool_fixture(cases, real_statutes=False), cases, RunStore(tmp_path), default_config=RunConfig(conversation_route="case_work"))
+    runner = AgentRunner(model, tool_fixture(cases, real_statutes=False), cases, RunStore(tmp_path), default_config=RunConfig())
     assert runner.start_run("c", "hi").status == "completed"
     assert cases.get_snapshot("c").case_version == 1 and len(model.calls) == 1
 
@@ -180,10 +180,10 @@ def test_old_format_is_not_loaded_or_resumed(tmp_path):
     cases.create("c", {})
     store = RunStore(tmp_path)
     store.save_checkpoint(Checkpoint(run_id="old", thread_id="conv_old", engine="obsolete", case_id="c", status="waiting_user",
-        config=RunConfig(conversation_route="case_work", ), messages=[], case_version=1, stage="consultation",
+        config=RunConfig(), messages=[], case_version=1, stage="consultation",
         wait=Wait(wait_id="old-wait", kind="clarification", questions=[WaitQuestion(question_id="q", text="?")])))
     runner = AgentRunner(ScriptedLLM([tool_call("finish", answer="new")]),
-                         tool_fixture(cases, real_statutes=False), cases, store, default_config=RunConfig(conversation_route="case_work"))
+                         tool_fixture(cases, real_statutes=False), cases, store, default_config=RunConfig())
     with pytest.raises(ValueError, match="格式"):
         runner.get_run("old")
     with pytest.raises(RunStateError, match="格式"):
@@ -196,11 +196,11 @@ def test_missing_framework_checkpoint_does_not_restart_tools(tmp_path):
     cases.create("c", {})
     store = RunStore(tmp_path)
     runner = AgentRunner(ScriptedLLM([tool_call("ask_user", questions=[{"question_id": "q", "text": "?"}])]),
-                         tool_fixture(cases, real_statutes=False), cases, store, default_config=RunConfig(conversation_route="case_work"))
+                         tool_fixture(cases, real_statutes=False), cases, store, default_config=RunConfig())
     info = runner.start_run("c", "hi")
     (tmp_path / "agent.sqlite3").unlink()
     model = ScriptedLLM([tool_call("finish", answer="must not run")])
-    runner = AgentRunner(model, tool_fixture(cases, real_statutes=False), cases, store, default_config=RunConfig(conversation_route="case_work"))
+    runner = AgentRunner(model, tool_fixture(cases, real_statutes=False), cases, store, default_config=RunConfig())
     info = runner.resume_run(info.run_id, UserReply(text="yes"), wait_id=info.wait.wait_id)
     assert info.status == "failed" and model.calls == []
 
@@ -222,7 +222,7 @@ def test_same_batch_tools_preserve_order_with_duplicate_provider_ids(tmp_path):
     a, b = tool_call("first"), tool_call("second")
     b.tool_calls[0].id = a.tool_calls[0].id  # malformed IDs cannot deadlock ordered dispatch
     model = ScriptedLLM([LLMResponse(tool_calls=a.tool_calls + b.tool_calls), tool_call("finish", answer="done")])
-    runner = AgentRunner(model, registry, cases, RunStore(tmp_path), default_config=RunConfig(conversation_route="case_work"))
+    runner = AgentRunner(model, registry, cases, RunStore(tmp_path), default_config=RunConfig())
     assert runner.start_run("c", "hi").status == "completed"
     assert observed == ["first", "second"]
 
@@ -235,7 +235,7 @@ def test_cancel_during_model_prevents_following_side_effect(tmp_path):
         entered.set()
         assert release.wait(10)
         return tool_call("update_case", facts={"late": "must not write"})
-    runner = AgentRunner(ScriptedLLM([slow]), tool_fixture(cases, real_statutes=False), cases, RunStore(tmp_path), default_config=RunConfig(conversation_route="case_work"))
+    runner = AgentRunner(ScriptedLLM([slow]), tool_fixture(cases, real_statutes=False), cases, RunStore(tmp_path), default_config=RunConfig())
     result = {}
     thread = threading.Thread(target=lambda: result.update(info=runner.start_run("c", "hi")), daemon=True)
     thread.start()
@@ -244,7 +244,7 @@ def test_cancel_during_model_prevents_following_side_effect(tmp_path):
         cp = next(runner.store.list_checkpoints())
         # Another runner must be able to cancel the active worker, even if the
         # worker subsequently saves its old checkpoint snapshot.
-        other = AgentRunner(ScriptedLLM([]), runner.tools, cases, RunStore(tmp_path), default_config=RunConfig(conversation_route="case_work"))
+        other = AgentRunner(ScriptedLLM([]), runner.tools, cases, RunStore(tmp_path), default_config=RunConfig())
         other.cancel_run(cp.run_id)
         runner.store.save_checkpoint(cp)
     finally:
@@ -275,7 +275,9 @@ def test_compacted_tool_message_preserves_identity_and_metadata():
     history = [HumanMessage(content="question"),
                AIMessage(content="", tool_calls=[{"id": "old-call", "name": "search", "args": {}}]), original,
                *[HumanMessage(content=f"recent-{i}") for i in range(4)]]
-    compacted = next(m for m in assemble(history, snapshot, 3000) if isinstance(m, ToolMessage))
+    from backend.agent.model.prompts import _size
+    budget = _size(assemble([], snapshot)) + 1500  # fixed prompt head plus room for slimmed history
+    compacted = next(m for m in assemble(history, snapshot, budget) if isinstance(m, ToolMessage))
     assert len(compacted.content) < len(original.content)
     assert compacted.id == original.id and compacted.tool_call_id == original.tool_call_id
     assert compacted.additional_kwargs == original.additional_kwargs

@@ -14,11 +14,11 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
 
 from backend.case import CaseService, SQLiteCaseRepository
+from backend.case.intake.updates import set_case_stage, record_user_statement  # noqa: E402
 from scripts.case.fixtures import load_development_case
 from backend.case.contracts import InvocationContext
 from backend.case.operations import REQUEST_MODELS, RESULT_MODELS
 from backend.case.materials.ocr import OcrEngineRegistry
-from backend.agent.case_adapter import RepositoryCasePort
 from demo_support import DEMO_REPLY, confirmed_demo_changes
 
 
@@ -65,10 +65,9 @@ def run_demo(output_dir,ocr_image=None):
         document_type="other",content=content,file_version="1")
     parsed=invoke("parse_documents",file_ids=["phase3-material"])
     invoke("check_evidence")
-    port=RepositoryCasePort(repo)
-    port.set_stage(case.case_id,"litigation")  # Synthetic demo's explicit user choice.
+    set_case_stage(repo, case.case_id,"litigation")  # Synthetic demo's explicit user choice.
     current=repo.get_case(case.case_id)
-    reply=port.record_user_reply(case_id=case.case_id,expected_case_version=current.case_version,
+    reply=record_user_statement(repo, case_id=case.case_id,expected_case_version=current.case_version,
         request_id="phase3-demo-reply",message_id="msg_demo_reply",actor_id="synthetic_user",text=DEMO_REPLY,
         created_at=datetime.now(timezone.utc))
     if reply.status!="ok": raise RuntimeError(reply.summary)

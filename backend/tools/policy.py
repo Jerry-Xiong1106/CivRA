@@ -11,8 +11,6 @@ class ToolPolicy(BaseModel):
     timeout_s: float = Field(default=30.0, gt=0)
     max_retries: int = Field(default=1, ge=0)
     side_effects: bool = False
-    feedback_loop: str | None = None
-    invalid_args_limit: int | None = Field(default=None, ge=1)
 
 
 def set_policy(tool: BaseTool, **policy) -> BaseTool:

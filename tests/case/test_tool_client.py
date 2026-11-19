@@ -1,5 +1,6 @@
 """Regressions at the shared model/evaluation boundary."""
 
+from backend.case.intake.updates import set_case_stage
 import json
 import subprocess
 import sys
@@ -16,7 +17,6 @@ from backend.tools.case_contracts import ToolInvocation
 from scripts.case.fixtures import load_development_case
 from backend.tools.case_tools import get_case_tool_contracts
 from backend.case.contracts import InvocationContext
-from backend.agent.case_adapter import RepositoryCasePort
 
 
 class CaseToolClientTests(unittest.TestCase):
@@ -89,7 +89,7 @@ class CaseToolClientTests(unittest.TestCase):
         self.assertEqual(self.repo.get_case(self.case.case_id).case_version, 2)
 
     def test_stale_version_is_not_silently_replaced(self):
-        RepositoryCasePort(self.repo).set_stage(self.case.case_id, "route_selection")
+        set_case_stage(self.repo, self.case.case_id, "route_selection")
         result = evaluate_case_tool(self.client, "check_evidence", self.invocation())
         self.assertEqual(result["error"]["code"], "version_conflict")
         self.assertEqual(result["error"]["details"]["case_version"], 2)

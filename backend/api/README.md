@@ -1,6 +1,6 @@
 # 前端 API 接入
 
-HTTP 层已实现，前端尚未实现。入口是 `backend/api/app.py`，协调逻辑在 `conversations.py`，HTTP 类型在 `schemas.py`。复用现有 AgentRunner、CaseService、SQLite 存储与 LangGraph 检查点，不另写案件处理循环。
+前端在 `frontend/`（Vue 3）。HTTP 入口是 `backend/api/app.py`，协调逻辑在 `conversations.py`，HTTP 类型在 `schemas.py`。复用现有 AgentRunner、CaseService、SQLite 存储与 LangGraph 检查点，不另写案件处理循环。
 
 ## 启动
 
@@ -34,7 +34,8 @@ API 启动时初始化一次模型、真实案件服务、检索服务和来源�
 | --- | --- | --- |
 | POST | `/api/conversations` | 创建空白会话和真实案件 |
 | GET | `/api/conversations/{id}` | 恢复页面：消息、当前运行、案件、材料、成果 |
-| POST | `/api/conversations/{id}/messages` | 提交新问题、追问回复或路线选择 |
+| POST | `/api/conversations/{id}/messages` | 提交新问题，或回复追问／步骤确认 |
+| POST | `/api/conversations/{id}/route` | 用户在界面点击路线入口：协商、调解或诉讼 |
 | GET | `/api/conversations/{id}/events?run_id=...` | SSE 运行事件 |
 | POST | `/api/conversations/{id}/files` | multipart 上传材料 |
 | GET | `/api/conversations/{id}/artifacts/{artifact_id}` | 下载生成文件 |
@@ -60,34 +61,62 @@ API 启动时初始化一次模型、真实案件服务、检索服务和来源�
 
 每次新提交使用新的 request_id；网络重试必须复用同一 ID 和内容。同 ID 同内容返回已有回执，不重复执行模型和工具；同 ID 不同内容返回 409。
 
-### 追问和路线选择
+### 路线入口、步骤确认和追问
 
-一个 wait 可包含多个问题，请按 question_id 分别提交答案。新记录的 wait.questions[].gap 对应任务缺口短名；
-run.tasks[].missing_kinds 区分 user_input（用户可补充）、material（材料）、verification（待核验）和 external（外部反馈）。旧记录没有分类时按未分类展示。
+**流程**：了解情况（还没选路线）→ 用户点击路线入口 → Agent 按该路线的步骤逐步引导；每一步交付后请用户确认，确认后自动进入下一步。
 
-收到 `run.waiting_user`，根据 `wait.kind` 展示问题或菜单。问题可能有多个，逐个显示并按 question_id 收集回答。不要从普通回答文字里猜测菜单。
+| 路线 | 步骤（step_id） |
+| --- | --- |
+| negotiation 协商解决 | prepare 核对诉求和材料 → communicate 提出方案并记录回复 → perform 核对约定和履行 |
+| mediation 调解解决 | channel 核实调解渠道 → participate 提交材料并参加调解 → result 核对结果和履行 |
+| litigation 诉讼准备 | jurisdiction 核实管辖和当事人 → evidence 证据目录 → draft 起诉状 → submit 提交 |
 
-追问回复：
+**选路线**（前端三个入口按钮）：
+
+```json
+POST /api/conversations/{id}/route
+{"request_id": "client-uuid", "route": "litigation"}
+```
+
+返回 202 回执，后端保存路线并启动一轮运行，Agent 直接开始引导当前步骤。随时可以点另一个入口切换；正在等待的追问会被取消，每条路线的进度分别保留，切回来从上次的步骤继续。
+
+**等待类型**（`run.wait.kind`），收到 `run.waiting_user` 后按类型展示：
+
+| kind | 展示 | 回复 `reply` |
+| --- | --- | --- |
+| `clarification` | 逐个显示 `questions[]` | `{"answers": {"question_id": "回答"}}` 或 `{"text": "..."}` |
+| `material_request` | 同上，并提示上传 | 同上，可在消息里附 `attachments` |
+| `step_confirmation` | 显示 `message`（本步交付物正文）和 `summary`，给两个按钮 | `{"step_decision": "done"}` 或 `{"step_decision": "revise", "text": "要改什么"}` |
+
+`wait.message` 是 Agent 随这次等待说的话（步骤确认时就是本步的完整交付物）。等待期间没有 `final`，请用它展示回答。
 
 ```json
 {
   "request_id": "another-uuid",
   "wait_id": "服务端返回的wait_id",
-  "reply": {"answers": {"服务端返回的question_id": "用户回答"}}
+  "reply": {"step_decision": "done"}
 }
 ```
 
-也允许 `reply: {"text": "用户自然语言回复"}`。路线菜单必须提交选项的 route 值：
+选"完成"后，后端把这一步记为已完成（记录引用用户这次的确认），Agent 在同一轮里接着引导下一步。选"还要修改"时步骤保持未完成，Agent 按用户意见修改后再请求确认。步骤确认只能用 `step_decision` 回复，其他等待不接受该字段（409）。
+
+**进度**：GET 会话返回 `route_progress`（未选路线时为 null）：
 
 ```json
 {
-  "request_id": "route-choice-uuid",
-  "wait_id": "服务端返回的wait_id",
-  "reply": {"route_choice": "mediation"}
+  "route": "litigation", "current_step": "evidence", "progress_version": 1,
+  "steps": [
+    {"step_id": "jurisdiction", "title": "核实管辖、当事人及具体程序要求", "status": "completed",
+     "materials": ["当事人信息", "争议事实和诉求"], "completion_condition": "依据官方来源确认具体要求",
+     "deliverable": "核对原告、被告、诉求和管辖法院，缺什么问什么", "tools": ["update_case", "search_statutes"],
+     "note": "核实管辖、当事人及具体程序要求：确认：这一步已完成。", "output_refs": []}
+  ]
 }
 ```
 
-`expected_case_version` 可选，用于拒绝基于旧案件版本的提交。服务器检查当前等待项、问题 ID 和路线选项；不接受前端传工具名称、案件阶段或模型参数。等待中不能把普通新消息当作另一轮并行启动。
+step 的 status 为 pending、in_progress、completed、blocked 或 not_applicable；诉讼的 evidence、draft 步骤在 `output_refs` 列出已生成的证据目录和起诉状。
+
+`expected_case_version` 可选，用于拒绝基于旧案件版本的提交。服务器检查当前等待项和问题 ID；不接受前端传工具名称、案件阶段或模型参数。等待中不能把普通新消息当作另一轮并行启动。
 
 ### SSE
 
@@ -95,7 +124,7 @@ run.tasks[].missing_kinds 区分 user_input（用户可补充）、material（�
 
 - `run.started`、`run.resumed`
 - `step.started`、`step.finished`：模型与工具的进度、状态和耗时
-- `run.waiting_user`：问题或路线菜单
+- `run.waiting_user`：追问或步骤确认（`data.wait` 同 GET 中的 `run.wait`）
 - `run.completed`、`run.failed`、`run.cancelled`、`run.budget_exhausted`：本次运行的结束状态
 - `state`：当前提交已处理后的运行快照，然后关闭连接
 
@@ -125,37 +154,15 @@ GET 会话中的 outputs 含成果及导出文件引用。用其中的 artifact_
 
 ## 连续对话与持久化
 
-### 诉讼路线入口和办理反馈
+手动终端：`python scripts/agent/interactive.py`，`/route litigation` 选路线，`/state` 查看进度，
+`/upload "D:\材料\认定书.pdf"` 上传文件，`/new` 新开独立案件。
 
-在已有会话中调用 `POST /api/conversations/{id}/routes/litigation/enter`，请求体为
-`{"request_id":"enter-1"}`。与发送消息一样使用回执、SSE 和 GET 查询。空案会得到角色与诉求追问；
-已有案件从当前材料、成果和实际反馈继续。同一 request_id 可重试。再次打开已在办理的路线
-返回已有运行；页面刷新只调用 GET。其他路线尚有追问时返回 409；用户明确确认切换后，
-在入口请求中传入当前 `switch_wait_id`。可直接选择诉讼的现有路线菜单复用原运行。
-
-会话 GET 的 `route_progress` 包含 current_step、next_action、steps、task_id、task_status、
-wait_id、missing、artifacts 和 progress_version。jurisdiction、evidence、draft、submit
-分别对应准备事项、证据目录、文书复核及提交反馈。每个步骤有独立的完成条件。
-受理等外部事件按用户报告记录。生成文书时不会自动记录提交或受理。
-
-已发生的进度可发往 `POST /api/conversations/{id}/routes/litigation/feedback`，例如
-`{"request_id":"filing-1","event":"submitted","note":"今天递交了材料，正在等待反馈"}`。
-还有待答追问时附当前 wait_id；路线菜单要先完成选择。event 可为 intake_checked、
-evidence_reviewed、draft_reviewed、submitted、accepted、correct_evidence、correct_draft。
-复核需要本案相符的成果；存在多个版本的不同成果时，在 note 中注明 output_id。
-也可在普通对话里报告进展，由 Agent 请求确认后记录。补正反馈重新打开对应步骤。
-
-手动终端用 `/route litigation` 进入，`/state` 查看同样的进度，
-`/upload "D:\材料\认定书.pdf"` 上传文件，`/feedback submitted 今天已经递交` 记录反馈。
-追问时也支持上传，回答或直接回车后材料会附到原运行。`/new` 新开独立案件。
-
-- 查询会话时读取 run.tasks，可看到当前、暂缓及已交付任务。任务数据以 LangGraph 检查点为准，提交回执仍保留该次返回的历史视图。任务状态与 run.status 独立。
-- 一段会话关联一个案件；一条新问题启动一次新运行。
+- 一段会话关联一个案件；一条新问题或一次选路线启动一次新运行。
 - 新运行承接前一运行的原生消息历史，提示仍按当前案件状态和上下文长度限制组装。
-- 追问回复恢复同一运行，不重新分类。
+- 追问和步骤确认的回复恢复同一运行。
 - 每次提交保存独立结果快照；旧消息不会在后续恢复后全部变成重复的最终回复。
 - cases.sqlite3 的 api_conversations、api_messages、agent_runs 分别记录会话、提交回执、每轮运行状态与图检查点 ID。
-- runs/agent.sqlite3 按 conversation_id 保存消息与任务。历史 run_id 读取当轮的图检查点。runs/<run_id>/ 保留 SSE、轨迹及工具结果。旧 checkpoint.json 启动时幂等导入，原件留存。
+- runs/agent.sqlite3 按 conversation_id 保存消息历史。历史 run_id 读取当轮的图检查点。runs/<run_id>/ 保留 SSE、轨迹及工具结果。路线进度保存在案件库中。
 - 正常等待中的运行可在服务重启后继续。执行途中进程退出会标记失败，不自动重放可能已写入的业务操作，历史结果保留。
 
 ## 错误与运行范围
@@ -178,4 +185,4 @@ evidence_reviewed、draft_reviewed、submitted、accepted、correct_evidence、c
 .\.venv-rag\Scripts\python.exe -B -m pytest tests -q -p no:cacheprovider
 ```
 
-接口测试使用真实案件存储、LangGraph 检查点、文书导出与 FastAPI 请求处理，但模型为脚本模型，不需要密钥，不调用付费 API。覆盖重复提交、并发冲突、三路线选择、追问与重启恢复、跨轮历史、SSE 游标、上传范围和 Word/PDF 下载。
+接口测试使用真实案件存储、LangGraph 检查点、文书导出与 FastAPI 请求处理，但模型为脚本模型，不需要密钥，不调用付费 API。覆盖重复提交、并发冲突、三条路线的入口与逐步确认、修改与切换路线、追问与重启恢复、跨轮历史、SSE 游标、上传范围和 Word/PDF 下载。

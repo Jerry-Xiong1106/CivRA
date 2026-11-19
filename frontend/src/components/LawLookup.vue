@@ -3,6 +3,7 @@ import { computed, watch } from 'vue';
 import { useWorkspaceStore } from '../stores/workspace.js';
 import { useNavigation } from '../composables/navigation.js';
 import { researchSources, currentWait } from '../domain/backendAdapter.js';
+import { renderMarkdown } from '../services/markdown.js';
 const store = useWorkspaceStore();
 const { isConsult } = useNavigation();
 const apiMode = computed(() => isConsult.value || store.apiMode);
@@ -48,8 +49,8 @@ function example() {
     <p v-if="active.server?.error" class="notice warn">{{ active.server.error }} <button class="link" @click="store.refreshCase(active)">刷新会话</button></p>
     <p v-if="active.server?.outbox && !busy" class="notice"><button class="link" @click="store.retryMessage(active)">重试上一条查询</button></p>
     <p v-if="busy" class="notice" role="status">正在检索与整理，请稍候…</p>
-    <article v-if="waiting" class="cu-source-card"><h3>助手需要你补充或确认</h3><p v-for="question in waiting.questions || []" :key="question.question_id">{{ question.text }}</p><p v-if="waiting.comparison">{{ waiting.comparison }}</p><button v-for="option in waiting.options || []" :key="option.route" class="button small" :disabled="busy" @click="store.replyRoute(option.route, active)">{{ option.label }}</button><p v-if="waiting.kind !== 'route_selection'" class="note">可在上面的输入框填写回答，继续本次咨询。</p></article>
-    <article v-if="answer" class="cu-source-card"><h3>助手返回的说明</h3><p class="cu-source-excerpt">{{ answer }}</p></article>
+    <article v-if="waiting" class="cu-source-card"><h3>助手需要你补充或确认</h3><p v-for="question in waiting.questions || []" :key="question.question_id">{{ question.text }}</p><p v-if="waiting.kind === 'step_confirmation'">{{ waiting.summary }}</p><p class="note">{{ waiting.kind === 'step_confirmation' ? '请在对话中确认这一步是否完成。' : '可在上面的输入框填写回答，继续本次咨询。' }}</p></article>
+    <article v-if="answer" class="cu-source-card"><h3>助手返回的说明</h3><div class="cc-markdown" v-html="renderMarkdown(answer)"></div></article>
     <article v-for="source in sources" :key="source.key" class="cu-source-card">
       <div class="row between wrap"><h3>{{ source.title }}</h3><span class="pill good">{{ source.location }}</span></div>
       <p class="cu-source-excerpt">{{ source.citation ? '回答中的引用位置：' + source.citation : '该来源由后端随回答返回；请打开原文核对适用条件。' }}</p>

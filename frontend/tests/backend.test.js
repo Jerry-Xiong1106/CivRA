@@ -25,6 +25,17 @@ function setup() {
       state.messages.push(row);
       return copy(row);
     },
+    async selectRoute(id, body) {
+      calls.push({ route_request: copy(body) });
+      state.case = { ...state.case, stage: body.route, selected_route: body.route, case_version: state.case.case_version + 1 };
+      const run = { run_id: 'run-route-' + state.messages.length, status: 'waiting_user', case_version: state.case.case_version,
+        wait: { wait_id: 'w-step', kind: 'step_confirmation', step_id: 'prepare', summary: '诉求已整理', message: '## 诉求清单\n- 修车费8000元' } };
+      state.run = run;
+      state.route_progress = { route: body.route, current_step: 'prepare', progress_version: 0, steps: [] };
+      const row = { request_id: body.request_id, input: copy(body), run, run_id: run.run_id, status: 'waiting_user', created_at: '2026-11-19' };
+      state.messages.push(row);
+      return copy(row);
+    },
     async events() { events++; },
     async upload() { throw new Error('not configured'); }
   };
@@ -50,24 +61,31 @@ test('clarification resumes the exact wait with free text instead of starting a 
   assert.deepEqual(s.calls[0].reply, { text: '三千元' });
   assert.equal(s.calls[0].text, undefined);
 });
-test('three routes submit server menu values and never optimistically rewrite case stage', async () => {
+test('route entries call the route endpoint and the server decides the stage', async () => {
   for (const route of ['negotiation', 'mediation', 'litigation']) {
     const s = setup(), c = record();
-    s.state.run = { run_id: 'waiting', status: 'waiting_user', wait: { wait_id: 'w-route', kind: 'route_selection', options: [{ route, label: route }] } };
-    applyConversation(c, copy(s.state));
-    assert.equal(await s.bridge.submit(c, '随便选一个'), null);
-    assert.equal(s.calls.length, 0);
-    await s.bridge.submit(c, '', { routeChoice: route });
-    assert.deepEqual(s.calls[0].reply, { route_choice: route });
-    assert.equal(c.route, null);
-    assert.equal(c.server.snapshot.stage, 'consultation');
+    await s.bridge.selectRoute(c, route);
+    assert.equal(s.calls[0].route_request.route, route);
+    assert.equal(s.calls[0].text, undefined);
+    assert.equal(c.server.snapshot.selected_route, route);
+    assert.equal(c.server.routeProgress.route, route);
+    const wait = currentWait(c);
+    assert.equal(wait.kind, 'step_confirmation');
+    const turns = transcript(copy(s.state));
+    assert.equal(turns.at(-2).text, '我选择「' + { negotiation: '协商解决', mediation: '调解解决', litigation: '诉讼准备' }[route] + '」');
+    assert.match(turns.at(-1).text, /修车费8000元/);
   }
 });
-test('route intent before a server menu is an ordinary request, not a forged route reply', async () => {
+test('step confirmation sends step_decision; typing while it waits means revise with a note', async () => {
   const s = setup(), c = record();
-  await s.bridge.submit(c, '', { routeChoice: 'mediation' });
-  assert.match(s.calls[0].text, /调解/);
-  assert.equal(s.calls[0].reply, undefined);
+  await s.bridge.selectRoute(c, 'negotiation');
+  await s.bridge.submit(c, '', { stepDecision: 'done' });
+  assert.deepEqual(s.calls[1].reply, { step_decision: 'done' });
+  assert.equal(s.calls[1].wait_id, 'w-step');
+  const t = setup(), d = record();
+  await t.bridge.selectRoute(d, 'negotiation');
+  await t.bridge.submit(d, '再加上拖车费');
+  assert.deepEqual(t.calls[1].reply, { step_decision: 'revise', text: '再加上拖车费' });
 });
 test('the user-selected case type is included once as context, not forged structured facts', async () => {
   const s = setup(), c = record();

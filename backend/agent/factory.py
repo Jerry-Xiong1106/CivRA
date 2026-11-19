@@ -118,10 +118,8 @@ def build_runner(
             cases = InMemoryCaseStore()
         else:
             from backend.agent.case_adapter import RepositoryCasePort
-            from backend.agent.litigation import LitigationGuide
 
-            cases = RepositoryCasePort(case_service.repository, assets=case_service.assets,
-                                      litigation=LitigationGuide(case_service))
+            cases = RepositoryCasePort(case_service)
     tools = build_tools(cases, real_statutes=real_statutes, statute_search=statute_search,
                         retrieval_service=retrieval_service,
                         mock_business_tools=mock_business_tools, case_service=case_service)

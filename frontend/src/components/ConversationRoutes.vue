@@ -14,6 +14,16 @@ watch(selected, () => { notes.value = store.current.preparationNotes?.[selected.
 const saved = computed(() => store.current.preparationDrafts?.[selected.value]);
 const workflow = computed(() => latestOutput(store.current, 'workflow', o => outputData(o).route === selected.value));
 const preparationItems = computed(() => store.apiMode && workflow.value ? outputData(workflow.value).steps.map(s => s.title + (s.contact ? '；办理方：' + s.contact : '') + (s.materials?.length ? '；材料：' + s.materials.join('、') : '')) : guide.value?.materials || []);
+const progress = computed(() => store.apiMode && store.routeProgress?.route === selected.value ? store.routeProgress : null);
+const STATUS_LABELS = { completed: '已完成', in_progress: '进行中', blocked: '受阻', not_applicable: '不适用', pending: '未开始' };
+function stepState(step) {
+  if (step.status === 'completed' || step.status === 'not_applicable') return 'completed';
+  return progress.value?.current_step === step.step_id ? 'current' : '';
+}
+function choose(id) {
+  if (store.apiMode && selected.value === id) return;
+  store.setRouteIntent(id);
+}
 const stale = computed(() => saved.value && (saved.value.basis !== store.readiness.signature || JSON.stringify(saved.value.files) !== JSON.stringify(store.current.files.map((f) => f.id))));
 function generate() {
   store.savePreparation(selected.value, notes.value);
@@ -30,11 +40,23 @@ function download() {
       <article v-for="(item, i) in ROUTE_GUIDES" :key="item.id" :class="{ selected: selected === item.id }">
         <span class="cc-route-number">0{{ i + 1 }}</span>
         <div><small>{{ item.lead }}</small><h3>{{ item.title }}</h3><p>{{ item.description }}</p>
-        <button class="button small" :aria-pressed="selected === item.id" :disabled="store.busy || (store.wait?.kind === 'route_selection' && !store.wait.options.some(o => o.route === item.id))" @click="store.setRouteIntent(item.id)">{{ selected === item.id ? '当前准备方向 ✓' : store.apiMode && store.wait?.kind !== 'route_selection' ? '请助手评估这个方向' : '按这个方向准备' }}</button></div>
+        <button class="button small" :aria-pressed="selected === item.id" :disabled="store.busy || (store.apiMode && selected === item.id)" @click="choose(item.id)">{{ selected === item.id ? (store.apiMode ? '当前路线 ✓' : '当前准备方向 ✓') : store.apiMode ? '按这条路线办理' : '按这个方向准备' }}</button></div>
       </article>
     </div>
-    <p class="cc-stage-note">实际阶段：{{ P.phaseLabels[store.current.fields.phase?.value] || '待确认' }}。准备方向只表示你的意向，不代表已申请、立案或达成协议。</p>
-    <section v-if="guide" class="cc-preparation">
+    <p v-if="store.apiMode" class="cc-stage-note">选定路线后，助手会按步骤引导你；每一步完成后由你确认，再进入下一步。可以随时换路线，各路线的进度会分别保留。</p>
+    <p v-else class="cc-stage-note">实际阶段：{{ P.phaseLabels[store.current.fields.phase?.value] || '待确认' }}。准备方向只表示你的意向，不代表已申请、立案或达成协议。</p>
+    <section v-if="progress" class="cc-preparation">
+      <h3>{{ guide.title }}的办理步骤</h3>
+      <p>{{ progress.current_step ? '当前步骤已高亮；在对话中完成并确认后自动进入下一步。' : '所有步骤都已确认完成。' }}</p>
+      <ol class="cc-route-steps">
+        <li v-for="(step, i) in progress.steps" :key="step.step_id" :class="stepState(step)">
+          <span class="cc-step-mark">{{ stepState(step) === 'completed' ? '✓' : i + 1 }}</span>
+          <div><strong>{{ step.title }}</strong><small>{{ STATUS_LABELS[step.status] || step.status }} · {{ step.deliverable }}</small><small v-if="step.materials?.length">需要的材料：{{ step.materials.join('、') }}</small><small v-if="step.output_refs?.length">已有成果：{{ step.output_refs.length }} 份，可在“已有成果”中查看</small></div>
+        </li>
+      </ol>
+      <div class="cc-action-row"><button class="link" @click="go('evidence')">查看共用材料 →</button><button class="link" @click="go('review')">核对案情 →</button></div>
+    </section>
+    <section v-else-if="guide && !store.apiMode" class="cc-preparation">
       <h3>{{ guide.title }}，先准备这些</h3>
       <ul><li v-for="item in preparationItems" :key="item">{{ item }}</li></ul>
       <p v-if="store.apiMode">{{ workflow ? (workflow.case_version === store.current.server.snapshot.case_version ? '以上步骤由后端针对本案返回。' : '步骤依据的案情版本已变化，请重新整理。') : '以上为通用准备提示；本案具体步骤以助手返回为准。' }}</p>

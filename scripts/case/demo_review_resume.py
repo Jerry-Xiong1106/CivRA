@@ -8,10 +8,10 @@ import sys
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from backend.case import CaseService, SQLiteCaseRepository
+from backend.case.intake.updates import record_user_statement  # noqa: E402
 from scripts.case.fixtures import load_development_case
 from backend.tools.case_client import CaseToolClient
 from backend.case.models import BusinessOutput, SourcePointer
-from backend.agent.case_adapter import RepositoryCasePort
 
 
 def demo_source(pointer):
@@ -78,7 +78,7 @@ def main():
     checks+=['graph direct material links','sample aliases deduplicated','unknown region retained']
     service.assets.put_file(case_id=case.case_id,file_id="supplement",file_name="合成补充.txt",media_type="text/plain",document_type="other",content="合成补充：收到部分款项，金额尚待核对。".encode())
     invoke("parse-supplement","parse_documents",dict(file_ids=["supplement"],ocr_mode="never"))
-    reply=RepositoryCasePort(repo).record_user_reply(case_id=case.case_id,expected_case_version=1,request_id="synthetic-user-message",
+    reply=record_user_statement(repo, case_id=case.case_id,expected_case_version=1,request_id="synthetic-user-message",
         message_id="msg_supplement",actor_id="synthetic_user",text="我补充了模拟付款材料，金额还需核对。",created_at=datetime.now(timezone.utc))
     assert reply.status=="ok",reply.error
     service=CaseService(SQLiteCaseRepository(output/"cases.db"),source_resolver=demo_source)

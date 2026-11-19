@@ -66,6 +66,9 @@ def update_case(request: UpdateCaseRequest | dict, repository: IdempotentCaseRep
                     previous[record[key]] = record
                     changed[collection].append(record[key])
             payload[collection] = list(previous.values())
+        if request.changes.dispute_type and request.changes.dispute_type != payload["dispute_type"]:
+            payload["dispute_type"] = request.changes.dispute_type
+            changed["dispute_type"] = [request.changes.dispute_type]
         if not any(changed.values()):
             return _error(case_id, version, "invalid_request", "变更与现有案件一致，没有可保存的新内容。")
         now = datetime.now(timezone.utc)
@@ -145,3 +148,21 @@ def set_case_stage(repository, case_id, stage):
         audit=CaseAuditRecord(case_id=case_id, case_version=updated.case_version, request_id=None,
             change_reason="runtime_user_route_selection", saved_at=datetime.now(timezone.utc)))
     return saved.case_version
+
+
+def record_user_statement(repository, *, case_id, expected_case_version, request_id, message_id, actor_id,
+                          text, created_at):
+    """Save an authenticated user statement so later records can quote it.
+
+    It is stored as said and never interpreted as a confirmation. created_at is the
+    application's original receipt time, reused on retries.
+    """
+    from .contracts import CaseChanges, UpdateCaseRequest
+    from ..contracts import InvocationContext
+    from ..models import UserStatement
+    return update_case(UpdateCaseRequest(
+        context=InvocationContext(request_id=request_id, case_id=case_id, experiment_run_id=None, deadline_at=None),
+        expected_case_version=expected_case_version,
+        changes=CaseChanges(upsert_statements=[UserStatement(message_id=message_id, actor_id=actor_id,
+                                                             text=text, created_at=created_at)]),
+        change_reason="application_recorded_user_reply"), repository)

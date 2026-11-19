@@ -22,8 +22,8 @@ async function register(event) {
   if (store.current.id !== caseId) return;
   if (apiMode) {
     go('evidence');
-    if (result?.length && !store.wait?.kind?.includes('route_selection')) await store.sendConversation('请解析我刚上传的材料，整理内容并检查重复、冲突和缺失；不确定的信息请让我核对。');
-    else if (result?.length) store.notify('材料已上传，先确认助手提供的处理方向，再继续解析。');
+    if (result?.length && store.wait?.kind !== 'step_confirmation') await store.sendConversation('请解析我刚上传的材料，整理内容并检查重复、冲突和缺失；不确定的信息请让我核对。');
+    else if (result?.length) store.notify('材料已上传，确认或修改当前步骤后，助手会继续使用这些材料。');
     return;
   }
   store.addWorkCard('evidence', `已登记 ${files.length} 份材料，可以在这里查看并补充。当前预览尚未解析文件内容。`);

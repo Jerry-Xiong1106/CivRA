@@ -254,9 +254,7 @@ def create_case_tools(service: CaseService, *, source_resolver=None) -> list[Bas
     for native in tools:
         set_policy(native, owner="member3", max_retries=0,
                    stages=list(OPERATION_STAGES[native.name]),
-                   side_effects=native.name not in read_only,
-                   feedback_loop="retrieve_verify" if native.name == "verify_output" else None,
-                   invalid_args_limit=2 if native.name in {"update_case", "calculate_costs"} else None)
+                   side_effects=native.name not in read_only)
     return tools
 
 
@@ -266,6 +264,6 @@ CASE_TOOL_SPECS = {t.name: describe_tool(t) for t in create_case_tools(None)}
 
 def get_case_tool_contracts() -> dict:
     fields = {"name", "owner", "description", "parameters", "stages", "side_effects", "max_retries"}
-    return {name: {**spec.model_dump(include=fields | ({"feedback_loop"} if spec.feedback_loop else set())),
+    return {name: {**spec.model_dump(include=fields),
                    "parameters": ARGUMENT_MODELS[name].model_json_schema()}
             for name, spec in CASE_TOOL_SPECS.items()}

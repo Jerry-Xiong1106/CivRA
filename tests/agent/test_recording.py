@@ -86,7 +86,7 @@ def test_terminal_checkpoint_saved_once_before_terminal_event(tmp_path, status):
               tool_call("finish", answer="done")]
     if status == "failed":
         script = [script[0], fail]
-    config = RunConfig(conversation_route="case_work", max_model_calls=0) if status == "budget_exhausted" else RunConfig(conversation_route="case_work", )
+    config = RunConfig(max_model_calls=0) if status == "budget_exhausted" else RunConfig()
     cases = InMemoryCaseStore()
     cases.create("c", {})
     store = ObservedStore(tmp_path)

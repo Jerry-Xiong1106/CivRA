@@ -12,6 +12,7 @@ import OutcomesView from './OutcomesView.vue';
 import DraftView from './DraftView.vue';
 import ResultsView from './ResultsView.vue';
 import ConversationRoutes from '../components/ConversationRoutes.vue';
+import { renderMarkdown } from '../services/markdown.js';
 const store = useWorkspaceStore(), { go, route } = useNavigation();
 const input = ref(''), feed = ref(null), composer = ref(null), panelBody = ref(null);
 const openUpload = inject('openUpload');
@@ -54,6 +55,13 @@ function onKey(event) {
     event.preventDefault(); send();
   }
 }
+const stepWait = computed(() => store.apiMode && store.wait?.kind === 'step_confirmation' ? store.wait : null);
+async function decide(decision) {
+  const note = decision === 'revise' ? input.value : '';
+  if (decision === 'revise' && !note.trim()) { store.notify('请在输入框写下需要修改的地方，再点“还需要修改”。'); composer.value?.focus(); return; }
+  const result = await store.decideStep(decision, note);
+  if (result && note && input.value === note) input.value = '';
+}
 function closePanel() { go('chat'); nextTick(() => composer.value?.focus()); }
 watch(() => turns.value.length, async () => { await nextTick(); feed.value?.scrollTo({ top: feed.value.scrollHeight, behavior: 'smooth' }); });
 watch(panel, async () => { await nextTick(); if (panelBody.value) panelBody.value.scrollTop = 0; });
@@ -78,12 +86,21 @@ watch(() => store.current.id, () => store.refreshCase(), { immediate: true });
             <div v-if="turn.role === 'user'" class="cc-user-bubble">{{ turn.text }}</div>
             <article v-else class="cc-assistant-turn">
               <div class="assistant-label"><i>C</i> CivRA <span>案件助手</span></div>
-              <p>{{ turn.text }}</p>
+              <div v-if="store.apiMode" class="cc-markdown" v-html="renderMarkdown(turn.text)"></div>
+              <p v-else>{{ turn.text }}</p>
               <p v-if="turn.final?.partial" class="note">这是本次运行停止前保留的部分结果，仍有事项未完成。</p>
               <p v-if="turn.final?.open_issues?.length" class="note">待处理：{{ turn.final.open_issues.join('；') }}</p>
               <button v-for="card in (turn.panels || (turn.panel ? [turn.panel] : []))" :key="card" class="cc-receipt" :class="{ active: panel === card }" @click="go(card)"><span class="cc-receipt-icon">{{ card === 'evidence' ? '▤' : '↗' }}</span><span><strong>{{ PANEL_TITLES[card] || '案情图谱' }}</strong><small>{{ summary(card) }}</small></span><span>展开 ↗</span></button>
             </article>
           </template>
+          <div v-if="stepWait && !store.busy" class="cc-step-confirm" role="group" aria-label="确认当前步骤">
+            <p><strong>这一步完成了吗？</strong>{{ stepWait.summary }}</p>
+            <div>
+              <button class="button primary" @click="decide('done')">这一步完成了，继续下一步</button>
+              <button class="button" @click="decide('revise')">还需要修改</button>
+            </div>
+            <small>需要修改时，先在下方输入框写清楚要改什么，再点“还需要修改”。</small>
+          </div>
           <article v-if="store.apiMode && (store.busy || store.current.server?.error || store.current.server?.outbox)" class="cc-assistant-turn" aria-live="polite">
             <p>{{ store.current.server?.error || store.current.server?.progress || (store.current.server?.outbox ? '上一条提交的结果尚未确认，请重试同一条提交或刷新。' : '正在同步案件记录…') }}</p>
             <button v-if="store.current.server?.outbox && !store.current.server?.sending" class="link" @click="store.retryMessage()">重试这一条提交</button>
@@ -95,7 +112,7 @@ watch(() => store.current.id, () => store.refreshCase(), { immediate: true });
         <div class="cc-shortcuts" aria-label="对话快捷提问"><button v-for="[label, text, icon, target] in shortcuts" :key="label" @click="send(text, target)"><span>{{ icon }}</span>{{ label }}</button></div>
         <form class="cc-composer" @submit.prevent="send()">
           <textarea ref="composer" v-model="input" aria-label="向 CivRA 发送消息" placeholder="告诉我你想解决什么，例如：我想先和对方协商，需要准备什么？" maxlength="10000" @keydown="onKey"></textarea>
-          <div><button type="button" class="link" :disabled="store.busy" @click="openUpload">＋ 添加材料</button><span>{{ store.wait?.kind === 'route_selection' ? '请在处理路径中选择本次提供的方向' : 'Enter 发送 · Shift + Enter 换行' }}</span><button class="cc-send" type="submit" :disabled="!input.trim() || store.busy || !!store.current.server?.outbox || store.wait?.kind === 'route_selection'" aria-label="发送消息">↑</button></div>
+          <div><button type="button" class="link" :disabled="store.busy" @click="openUpload">＋ 添加材料</button><span>{{ stepWait ? '直接发送会作为修改意见' : 'Enter 发送 · Shift + Enter 换行' }}</span><button class="cc-send" type="submit" :disabled="!input.trim() || store.busy || !!store.current.server?.outbox" aria-label="发送消息">↑</button></div>
         </form>
         <p class="cc-demo-note">{{ store.apiMode ? '后端案件 · 回答与成果由 Agent 返回，上传后需解析与核对' : '本地历史 / 演示记录 · 新建案件可使用后端，已有数据不会自动上传' }}</p>
       </div>

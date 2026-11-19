@@ -25,7 +25,7 @@ def cases():
 
 
 def runner_for(cases, tmp_path, script, **kw):
-    kw.setdefault("default_config", RunConfig(conversation_route="case_work"))
+    kw.setdefault("default_config", RunConfig())
     return AgentRunner(ScriptedLLM(script), mock_tool_fixture(cases), cases, RunStore(tmp_path), **kw)
 
 
@@ -114,7 +114,7 @@ def test_run_deadline(cases, tmp_path):
         time.sleep(0.2)
         return tool_call("search_statutes", query="q")
 
-    runner = runner_for(cases, tmp_path, [slow] * 5, default_config=RunConfig(conversation_route="case_work", max_run_seconds=0.3))
+    runner = runner_for(cases, tmp_path, [slow] * 5, default_config=RunConfig(max_run_seconds=0.3))
     info = runner.start_run(CASE, "hi")
     assert info.status == "budget_exhausted" and info.final.completion_reason == "budget_exhausted"
     assert "时间上限" in info.final.open_issues[0]
@@ -123,7 +123,7 @@ def test_run_deadline(cases, tmp_path):
 # ---------------------------------------------------------------- model interface
 
 def test_run_config_model_params_reach_the_model(cases, tmp_path):
-    cfg = RunConfig(conversation_route="case_work", model="deepseek-chat", seed=7, temperature=0.2, max_output_tokens=800)
+    cfg = RunConfig(model="deepseek-chat", seed=7, temperature=0.2, max_output_tokens=800)
     runner = runner_for(cases, tmp_path, [tool_call("finish", answer="ok")], default_config=cfg)
     runner.start_run(CASE, "hi")
     call = runner.llm.calls[0]

@@ -218,10 +218,6 @@ class RunStore:
                 lines.append(stream.readline())
             return lines
 
-    def read_tasks(self, run_id: str):
-        from backend.common.schemas import CaseTask
-        return [CaseTask.model_validate(row) for row in self._read_channel(run_id, "tasks")]
-
     def read_messages(self, run_id: str) -> list:
         return self._read_channel(run_id, "messages")
 

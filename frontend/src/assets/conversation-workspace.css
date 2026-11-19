@@ -2,3 +2,35 @@
 @media(min-width:1450px){.cc-workspace.with-panel{grid-template-columns:minmax(420px,1fr) minmax(500px,.95fr)}}
 @media(max-width:1150px){.cc-workspace.with-panel{grid-template-columns:minmax(300px,1fr) minmax(380px,1.05fr)}.cc-feed-inner{padding:24px}.cc-compose-wrap{padding:12px 20px}.cc-panel-body{padding:20px}.cc-inline-routes{grid-template-columns:1fr}.cc-inline-routes button{display:flex;align-items:center;justify-content:space-between;padding:11px 13px}.cc-inline-routes span{margin:0}.cc-welcome h1{font-size:23px}.cc-composer>div>span{display:none}}
 @media(max-width:760px){.cc-workspace.with-panel{grid-template-columns:minmax(0,1fr)}.cc-work-panel{position:fixed;inset:120px 0 0;z-index:4;border-left:0;border-top:1px solid #dae5d0;box-shadow:0 -12px 35px #23401c17;border-radius:16px 16px 0 0;overflow:hidden}.cc-context-bar{padding:12px 18px}.cc-feed-inner{padding:22px 20px}.cc-compose-wrap{padding:10px 16px 12px}.cc-welcome h1{font-size:23px}.cc-shortcuts{gap:5px}.cc-shortcuts button{padding:6px 9px}.cc-user-bubble{margin-left:20px}.cc-panel-body{padding:20px}.cc-work-panel>header{padding:15px 20px}.cc-demo-note{font-size:8px}.cc-composer textarea{font-size:12px}.cc-route-list article{padding:16px}}
+
+/* Rendered assistant answers */
+.cc-markdown{font-size:13px;line-height:1.95;overflow-wrap:anywhere;color:#2f3d2a}
+.cc-markdown p{margin:0 0 10px}
+.cc-markdown h3,.cc-markdown h4,.cc-markdown h5,.cc-markdown h6{font-weight:600;margin:16px 0 8px;line-height:1.6}
+.cc-markdown h3{font-size:16px}.cc-markdown h4{font-size:14px}.cc-markdown h5,.cc-markdown h6{font-size:13px}
+.cc-markdown ul,.cc-markdown ol{padding-left:20px;margin:0 0 10px}
+.cc-markdown li{margin:4px 0}
+.cc-markdown blockquote{border-left:3px solid #c9d8bd;padding:4px 12px;margin:0 0 10px;color:#5f7154;background:#f7faf3}
+.cc-markdown code{background:#eef3e9;padding:1px 5px;border-radius:4px;font-size:12px}
+.cc-markdown hr{border:0;border-top:1px solid #e3eadc;margin:14px 0}
+
+/* Confirming the current route step */
+.cc-step-confirm{border:1px solid #b9cdb0;background:#f3f8ef;border-radius:12px;padding:16px 18px;margin:0 0 24px}
+.cc-step-confirm p{font-size:12px;line-height:1.8;color:#4f6145;margin-bottom:12px}
+.cc-step-confirm p strong{display:block;font-size:13px;color:#2e4a2c;margin-bottom:4px}
+.cc-step-confirm>div{display:flex;gap:10px;flex-wrap:wrap}
+.cc-step-confirm small{display:block;font-size:10px;color:#8a997e;margin-top:10px}
+
+/* Steps of the selected route */
+.cc-route-steps{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:8px}
+.cc-route-steps li{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid #e3eadc;border-radius:10px;background:#fff}
+.cc-route-steps li.current{border-color:#91ab82;background:#f6faf1}
+.cc-route-steps li.completed{background:#fafcf8}
+.cc-route-steps .cc-step-mark{flex-shrink:0;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11px;background:#eef3e9;color:#6c7f60}
+.cc-route-steps li.completed .cc-step-mark{background:#2e664e;color:#fff}
+.cc-route-steps li.current .cc-step-mark{background:#91ab82;color:#fff}
+.cc-route-steps strong{display:block;font-size:12px;font-weight:500}
+.cc-route-steps small{display:block;font-size:10px;color:#8a997e;line-height:1.7;margin-top:3px}
+.cc-markdown table{border-collapse:collapse;width:100%;margin:0 0 12px;font-size:12px}
+.cc-markdown th,.cc-markdown td{border:1px solid #e0e7d8;padding:6px 9px;text-align:left;vertical-align:top}
+.cc-markdown th{background:#f3f7ee;font-weight:500}

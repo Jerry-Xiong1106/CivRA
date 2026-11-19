@@ -1,5 +1,6 @@
 """Real text/PDF/Word parsing, immutable assets and replaceable OCR boundaries."""
 
+from backend.case.intake.updates import set_case_stage
 import io
 import unittest
 from datetime import datetime, timedelta, timezone
@@ -15,7 +16,6 @@ from backend.case.intake.contracts import UpdateCaseRequest, CaseChanges
 from backend.case.models import BusinessOutput
 from backend.case.materials.ocr import OcrEngineRegistry, OcrLine, OcrPage, PaddleOcrConfig, PaddleOcrEngine
 from backend.case.errors import CaseNotFound, VersionConflict
-from backend.agent.case_adapter import RepositoryCasePort
 
 
 class OfflineEngine:
@@ -169,7 +169,7 @@ class DocumentsAssetsTests(unittest.TestCase):
         with self.assertRaises(ValueError): self.assets.save_output(output.model_copy(update={"output_version":3}))
         self.assets.save_output(output.model_copy(update={"output_version":2,"text":"new"}))
         self.assertEqual(self.assets.get_output(self.case.case_id,"test")["output"].output_version,2)
-        RepositoryCasePort(self.repo).set_stage(self.case.case_id,"litigation")
+        set_case_stage(self.repo, self.case.case_id,"litigation")
         self.assertTrue(self.assets.get_output(self.case.case_id,"test")["stale"])
         with self.assertRaises(VersionConflict): self.assets.save_output(output)
 

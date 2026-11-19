@@ -1,5 +1,5 @@
 import { createCivraApi, ApiError } from './civraApi.js';
-import { applyConversation, currentWait, panelsForFinal, ROUTE_LABELS } from '../domain/backendAdapter.js';
+import { applyConversation, currentWait, panelsForFinal } from '../domain/backendAdapter.js';
 
 // Capture the case object for each operation. Switching the visible case must
 // never redirect an upload, resumed wait or late response into another case.
@@ -42,7 +42,7 @@ export function createBackendBridge({ persist, notify, client = createCivraApi()
           }
           if (event.type === 'step.started') c.server.progress = '正在整理与处理…';
           if (event.type === 'step.finished') c.server.progress = '已完成一个处理步骤…';
-          if (event.type === 'run.waiting_user') c.server.progress = '请补充信息或确认处理方向';
+          if (event.type === 'run.waiting_user') c.server.progress = '请回答问题或确认这一步';
           persist();
         });
         const view = await read(c);
@@ -75,7 +75,7 @@ export function createBackendBridge({ persist, notify, client = createCivraApi()
     } catch (error) { mark(c, { error: error.message }); notify(error.message); }
     finally { active.delete(c.id); mark(c, { syncing: false }); }
   }
-  async function submit(c, text, { routeChoice, attachments, retry = false } = {}) {
+  async function submit(c, text, { stepDecision, attachments, retry = false } = {}) {
     if (busy(c) && !retry) { notify('当前请求仍在处理，请等待结果或刷新会话。'); return null; }
     if (active.has(c.id)) return null;
     if (c.server?.outbox && !retry) { notify('上一条提交尚未确认，请先重试该条请求，避免重复办理。'); return null; }
@@ -89,16 +89,14 @@ export function createBackendBridge({ persist, notify, client = createCivraApi()
         const wait = currentWait(c);
         const common = { request_id: crypto.randomUUID(), expected_case_version: c.server.snapshot.case_version,
           attachments: attachments || c.server.pendingAttachments || [] };
-        if (wait?.kind === 'route_selection') {
-          if (!wait.options.some(o => o.route === routeChoice)) {
-            throw new ApiError('请使用处理路径中的按钮，选择助手本次提供的方向。', 422);
-          }
-          payload = { ...common, wait_id: wait.wait_id, reply: { route_choice: routeChoice } };
+        if (wait?.kind === 'step_confirmation') {
+          // Typing while a step waits for confirmation means "revise, with this note".
+          const decision = stepDecision || 'revise';
+          payload = { ...common, wait_id: wait.wait_id, reply: { step_decision: decision, ...(text ? { text } : {}) } };
         } else if (wait) {
           payload = { ...common, wait_id: wait.wait_id, reply: { text } };
         } else {
-          const requestText = routeChoice ? '我希望按“' + ROUTE_LABELS[routeChoice] + '”准备，请比较适用条件并让我确认处理路径。' : text;
-          payload = { ...common, text: (!c.server.submissions?.length && c.caseTypeHint ? '创建案件时初步选择的纠纷类型：' + c.caseTypeHint + '，请根据后续案情核对。\n' : '') + requestText };
+          payload = { ...common, text: (!c.server.submissions?.length && c.caseTypeHint ? '创建案件时初步选择的纠纷类型：' + c.caseTypeHint + '，请根据后续案情核对。\n' : '') + text };
         }
         mark(c, { outbox: payload });
       }
@@ -111,7 +109,7 @@ export function createBackendBridge({ persist, notify, client = createCivraApi()
       await read(c);
       if (c.server.pending) await track(c, receipt.run_id, controller.signal);
       const final = c.server.run?.final;
-      return { accepted: true, panel: currentWait(c)?.kind === 'route_selection' ? 'workflow' : panelsForFinal(final, c.server.outputs)[0] || '' };
+      return { accepted: true, panel: currentWait(c) ? '' : panelsForFinal(final, c.server.outputs)[0] || '' };
     } catch (error) {
       if ([401, 404, 409, 413, 415, 422].includes(error.status)) {
         mark(c, { outbox: null });
@@ -122,6 +120,27 @@ export function createBackendBridge({ persist, notify, client = createCivraApi()
       return accepted ? { accepted: true, panel: '' } : null;
     } finally { active.delete(c.id); mark(c, { sending: false }); }
   }
+  // The user picked a route entry in the interface; the Agent starts guiding that route.
+  async function selectRoute(c, route) {
+    if (active.has(c.id) || c.server?.outbox) { notify('当前请求仍在处理，请稍后再切换路线。'); return null; }
+    const controller = new AbortController(); active.set(c.id, controller);
+    mark(c, { sending: true, error: '', progress: '正在进入所选路线…' });
+    try {
+      const id = await ensure(c);
+      const receipt = await client.selectRoute(id, { request_id: crypto.randomUUID(), route,
+        expected_case_version: c.server.snapshot.case_version });
+      mark(c, { pending: ['queued', 'running'].includes(receipt.status), progress: '助手正在引导当前步骤…', lastReceipt: receipt });
+      await read(c);
+      if (c.server.pending) await track(c, receipt.run_id, controller.signal);
+      return { accepted: true };
+    } catch (error) {
+      if (error.status === 409) { try { await read(c); } catch { /* show original conflict */ } }
+      mark(c, { error: error.message, progress: '' });
+      notify(error.message);
+      return null;
+    } finally { active.delete(c.id); mark(c, { sending: false }); }
+  }
+
   async function upload(c, files) {
     if (busy(c) || c.server?.outbox) { notify('请先完成或重试当前请求，再上传材料。'); return []; }
     active.set(c.id, new AbortController());
@@ -150,6 +169,6 @@ export function createBackendBridge({ persist, notify, client = createCivraApi()
     try { return await client.download(c.server.conversationId, artifactId); }
     catch (error) { notify(error.message); return null; }
   }
-  return { submit, sync, upload, download, busy, retry: c => submit(c, '', { retry: true }),
+  return { submit, selectRoute, sync, upload, download, busy, retry: c => submit(c, '', { retry: true }),
     dispose: () => { for (const controller of active.values()) controller.abort(); active.clear(); } };
 }
