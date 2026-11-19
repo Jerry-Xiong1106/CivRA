@@ -92,7 +92,11 @@ def update_case(request: UpdateCaseRequest | dict, repository: IdempotentCaseRep
         return _error(case_id, version, "not_found", "案件不存在或不可读取。")
     except UpdateDeadlineExceeded:
         return _error(case_id, version, "timeout", "等待数据库事务期间请求已过期，未保存变更。")
-    except (ValidationError, ValueError, RequestConflict) as exc:
+    except ValidationError as exc:
+        issues = [{"location": list(item["loc"]), "type": item["type"], "message": item["msg"]}
+                  for item in exc.errors(include_input=False, include_context=False, include_url=False)]
+        return _error(case_id, version, "invalid_request", "案件变更不合法。", {"issues": issues})
+    except (ValueError, RequestConflict) as exc:
         return _error(case_id, version, "invalid_request", "案件变更不合法。", {"reason": str(exc).splitlines()[0]})
     except sqlite3.Error:
         return _error(case_id, version, "tool_error", "案件存储操作失败，未返回成功结果；请查询案件版本后重试。")

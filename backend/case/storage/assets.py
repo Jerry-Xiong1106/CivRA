@@ -72,6 +72,16 @@ class SQLiteAssetStore:
                 connection.execute("INSERT INTO case_files VALUES (?,?,?,?,?)",(case_id,file_id,file_version,record.model_dump_json(),content))
         return record
 
+    def list_file_refs(self, case_id, *, limit=50):
+        """Recent input metadata for the Agent, without loading bytes or generated outputs."""
+        with self.repository.connection() as connection:
+            rows = connection.execute(
+                "SELECT metadata_json FROM case_files WHERE case_id=? ORDER BY rowid DESC LIMIT ?",
+                (case_id, limit),
+            ).fetchall()
+        return [FileRecord.model_validate_json(row[0]).model_dump(
+            include={"file_id", "file_version", "file_name", "document_type"}) for row in rows]
+
     def get_file(self, case_id, file_id, file_version=None) -> tuple[FileRecord, bytes]:
         with self.repository.connection() as connection:
             rows=connection.execute("SELECT metadata_json,content FROM case_files WHERE case_id=? AND file_id=?" +

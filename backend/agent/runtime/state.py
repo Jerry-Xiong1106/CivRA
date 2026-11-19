@@ -12,6 +12,8 @@ CURRENT_ENGINE = "langchain-create-agent-v2"
 
 class Checkpoint(BaseModel):
     run_id: str
+    thread_id: str | None = None  # Old records used run_id as the graph thread.
+    graph_checkpoint_id: str | None = None
     engine: str = CURRENT_ENGINE
     case_id: str
     status: RunStatus
@@ -25,8 +27,10 @@ class Checkpoint(BaseModel):
     routing_reason: str = ""
     route_selected: bool = False
     clarification_rounds: int = 0
+    intake_wait_id: str | None = None
     search_calls: int = 0
     asked_questions: list[str] = Field(default_factory=list)
+    asked_gap_labels: dict[str, list[str]] = Field(default_factory=dict)
     usage: RunUsage = Field(default_factory=RunUsage)
     wait: Wait | None = None
     experiment_run_id: str | None = None

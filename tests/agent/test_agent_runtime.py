@@ -255,7 +255,7 @@ def test_long_history_is_compacted_but_stored_in_full(cases, tmp_path):
 
     from backend.agent.runtime.store import RunStore as RS
     stored = RS(tmp_path).read_messages(info.run_id)
-    assert "messages" not in json.loads((tmp_path / info.run_id / "checkpoint.json").read_text(encoding="utf-8"))
+    assert "messages" not in RS(tmp_path).load_checkpoint(info.run_id).model_dump()
     assert sum(big in m.content for m in stored if m.type == "tool") == 11  # full history kept
 
 

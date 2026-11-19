@@ -48,6 +48,26 @@ class OfficialFormsTests(unittest.TestCase):
         self.assertNotEqual(result.status, "error", result.error)
         return result.data, request
 
+    def test_lookup_pages_cover_all_blank_forms_and_expose_actual_drafting_ids(self):
+        from backend.tools.official_forms import create_form_lookup
+        tool = create_form_lookup(self.service)
+        ids = set()
+        fillable = []
+        offset = 0
+        while offset is not None:
+            page = tool.invoke({"offset": offset})["data"]
+            assert page["total"] == 113 and 1 <= len(page["candidates"]) <= 8
+            for card in page["candidates"]:
+                assert card["template_id"] not in ids
+                ids.add(card["template_id"])
+                if card["draft_document_args"]:
+                    t = self.service.drafter.templates.get(**card["draft_document_args"])
+                    fillable.append(t.template_id)
+            offset = page["next_offset"]
+        assert len(ids) == 113 and len(fillable) == 3
+        miss = tool.invoke({"query": "不存在的模板", "document_type": "defense"})
+        assert miss["status"] == "empty" and miss["data"]["candidates"] == []
+
     def confirm(self, preview, text=None):
         case = self.repo.get_case(self.case_id)
         reply = RepositoryCasePort(self.repo).record_user_reply(case_id=self.case_id, expected_case_version=case.case_version,

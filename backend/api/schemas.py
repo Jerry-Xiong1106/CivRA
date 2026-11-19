@@ -3,7 +3,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from backend.common.schemas import RunInfo, UserReply
+from backend.common.schemas import LitigationStep, RunInfo, UserReply
+from backend.agent.litigation import Feedback
 from backend.case.models import BusinessOutput, CaseSnapshot
 from backend.case.storage.assets import FileRecord
 
@@ -64,9 +65,56 @@ class MessageReceipt(BaseModel):
     error: str | None = None
 
 
+class LitigationEntry(Payload):
+    request_id: str = Field(min_length=1, max_length=128)
+    expected_case_version: int | None = Field(default=None, ge=1, strict=True)
+    switch_wait_id: str | None = Field(default=None, min_length=1, max_length=200)
+
+
+class LitigationFeedback(Payload):
+    request_id: str = Field(min_length=1, max_length=128)
+    event: Feedback
+    note: str = Field(min_length=1, max_length=1500)
+    wait_id: str | None = Field(default=None, min_length=1, max_length=200)
+    expected_case_version: int | None = Field(default=None, ge=1, strict=True)
+
+
+class RouteSubmission(MessageRequest):
+    operation: Literal["enter_litigation", "litigation_feedback"]
+    switch_wait_id: str | None = None
+    event: Feedback | None = None
+
+
 class SubmissionView(MessageReceipt):
-    input: MessageRequest
+    input: RouteSubmission | MessageRequest
     created_at: str
+
+
+class RouteStepView(BaseModel):
+    step_id: LitigationStep
+    title: str
+    completion_condition: str
+    status: str
+    feedback: str | None
+    event: Feedback | None
+    output_refs: list[str]
+
+
+class LitigationProgressView(BaseModel):
+    route: Literal["litigation"]
+    role: Literal["plaintiff", "defendant"] | None
+    current_step: LitigationStep | None
+    next_action: str
+    steps: list[RouteStepView]
+    artifacts: dict[str, list[str]]
+    artifact_gaps: dict[str, list[str]]
+    progress_version: int
+    task_id: str | None
+    task_status: str | None
+    missing: list[str]
+    wait_id: str | None
+    files: list[str]
+    inventory_truncated: bool
 
 
 class ConversationView(BaseModel):
@@ -81,3 +129,4 @@ class ConversationView(BaseModel):
     files: list[FileRecord]
     outputs: list[BusinessOutput]
     inventory_truncated: bool = False
+    route_progress: LitigationProgressView | None = None

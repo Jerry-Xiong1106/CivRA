@@ -7,6 +7,8 @@ from .route_models import RouteSourceExcerpt
 
 WORKFLOW_VERSION = "civil_planning_v2"
 TaskStatus = Literal["pending", "in_progress", "completed", "blocked", "not_applicable"]
+LitigationFeedbackEvent = Literal["intake_checked", "evidence_reviewed", "draft_reviewed", "submitted",
+                                 "accepted", "correct_evidence", "correct_draft"]
 
 
 class WorkflowSourceNote(ContractModel):
@@ -53,6 +55,7 @@ class WorkflowProgressRecord(ContractModel):
     plan_basis_hash: str
     case_version: int
     progress_version: int
+    event: LitigationFeedbackEvent | None = None
 
 
 class WorkflowEdge(ContractModel):

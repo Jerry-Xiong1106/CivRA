@@ -26,7 +26,8 @@ def test_no_wording_can_bypass_search_limits_in_the_same_batch(tmp_path):
 
 
 def test_clarification_limits_survive_restart_without_blocking_route_selection(tmp_path):
-    s = setup(tmp_path, [tool_call("ask_user", questions=[{"question_id":str(i),"text":str(i)} for i in range(3)]), ask(1)])
+    s = setup(tmp_path, [tool_call("ask_user", questions=[{"question_id":str(i),"text":str(i)} for i in range(3)]), ask(1)],
+              max_clarification_rounds=2)
     info = s.runner.start_run("c", "朋友欠我钱怎么办")
     assert len(info.wait.questions) == 1
     model = ScriptedLLM([ask(2), ask(3), tool_call("request_route_choice", comparison="请选择", options=[{"route":"mediation","label":"调解"}]), tool_call("finish",answer="已选择调解")])
@@ -59,10 +60,13 @@ def test_old_checkpoint_task_label_cannot_bypass_common_limits(tmp_path):
     s=setup(tmp_path,[tool_call("search_statutes",query="q"),ask(1)],max_search_calls=1)
     info=s.runner.start_run("c","旧流程")
     path=tmp_path/info.run_id/"checkpoint.json"
-    record=json.loads(path.read_text(encoding="utf-8"))
+    record=s.runner.store.load_checkpoint(info.run_id).model_dump(mode="json")
     record['task_type']='general'
     record['config']['task_type']='general'
     path.write_text(json.dumps(record,ensure_ascii=False),encoding="utf-8")
+    import sqlite3
+    with sqlite3.connect(s.runner.store.database) as db:
+        db.execute("DELETE FROM agent_runs WHERE run_id=?", (info.run_id,))
     runner=AgentRunner(ScriptedLLM([tool_call("search_statutes",query="q2"),tool_call("finish",answer="用已有结果回答")]),
                        s.tools,s.cases,RunStore(tmp_path), default_config=RunConfig(conversation_route="case_work"))
     info=runner.resume_run(info.run_id,UserReply(text="补充情况"),wait_id=info.wait.wait_id)

@@ -80,6 +80,22 @@ class CostCalculator:
                 amounts={"total":self._sum(values)}
                 formula="total = sum(input amounts)"
                 assumptions.append("输入为调用方明确提供的金额；是否重复需先检查证据。")
+            elif request.calculation_type=="subtract_amounts":
+                if set(request.inputs) != {"base", "deductions"} or not isinstance(request.inputs["deductions"], list):
+                    raise ValueError("subtract_amounts requires base (Money) and deductions (list of Money)")
+                base = Money.model_validate(request.inputs["base"])
+                deducted = self._sum([Money.model_validate(row) for row in request.inputs["deductions"]])
+                if base.currency != deducted.currency:
+                    raise ValueError("base and deductions must use the same currency")
+                formula = "balance = base - sum(deductions)"
+                amounts = {}
+                if base.decimal < deducted.decimal:
+                    unresolved.append("扣减合计超过基数，请核对金额和范围")
+                else:
+                    with localcontext() as ctx:
+                        ctx.prec = max(len(base.amount), len(deducted.amount)) * 2 + 2
+                        amounts["total"] = Money(amount=format(base.decimal - deducted.decimal, "f"), currency=base.currency)
+                assumptions.append("差额仅针对明确列出的输入，未计入的未知项仍需核对。")
             elif request.calculation_type=="multiply":
                 if set(request.inputs)!={"amount","multiplier"}:
                     raise ValueError("multiply needs amount and multiplier")

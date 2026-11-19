@@ -33,7 +33,7 @@ def test_domain_inputs_are_data_in_native_templates(question):
     assert view[-1] is history[0]
     assert question in view[-1].content
     assert '"clarification_rounds": 1' in view[-2].content
-    assert context["max_clarification_rounds"] == 2
+    assert context["max_clarification_rounds"] == 3
 
 
 def test_template_preserves_braces_and_native_tool_call_pair():

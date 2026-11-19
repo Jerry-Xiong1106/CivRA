@@ -159,15 +159,25 @@ def test_pause_skips_later_side_effect_and_resumes_new_runner(tmp_path):
     # A previous release may have stored a readable mirror. Resume must ignore
     # that copy and use the durable framework history, even if they disagree.
     path = tmp_path / info.run_id / "checkpoint.json"
-    metadata = json.loads(path.read_text(encoding="utf-8"))
+    metadata = store.load_checkpoint(info.run_id).model_dump(mode="json")
+    # Reconstruct the previous on-disk format, including a run-scoped graph.
+    import sqlite3
+    thread = metadata.pop("thread_id")
+    metadata.pop("graph_checkpoint_id")
+    with sqlite3.connect(tmp_path / "agent.sqlite3") as graph:
+        graph.execute("UPDATE checkpoints SET thread_id=? WHERE thread_id=?", (info.run_id, thread))
+        graph.execute("UPDATE writes SET thread_id=? WHERE thread_id=?", (info.run_id, thread))
+    with sqlite3.connect(store.database) as db:
+        db.execute("DELETE FROM agent_runs WHERE run_id=?", (info.run_id,))
     metadata["messages"] = [{"role": "user", "content": "stale mirror must not be replayed"}]
     path.write_text(json.dumps(metadata), encoding="utf-8")
     second_model = ScriptedLLM([tool_call("finish", answer="done")])
     second = AgentRunner(second_model, tool_fixture(cases, real_statutes=False), cases, RunStore(tmp_path), default_config=RunConfig(conversation_route="case_work"))
-    info = second.resume_run(info.run_id, UserReply(text="yes"), wait_id=info.wait.wait_id)
+    info = second.resume_run(info.run_id, UserReply(text="yes"), wait_id=info.wait.wait_id, conversation_id="conv_migrated")
     assert info.status == "completed" and len(second_model.calls) == 1
     assert not any("stale mirror" in m.get("content", "") for m in second_model.calls[0]["messages"])
-    assert "messages" not in json.loads(path.read_text(encoding="utf-8"))
+    assert second.store.load_checkpoint(info.run_id).thread_id == "conv_migrated"
+    assert path.read_text(encoding="utf-8") == json.dumps(metadata)
     assert cases.get_snapshot("c").case_version == 1
 
 

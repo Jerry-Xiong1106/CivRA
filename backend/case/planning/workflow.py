@@ -11,7 +11,7 @@ from ..errors import CaseNotFound, VersionConflict
 from ..research.sources import SourceSelection, review_sources
 from ..case_context import build_case_context
 from .workflow_models import (
-    TaskStatus, WORKFLOW_VERSION, WorkflowEdge, WorkflowProgressRecord, WorkflowSourceCheck,
+    LitigationFeedbackEvent, TaskStatus, WORKFLOW_VERSION, WorkflowEdge, WorkflowProgressRecord, WorkflowSourceCheck,
 )
 
 
@@ -30,6 +30,7 @@ class WorkflowProgressChange(ContractModel):
     status: TaskStatus
     note: str = Field(min_length=1, max_length=2000)
     evidence_ids: list[Identifier] = Field(default_factory=list, max_length=30)
+    event: LitigationFeedbackEvent | None = None
 
     @model_validator(mode="after")
     def meaningful_note(self):
@@ -252,6 +253,11 @@ class CaseWorkflowService:
         except (ValidationError, ValueError, KeyError, TimeoutError) as exc:
             return failure(case_id, version, exc)
 
+    def latest_progress(self, case_id, route):
+        """Read an existing revision for display without building or saving a plan."""
+        data, _, _ = self._read(case_id, route)
+        return data
+
     def record_progress(self, payload):
         case_id, version = None, None
         try:
@@ -260,7 +266,11 @@ class CaseWorkflowService:
             deadline(request)
             snapshot = self.repository.get_case(case_id)
             head, index, _ = self._read(case_id, request.route)
-            request_hash = digest(request)
+            identity = request.model_dump(mode="json")
+            for change in identity["changes"]:
+                if change["event"] is None:
+                    change.pop("event")  # Keep receipts created before typed litigation feedback.
+            request_hash = digest(identity)
             retry = index.get(request.context.request_id)
             if retry is not None:
                 if retry["digest"] != request_hash:
@@ -293,10 +303,12 @@ class CaseWorkflowService:
             for change in request.changes:
                 if change.step_id not in steps or set(change.evidence_ids) - evidence:
                     raise ValueError("progress references unknown steps or unavailable evidence")
+                if change.event and request.route != "litigation":
+                    raise ValueError("litigation feedback requires the litigation route")
                 records[change.step_id] = WorkflowProgressRecord(step_id=change.step_id, status=change.status,
                     note=change.note, message_id=request.message_id, actor_id=request.actor_id, quote=request.quote,
                     evidence_ids=change.evidence_ids, plan_output_id=output.output_id, plan_basis_hash=plan.plan_basis_hash,
-                    case_version=version, progress_version=head.revision + 1)
+                    case_version=version, progress_version=head.revision + 1, event=change.event)
             data = WorkflowProgressData(route=request.route, revision=head.revision + 1, records=records)
             result = BusinessResult[WorkflowProgressData](case_id=case_id, case_version=version, status="ok", data=data,
                 summary="已记录用户待办反馈，未改变案件事实、路线或结案状态。", output_refs=[self._output_id(case_id, request.route)])

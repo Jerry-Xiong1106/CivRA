@@ -84,7 +84,9 @@ def build_tools(
         tools.extend(create_knowledge_tools(statute_search, retrieval_service=retrieval_service))
     if case_service is not None:
         from backend.tools.case_tools import create_case_tools
+        from backend.tools.official_forms import create_form_lookup
         tools.extend(create_case_tools(case_service))
+        tools.append(create_form_lookup(case_service))
     return tools
 
 
@@ -116,11 +118,16 @@ def build_runner(
             cases = InMemoryCaseStore()
         else:
             from backend.agent.case_adapter import RepositoryCasePort
+            from backend.agent.litigation import LitigationGuide
 
-            cases = RepositoryCasePort(case_service.repository)
+            cases = RepositoryCasePort(case_service.repository, assets=case_service.assets,
+                                      litigation=LitigationGuide(case_service))
     tools = build_tools(cases, real_statutes=real_statutes, statute_search=statute_search,
                         retrieval_service=retrieval_service,
                         mock_business_tools=mock_business_tools, case_service=case_service)
+    if store is None and case_service is not None:
+        database = case_service.repository.path
+        store = RunStore(database.parent / "runs", database=database)
     runner = AgentRunner(llm or llm_from_env(config.model if config else None), tools, cases,
                          store or RunStore(), default_config=config,
                          record_user_messages=case_service is not None)

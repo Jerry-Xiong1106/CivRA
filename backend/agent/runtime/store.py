@@ -13,7 +13,6 @@ from decimal import Decimal
 from pathlib import Path
 from threading import RLock
 from typing import Any, Iterator
-from uuid import uuid4
 
 from pydantic import BaseModel
 
@@ -22,6 +21,7 @@ from backend.common.schemas import TERMINAL_STATUSES, LLMResponse, RunEvent, Too
 
 DEFAULT_RUNS_DIR = Path(os.environ.get("CIVRA_RUNS_DIR", "var/runs"))
 MAX_LOG_INDEXES = 128
+_GRAPH_SETUP_LOCK = RLock()
 
 
 @dataclass
@@ -32,9 +32,12 @@ class _LogIndex:
 
 
 class RunStore:
-    def __init__(self, root: Path | str = DEFAULT_RUNS_DIR) -> None:
+    def __init__(self, root: Path | str = DEFAULT_RUNS_DIR, *, database: Path | str | None = None) -> None:
         self.root = Path(root)
-        self._checkpoint_lock = RLock()
+        workspace = self.root.parent if self.root.name == "runs" else self.root
+        self.database = Path(database) if database else workspace / "cases.sqlite3"
+        self.database.parent.mkdir(parents=True, exist_ok=True)
+        self._initialize_runs()
         self._read_lock = RLock()
         self._log_indexes: OrderedDict[Path, _LogIndex] = OrderedDict()
 
@@ -43,61 +46,103 @@ class RunStore:
         d.mkdir(parents=True, exist_ok=True)
         return d
 
+    @contextmanager
+    def _db(self):
+        with closing(sqlite3.connect(self.database, timeout=10)) as db, db:
+            yield db
+
+    def _initialize_runs(self):
+        with self._db() as db:
+            db.execute("""CREATE TABLE IF NOT EXISTS agent_runs (
+                run_id TEXT PRIMARY KEY, case_id TEXT NOT NULL, thread_id TEXT NOT NULL,
+                state_json TEXT NOT NULL, cancel_requested INTEGER NOT NULL DEFAULT 0)""")
+            db.execute("CREATE INDEX IF NOT EXISTS agent_runs_thread ON agent_runs(thread_id)")
+            for path in self.root.glob("*/checkpoint.json"):
+                run_id = path.parent.name
+                if db.execute("SELECT 1 FROM agent_runs WHERE run_id=?", (run_id,)).fetchone():
+                    continue
+                raw = path.read_text(encoding="utf-8")
+                record = json.loads(raw)
+                if record.get("run_id") != run_id:
+                    raise ValueError(f"Run directory does not match legacy record: {path}")
+                db.execute("INSERT OR IGNORE INTO agent_runs VALUES (?,?,?,?,?)",
+                           (run_id, record["case_id"], record.get("thread_id") or run_id, raw,
+                            int((path.parent / "cancel.requested").exists())))
+
     def exists(self, run_id: str) -> bool:
-        return (self.root / run_id / "checkpoint.json").exists()
+        with self._db() as db:
+            return db.execute("SELECT 1 FROM agent_runs WHERE run_id=?", (run_id,)).fetchone() is not None
+
+    def latest_run(self, thread_id):
+        with self._db() as db:
+            row = db.execute("SELECT run_id FROM agent_runs WHERE thread_id=? ORDER BY rowid DESC LIMIT 1",
+                             (thread_id,)).fetchone()
+        return row[0] if row else None
+
+    @contextmanager
+    def begin_run(self, cp, expected_previous):
+        """Reserve the conversation before recording input or invoking tools."""
+        with self._db() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT run_id FROM agent_runs WHERE thread_id=? ORDER BY rowid DESC LIMIT 1",
+                             (cp.thread_id,)).fetchone()
+            if (row[0] if row else None) != expected_previous:
+                raise ValueError("会话已有更新的运行。")
+            db.execute("INSERT INTO agent_runs(run_id,case_id,thread_id,state_json) VALUES (?,?,?,?)",
+                       (cp.run_id, cp.case_id, cp.thread_id, cp.model_dump_json()))
+        try:
+            yield
+        except Exception:
+            # No graph or model call has started. Release the reservation so a
+            # retry can reuse the application's idempotently recorded input.
+            with self._db() as db:
+                db.execute("DELETE FROM agent_runs WHERE run_id=?", (cp.run_id,))
+            raise
 
     @contextmanager
     def graph_checkpointer(self):
-        """Framework-owned conversation checkpoints; JSON holds domain metadata/logs."""
+        """Framework-owned conversation checkpoints, separate from case transactions."""
         from langgraph.checkpoint.sqlite import SqliteSaver
         self.root.mkdir(parents=True, exist_ok=True)
         with closing(sqlite3.connect(self.root / "agent.sqlite3", check_same_thread=False)) as connection:
-            yield SqliteSaver(connection)
+            saver = SqliteSaver(connection)
+            with _GRAPH_SETUP_LOCK:
+                saver.setup()
+            yield saver
 
     def request_cancel(self, run_id: str) -> None:
         """A separate durable signal cannot be overwritten by a stale checkpoint."""
-        if not self.exists(run_id):
-            raise KeyError(f"unknown run: {run_id}")
-        (self.root / run_id / "cancel.requested").touch(exist_ok=True)
+        with self._db() as db:
+            if not db.execute("UPDATE agent_runs SET cancel_requested=1 WHERE run_id=?", (run_id,)).rowcount:
+                raise KeyError(f"unknown run: {run_id}")
 
     def is_cancel_requested(self, run_id: str) -> bool:
-        return (self.root / run_id / "cancel.requested").exists()
+        with self._db() as db:
+            row = db.execute("SELECT cancel_requested FROM agent_runs WHERE run_id=?", (run_id,)).fetchone()
+        return bool(row and row[0])
 
     def save_checkpoint(self, cp: Checkpoint) -> None:
-        with self._checkpoint_lock:
-            path = self._dir(cp.run_id) / "checkpoint.json"
-            # Separate stores/processes must never share a temporary file.
-            tmp = path.with_name(f".checkpoint-{uuid4().hex}.tmp")
-            tmp.write_text(cp.model_dump_json(indent=2), encoding="utf-8")
-            for attempt in range(7):
-                try:
-                    tmp.replace(path)  # Readers never see a partial JSON document.
-                    break
-                except PermissionError as exc:
-                    # Windows readers, indexers or antivirus can briefly hold the
-                    # target without delete sharing. Keep permanent failures visible.
-                    if getattr(exc, "winerror", None) not in (5, 32, 33) or attempt == 6:
-                        raise
-                    time.sleep(0.01 * 2**attempt)
+        with self._db() as db:
+            db.execute("""INSERT INTO agent_runs(run_id,case_id,thread_id,state_json) VALUES (?,?,?,?)
+                          ON CONFLICT(run_id) DO UPDATE SET
+                          thread_id=excluded.thread_id,state_json=excluded.state_json""",
+                       (cp.run_id, cp.case_id, cp.thread_id or cp.run_id, cp.model_dump_json()))
 
     def load_checkpoint(self, run_id: str) -> Checkpoint:
-        path = self.root / run_id / "checkpoint.json"
-        with self._checkpoint_lock:
-            if not path.exists():
-                raise KeyError(f"unknown run: {run_id}")
-            record = json.loads(path.read_text(encoding="utf-8"))
+        with self._db() as db:
+            row = db.execute("SELECT state_json FROM agent_runs WHERE run_id=?", (run_id,)).fetchone()
+        if row is None:
+            raise KeyError(f"unknown run: {run_id}")
+        record = json.loads(row[0])
         if record.get("engine") != CURRENT_ENGINE:
             raise ValueError("运行记录格式已变化，请新建会话；历史原始文件未改动。")
         return Checkpoint.model_validate(record)
 
     def list_checkpoints(self) -> Iterator[Checkpoint]:
-        if not self.root.exists():
-            return
-        for p in sorted(self.root.glob("*/checkpoint.json")):
-            with self._checkpoint_lock:
-                record = json.loads(p.read_text(encoding="utf-8"))
-            if record.get("engine") == CURRENT_ENGINE:
-                yield Checkpoint.model_validate(record)
+        with self._db() as db:
+            rows = db.execute("SELECT state_json FROM agent_runs WHERE json_extract(state_json,'$.engine')=? "
+                              "ORDER BY run_id", (CURRENT_ENGINE,)).fetchall()
+        yield from (Checkpoint.model_validate_json(row[0]) for row in rows)
 
     def save_result(self, run_id: str, step_id: int, payload: dict[str, Any]) -> str:
         """Store a step's full input/result; returns the result_ref recorded in the trace."""
@@ -161,13 +206,56 @@ class RunStore:
                 lines.append(stream.readline())
             return lines
 
+    def read_tasks(self, run_id: str):
+        from backend.common.schemas import CaseTask
+        return [CaseTask.model_validate(row) for row in self._read_channel(run_id, "tasks")]
+
     def read_messages(self, run_id: str) -> list:
-        """Read full native messages on demand; no second history is persisted."""
+        return self._read_channel(run_id, "messages")
+
+    def _read_channel(self, run_id: str, channel: str) -> list:
+        """Read one persisted LangGraph state field; old or absent fields default to empty."""
         if not (self.root / "agent.sqlite3").exists():
             return []
         with self.graph_checkpointer() as saver:
-            checkpoint = saver.get_tuple({"configurable": {"thread_id": run_id}})
-            return checkpoint.checkpoint["channel_values"].get("messages", []) if checkpoint else []
+            cp = self.load_checkpoint(run_id)
+            config = {"thread_id": cp.thread_id or run_id}
+            if cp.graph_checkpoint_id:
+                config["checkpoint_id"] = cp.graph_checkpoint_id
+            elif cp.thread_id and cp.status in TERMINAL_STATUSES:
+                return []
+            checkpoint = saver.get_tuple({"configurable": config})
+            return checkpoint.checkpoint["channel_values"].get(channel, []) if checkpoint else []
+
+    def pin_graph(self, cp):
+        """Remember the graph snapshot visible when this invocation stopped."""
+        if (self.root / "agent.sqlite3").exists():
+            with self.graph_checkpointer() as saver:
+                state = saver.get_tuple({"configurable": {"thread_id": cp.thread_id or cp.run_id}})
+                if state:
+                    cp.graph_checkpoint_id = state.checkpoint["id"]
+
+    def continue_thread(self, previous, thread_id):
+        """Validate continuity, seeding a legacy per-run thread exactly once."""
+        old_thread = previous.thread_id or previous.run_id
+        source = {"thread_id": old_thread}
+        if previous.graph_checkpoint_id:
+            source["checkpoint_id"] = previous.graph_checkpoint_id
+        with self.graph_checkpointer() as saver:
+            saved = saver.get_tuple({"configurable": source})
+            if saved is None:
+                raise ValueError("缺少上一运行的框架检查点，无法承接历史。")
+            target = {"thread_id": thread_id, "checkpoint_ns": ""}
+            if old_thread != thread_id:
+                if previous.thread_id:
+                    raise ValueError("会话和运行的线程不匹配。")
+                latest = saver.get_tuple({"configurable": target})
+                if latest is None:
+                    saver.put({"configurable": target}, saved.checkpoint, saved.metadata,
+                              saved.checkpoint["channel_versions"])
+                elif latest.checkpoint["id"] != saved.checkpoint["id"]:
+                    raise ValueError("此会话已有更新的运行。")
+            return saved.checkpoint["id"]
 
     def emit(self, cp: Checkpoint, type_: str, step_id: int | None = None, *, checkpoint=False, **data) -> None:
         cp.event_seq += 1
@@ -178,6 +266,7 @@ class RunStore:
 
     def end(self, cp: Checkpoint, **data):
         # Publish the terminal event only after its state and final usage are durable.
+        self.pin_graph(cp)
         self.emit(cp, f"run.{cp.status}", checkpoint=True, final=cp.final.model_dump(), **data)
         return cp.info()
 

@@ -49,6 +49,74 @@ class CreateAgentIntegrationTests(unittest.TestCase):
 
         return setup
 
+    def test_search_format_corrections_do_not_use_the_retrieval_quota(self):
+        setup = self.setup_runner([
+            tool_call("search_statutes", query="《民法典》第一千一百六十五条至第一千一百七十九条"),
+            tool_call("search_statutes", query="《道路交通安全法》第七十五条至第七十六条"),
+            tool_call("search_statutes", query="《民法典》第一千一百七十九条"),
+            tool_call("search_statutes", query="《道路交通安全法》第七十六条"),
+            tool_call("finish", answer="已核对本轮检索结果。"),
+        ])
+        info = setup.runner.start_run(self.case.case_id, "请检索本案所需条文。",
+                                     config=RunConfig(conversation_route="case_work", max_search_calls=1,
+                                                      max_feedback_rounds=1))
+        searches = [s for s in setup.runner.get_trace(info.run_id) if s.tool_name == "search_statutes"]
+        assert info.status == "completed"
+        assert [s.error.code if s.error else s.status for s in searches] == [
+            "INVALID_ARGS", "INVALID_ARGS", "ok", "NOT_ALLOWED",
+        ]
+        assert setup.runner.store.load_checkpoint(info.run_id).search_calls == 1
+
+    def test_agent_update_uses_saved_confirmation_timestamp_and_runtime_version(self):
+        def save_facts(messages, tools):
+            snapshot = self.repository.get_case(self.case.case_id)
+            statement = next(s for s in snapshot.statements if s.text == "我确认双方同等责任，目前看到的医疗费票据是18000元。")
+            facts = [
+                {"fact_id": "f_test_liability", "field": "liability_finding",
+                 "value_type": "text", "value": "同等责任",
+                 "confirmation": {"message_id": statement.message_id, "confirmed_by": statement.actor_id,
+                                  "confirmed_at": statement.created_at.replace(microsecond=0).isoformat()}},
+                {"fact_id": "f_test_medical", "field": "medical_expense_reported",
+                 "value_type": "money", "value": {"amount": "18000", "currency": "CNY"},
+                 "confirmation": {"message_id": statement.message_id}},
+            ]
+            for fact in facts:
+                fact.update(provenance="user_statement", confirmation_status="confirmed", statement_refs=[statement.message_id])
+            return tool_call("update_case", expected_case_version=snapshot.case_version - 1,
+                             changes={"upsert_facts": facts}, change_reason="记录明确确认的事实")
+
+        setup = self.setup_runner([save_facts, tool_call("finish", answer="可以继续准备调解方案。")])
+        info = setup.runner.start_run(self.case.case_id, "我确认双方同等责任，目前看到的医疗费票据是18000元。")
+        assert info.status == "completed"
+        snapshot = self.repository.get_case(self.case.case_id)
+        by_id = {item.fact_id: item for item in snapshot.facts}
+        for key in ("f_test_liability", "f_test_medical"):
+            confirmation = by_id[key].confirmation
+            statement = next(s for s in snapshot.statements if s.message_id == confirmation.message_id)
+            assert (confirmation.confirmed_by, confirmation.confirmed_at) == (statement.actor_id, statement.created_at)
+
+    def test_invalid_case_updates_leave_budget_for_the_requested_answer(self):
+        invalid = tool_call("update_case", change_reason="登记信息", changes={"upsert_facts": [{
+            "fact_id": "f_test_bad", "field": "injury", "value_type": "text", "value": "手腕骨折",
+            "provenance": "user_statement", "confirmation_status": "unconfirmed", "statement_refs": ["missing"],
+        }]})
+
+        def after_second_failure(messages, tools):
+            assert "update_case" not in {tool.name for tool in tools}
+            return invalid
+
+        setup = self.setup_runner([
+            invalid, invalid, after_second_failure,
+            tool_call("finish", answer="基于目前陈述先准备调解方案。"),
+        ])
+        info = setup.runner.start_run(self.case.case_id, "我要准备调解方案。")
+        assert info.status == "completed"
+        steps = [step for step in setup.runner.get_trace(info.run_id) if step.tool_name == "update_case"]
+        assert [step.error.code for step in steps] == ["INVALID_ARGS", "INVALID_ARGS", "NOT_ALLOWED"]
+        assert steps[1].error.details["next_action"]
+        assert steps[0].error.details["issues"][0]["message"]
+        assert info.final.answer == "基于目前陈述先准备调解方案。"
+
     def test_factory_runs_real_business_and_local_rag_and_preserves_sources(self):
         setup = self.setup_runner([
             tool_call('check_evidence'),
@@ -58,7 +126,8 @@ class CreateAgentIntegrationTests(unittest.TestCase):
                 'location':'已读取候选条文。'}]),
         ])
         self.assertIsInstance(setup.cases, RepositoryCasePort)
-        self.assertEqual(len([t.name for t in setup.tools]), 11)
+        self.assertEqual(len(setup.tools), 12)
+        self.assertEqual(sum(t.name == "find_form_template" for t in setup.tools), 1)
         info = setup.runner.start_run(self.case.case_id, '请核对证据并检索民法典第六百八十条。')
         self.assertEqual(info.status, 'completed')
         trace = setup.runner.get_trace(info.run_id)
@@ -96,7 +165,8 @@ class CreateAgentIntegrationTests(unittest.TestCase):
                              case_service=self.service, real_statutes=False,
                              store=RunStore(self.directory/'runs'), dotenv=None)
 
-        self.assertEqual(len([t.name for t in setup.tools]), 11)
+        self.assertEqual(len(setup.tools), 12)
+        self.assertEqual(sum(t.name == "find_form_template" for t in setup.tools), 1)
         self.assertEqual(describe_tool(next(t for t in setup.tools if t.name == 'update_case')).owner, 'member3')
         self.assertIn('changes', describe_tool(next(t for t in setup.tools if t.name == 'update_case')).parameters['properties'])
         self.assertEqual(setup.runner.start_run(self.case.case_id, '检查合成案件').status, 'completed')

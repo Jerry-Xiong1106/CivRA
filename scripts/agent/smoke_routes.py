@@ -1,7 +1,7 @@
 """Live two-entry acceptance, with empty synthetic cases and bounded budgets."""
 from datetime import datetime, timezone
 from getpass import getpass
-import json, sys, uuid
+import json, os, sys, uuid
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT));sys.stdout.reconfigure(encoding='utf-8')
@@ -14,7 +14,7 @@ from backend.case.models import CaseSnapshot
 from backend.case.research.knowledge_bridge import CorpusSourceResolver
 from backend.common.schemas import RunConfig,UserReply
 load_dotenv()
-key=getpass('DeepSeek API key (not echoed): ').strip()
+key=os.environ.get('DEEPSEEK_API_KEY') or getpass('DeepSeek API key (not echoed): ').strip()
 model=make_chat_model(model='deepseek-flash',base_url='https://api.deepseek.com',api_key=key,timeout_s=45)
 model=model.model_copy(update={'extra_body':{'thinking':{'type':'disabled'}}})
 base=ROOT/'var/manual-agent'/('two-routes-'+datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S'))
@@ -53,6 +53,9 @@ for name,message,expected in queries:
             'nonempty':bool(info.final and info.final.answer),'search_bound':cp.search_calls<=3,'question_bound':cp.clarification_rounds<=2}
     if name in ('rule','meaning','definition'):checks['no_questions']=not waits
     if name=='routes':checks['route_selected']=repo.get_case(case.case_id).selected_route=='mediation'
+    if expected == "case_work":
+        checks["task_recorded"] = bool(info.tasks)
+        checks["at_most_one_current"] = sum(t.status in ("active","partial","waiting_input") for t in info.tasks) <= 1
     result={'prompt':message,'initial_route':initial,'expected_route':expected,'checks':checks,'waits':waits,
             'final':info.model_dump(mode='json'),'trace':trace,'routing_reason':cp.routing_reason}
     (d/'result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')

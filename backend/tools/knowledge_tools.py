@@ -72,7 +72,7 @@ def create_knowledge_tools(
 
     @tool(
         'search_statutes',
-        description='检索当前法律库中的完整条文、条号、版本及来源。query可以是问题或明确的法律名称＋条号。只返回候选，不判断依据充分性；不支持案例、日期或法域过滤。明确指定多条时不按top_k截断。',
+        description='检索当前法律库中的完整条文、条号、版本及来源。query 可用自然语言描述待检索问题，或逐条写明法律名称＋完整条号。避免条号范围或无法确定所属法律的条号。只返回候选，不判断依据充分性；不支持案例、日期或法域过滤。明确指定多条时不按top_k截断。',
         args_schema={
             'type': 'object',
             'properties': {'query': {'type': 'string', 'minLength': 1},
@@ -104,7 +104,7 @@ def create_knowledge_tools(
             result = ToolResult.fail('INTERNAL', '检索执行失败，请检查服务配置和索引；未返回替代结果。')
         return result.model_dump(mode='json', exclude_none=True)
 
-    set_policy(search_statutes, owner='member2', feedback_loop='retrieve_verify')
+    set_policy(search_statutes, owner='member2', feedback_loop='retrieve_verify', invalid_args_limit=3)
     return [search_statutes]
 
 

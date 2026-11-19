@@ -162,7 +162,7 @@ TERMINAL_STATUSES = {"completed", "failed", "cancelled", "budget_exhausted"}
 class RunConfig(BaseModel):
     conversation_route: Literal["auto", "consultation", "case_work"] = "auto"
     max_search_calls: int | None = Field(default=3, ge=0)
-    max_clarification_rounds: int | None = Field(default=2, ge=0)
+    max_clarification_rounds: int | None = Field(default=3, ge=0)
     max_questions_per_round: int = Field(default=2, ge=1)
     mode: Literal["direct_llm", "rag", "fixed_workflow", "agent"] = "agent"
     model: str | None = None                 # None = the client's default model
@@ -178,6 +178,12 @@ class RunConfig(BaseModel):
     max_context_chars: int = 60_000          # older history is compacted beyond this size
     enabled_tools: list[str] | None = None
 
+    @classmethod
+    def interactive(cls):
+        """Shared per-run envelope for the HTTP service and manual terminal."""
+        return cls(max_steps=56, max_model_calls=16, max_tool_calls=24,
+                   max_total_tokens=240_000, max_run_seconds=300, max_output_tokens=2200)
+
 
 class UserReply(BaseModel):
     text: str | None = None
@@ -191,6 +197,7 @@ class WaitQuestion(BaseModel):
     text: str
     reason: str | None = None
     field: str | None = None
+    gap: str | None = None
 
 
 class WaitOption(BaseModel):
@@ -242,7 +249,37 @@ class FinalOutput(BaseModel):
     partial: bool = False                    # True when the run stopped before finish
 
 
+TaskKind = Literal["general", "text", "item_review", "document", "unsupported_document", "calculation", "mediation_plan", "evidence_directory"]
+DocumentScope = Literal["draft", "complete"]
+LitigationStep = Literal["jurisdiction", "evidence", "draft", "submit"]
+
+
+class CaseTask(BaseModel):
+    task_id: str
+    route_step: LitigationStep | None = None
+    deliverable: str
+    kind: TaskKind
+    status: Literal["active", "waiting_input", "paused", "partial", "blocked", "delivered", "cancelled"] = "active"
+    missing: list[str] = Field(default_factory=list)
+    missing_kinds: dict[str, Literal["user_input", "material", "verification", "external"]] = Field(default_factory=dict)
+    formats: list[str] = Field(default_factory=list)
+    document_scope: DocumentScope = "draft"
+    calculation_type: str | None = None
+    mediation_preliminary: bool = False
+    mediation_inputs: dict[str, str] = Field(default_factory=dict)
+    mediation_asked: list[str] = Field(default_factory=list)
+    review_file_ids: list[str] = Field(default_factory=list)
+    unreadable_files: dict[str, list[str]] = Field(default_factory=dict)
+    verified_missing: list[str] = Field(default_factory=list)
+    delivery_run_id: str | None = None
+    review_items: list[str] = Field(default_factory=list)
+    reviewed_items: list[str] = Field(default_factory=list)
+    input_refs: list[str] = Field(default_factory=list)
+    output_refs: list[str] = Field(default_factory=list)
+
+
 class RunInfo(BaseModel):
+    tasks: list[CaseTask] = Field(default_factory=list)
     conversation_route: Literal["consultation", "case_work"] = "consultation"
     schema_version: str = "0.5"
     run_id: str

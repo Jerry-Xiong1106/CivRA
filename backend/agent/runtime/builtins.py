@@ -1,6 +1,9 @@
 """Native control tools; middleware applies pause, route-choice and finish actions."""
 from langchain.tools import tool
 from backend.tools.policy import set_policy
+from backend.agent.tasks import TaskIntent
+
+TASK_CHANGE = TaskIntent.model_json_schema()
 
 ROUTES = ["negotiation", "mediation", "litigation"]
 
@@ -10,12 +13,15 @@ ROUTES = ["negotiation", "mediation", "litigation"]
     args_schema={
         'type': 'object', 'additionalProperties': False, 'required': ['questions'],
         'properties': {
+            'task_change': TASK_CHANGE,
             'kind': {'enum': ['clarification', 'material_request']},
             'questions': {'type': 'array', 'minItems': 1, 'items': {
                 'type': 'object', 'required': ['question_id', 'text'],
                 'properties': {'question_id': {'type': 'string'},
                                'text': {'type': 'string', 'minLength': 1},
-                               'reason': {'type': 'string'}, 'field': {'type': 'string'}},
+                               'reason': {'type': 'string'}, 'field': {'type': 'string'},
+                               'gap': {'type':'string', 'minLength':1, 'maxLength':200,
+                                       'description':'此问题对应的稳定缺口短名，同一事项复用同一名称。'}},
             }},
         },
     },
@@ -50,11 +56,34 @@ set_policy(
 
 @tool(
     'finish',
-    description='结束本次运行并交付当前任务的具体结果，不等于案件办结。路线或计划不能替代用户请求的实际准备成果；关键缺口仍需输入且追问额度允许时应使用ask_user。只列当前相关缺口，不声称已执行未执行的动作。',
+    description='交付本次用户要求的结果。入口任务仍是通用目标时，用 task_change 明确实际交付物。用 task_result.gaps 区分用户待答、材料、待核验及外部待办，仅列阻碍当前交付的事项。',
     args_schema={
         'type': 'object', 'additionalProperties': False, 'required': ['answer'],
         'properties': {
             'answer': {'type': 'string', 'minLength': 1},
+            'task_change': TASK_CHANGE,
+            'task_result': {'type': 'object', 'additionalProperties': False, 'properties': {
+                'answer_is_deliverable': {'type': 'boolean', 'description': '文字交付物已写在 answer 中；承诺以后处理不算交付。无需再抄整段正文。'},
+                'known_inputs': {'type':'array', 'maxItems':6, 'items':{'type':'string','minLength':1,'maxLength':500},
+                                 'description':'当前交付所用的用户原话摘录，保留未知、否定和条件。'},
+                'gaps': {'type':'array','maxItems':20,
+                         'description':'完整剩余缺口，按影响排序。同一事项复用 label，只写一次；替代 missing 和 next_question。用户现在能答时填 question，可同轮问多个独立问题。已跳过的保留未知并省略问句，已解决或允许留空的事项移除。',
+                         'items': {'type':'object','additionalProperties':False,'required':['label','kind'],
+                                   'properties': {'label':{'type':'string','minLength':1,'maxLength':200},
+                                                  'kind':{'enum':['user_input','material','verification','external']},
+                                                  'question':{'type':'string','minLength':1,'maxLength':500,
+                                                              'description':'仅 user_input 使用，给用户的具体问法。'}}}},
+                'next_question': {'type':'string','minLength':1,'maxLength':500,
+                                  'description':'旧版单问兼容字段。新调用使用 gaps。'},
+                'delivered_text': {'type': 'string', 'description': '回答中实际交付的正文原文'},
+                'missing': {'type': 'array', 'items': {'type': 'string'}},
+                'mediation_inputs': {'type': 'object', 'additionalProperties': False, 'properties': {
+                    'payment_history': {'type': 'string', 'description': '用户关于已付或垫付款的原话'},
+                    'payment_preference': {'type': 'string', 'description': '用户关于可接受的付款安排的原话'},
+                }},
+                'items': {'type': 'array', 'items': {'type': 'object', 'required': ['quote','finding'],
+                          'properties': {'quote': {'type': 'string'}, 'finding': {'type': 'string'}}}},
+            }},
             'open_issues': {'type': 'array', 'items': {'type': 'string'}},
             'output_refs': {'type': 'array', 'items': {'type': 'string'}},
             'citations': {

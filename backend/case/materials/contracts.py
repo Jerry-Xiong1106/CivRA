@@ -37,6 +37,7 @@ class ParseDocumentsData(ContractModel):
     text_segments: list[ExtractedText]
     extracted_facts: list[Fact]
     warnings: list[str]
+    unreadable: dict[str, list[str]] = Field(default_factory=dict)
 
 
 class CheckEvidenceRequest(SnapshotRequest):

@@ -38,6 +38,7 @@ API 启动时初始化一次模型、真实案件服务、检索服务和来源�
 | GET | `/api/conversations/{id}/events?run_id=...` | SSE 运行事件 |
 | POST | `/api/conversations/{id}/files` | multipart 上传材料 |
 | GET | `/api/conversations/{id}/artifacts/{artifact_id}` | 下载生成文件 |
+| GET | `/api/form-templates/{template_id}/{version}` | 按目录版本下载官方空白 Word（使用相同的 Bearer 认证） |
 
 ### 创建和发送消息
 
@@ -60,6 +61,9 @@ API 启动时初始化一次模型、真实案件服务、检索服务和来源�
 每次新提交使用新的 request_id；网络重试必须复用同一 ID 和内容。同 ID 同内容返回已有回执，不重复执行模型和工具；同 ID 不同内容返回 409。
 
 ### 追问和路线选择
+
+一个 wait 可包含多个问题，请按 question_id 分别提交答案。新记录的 wait.questions[].gap 对应任务缺口短名；
+run.tasks[].missing_kinds 区分 user_input（用户可补充）、material（材料）、verification（待核验）和 external（外部反馈）。旧记录没有分类时按未分类展示。
 
 收到 `run.waiting_user`，根据 `wait.kind` 展示问题或菜单。问题可能有多个，逐个显示并按 question_id 收集回答。不要从普通回答文字里猜测菜单。
 
@@ -121,12 +125,37 @@ GET 会话中的 outputs 含成果及导出文件引用。用其中的 artifact_
 
 ## 连续对话与持久化
 
+### 诉讼路线入口和办理反馈
+
+在已有会话中调用 `POST /api/conversations/{id}/routes/litigation/enter`，请求体为
+`{"request_id":"enter-1"}`。与发送消息一样使用回执、SSE 和 GET 查询。空案会得到角色与诉求追问；
+已有案件从当前材料、成果和实际反馈继续。同一 request_id 可重试。再次打开已在办理的路线
+返回已有运行；页面刷新只调用 GET。其他路线尚有追问时返回 409；用户明确确认切换后，
+在入口请求中传入当前 `switch_wait_id`。可直接选择诉讼的现有路线菜单复用原运行。
+
+会话 GET 的 `route_progress` 包含 current_step、next_action、steps、task_id、task_status、
+wait_id、missing、artifacts 和 progress_version。jurisdiction、evidence、draft、submit
+分别对应准备事项、证据目录、文书复核及提交反馈。每个步骤有独立的完成条件。
+受理等外部事件按用户报告记录。生成文书时不会自动记录提交或受理。
+
+已发生的进度可发往 `POST /api/conversations/{id}/routes/litigation/feedback`，例如
+`{"request_id":"filing-1","event":"submitted","note":"今天递交了材料，正在等待反馈"}`。
+还有待答追问时附当前 wait_id；路线菜单要先完成选择。event 可为 intake_checked、
+evidence_reviewed、draft_reviewed、submitted、accepted、correct_evidence、correct_draft。
+复核需要本案相符的成果；存在多个版本的不同成果时，在 note 中注明 output_id。
+也可在普通对话里报告进展，由 Agent 请求确认后记录。补正反馈重新打开对应步骤。
+
+手动终端用 `/route litigation` 进入，`/state` 查看同样的进度，
+`/upload "D:\材料\认定书.pdf"` 上传文件，`/feedback submitted 今天已经递交` 记录反馈。
+追问时也支持上传，回答或直接回车后材料会附到原运行。`/new` 新开独立案件。
+
+- 查询会话时读取 run.tasks，可看到当前、暂缓及已交付任务。任务数据以 LangGraph 检查点为准，提交回执仍保留该次返回的历史视图。任务状态与 run.status 独立。
 - 一段会话关联一个案件；一条新问题启动一次新运行。
 - 新运行承接前一运行的原生消息历史，提示仍按当前案件状态和上下文长度限制组装。
 - 追问回复恢复同一运行，不重新分类。
 - 每次提交保存独立结果快照；旧消息不会在后续恢复后全部变成重复的最终回复。
-- 会话和消息回执保存在 cases.sqlite3 的 api_conversations、api_messages 表；案件业务表不改变。
-- Agent 消息、检查点和轨迹继续保存在 runs/，不在 HTTP 层复制另一套工具日志。
+- cases.sqlite3 的 api_conversations、api_messages、agent_runs 分别记录会话、提交回执、每轮运行状态与图检查点 ID。
+- runs/agent.sqlite3 按 conversation_id 保存消息与任务。历史 run_id 读取当轮的图检查点。runs/<run_id>/ 保留 SSE、轨迹及工具结果。旧 checkpoint.json 启动时幂等导入，原件留存。
 - 正常等待中的运行可在服务重启后继续。执行途中进程退出会标记失败，不自动重放可能已写入的业务操作，历史结果保留。
 
 ## 错误与运行范围

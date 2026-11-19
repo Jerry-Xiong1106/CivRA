@@ -15,9 +15,10 @@ from threading import BoundedSemaphore, RLock
 from uuid import uuid4
 
 from backend.agent.runner import StaleWait, VersionConflict
+from backend.agent.litigation import entry_action
 from backend.case.models import CaseSnapshot
-from backend.common.schemas import TERMINAL_STATUSES, RunInfo
-from .schemas import MessageReceipt, MessageRequest
+from backend.common.schemas import RunInfo
+from .schemas import MessageReceipt, MessageRequest, RouteSubmission
 
 log = logging.getLogger(__name__)
 
@@ -142,6 +143,8 @@ class Conversations:
         conversation["files"] = [f.model_dump(mode="json") for f in inventory["files"]]
         conversation["outputs"] = [o.model_dump(mode="json") for o in inventory["outputs"]]
         conversation["inventory_truncated"] = inventory["truncated"]
+        conversation["route_progress"] = self.runner.litigation_progress(
+            conversation["case_id"], conversation["run"], inventory)
         return conversation
 
     def receipt(self, conversation_id, request_id):
@@ -182,10 +185,32 @@ class Conversations:
                 raise Conflict("conversation already has work in progress")
             last_id = messages[-1]["run_id"] if messages else None
             previous = self._info(last_id) if last_id else None
-            version = self.repository.get_case(conversation["case_id"]).case_version
+            case = self.repository.get_case(conversation["case_id"])
+            version = case.case_version
             if request.expected_case_version is not None and request.expected_case_version != version:
                 raise VersionConflict(f"expected {request.expected_case_version}, current {version}")
-            if previous and previous.status == "waiting_user":
+            entering = isinstance(request, RouteSubmission) and request.operation == "enter_litigation"
+            if isinstance(request, RouteSubmission) and request.event and case.stage != "litigation":
+                raise Conflict("请先进入诉讼路线")
+            if isinstance(request, RouteSubmission) and request.event:
+                try:
+                    self.runner.cases.litigation.validate_feedback(case, request.event, request.text or request.reply.text)
+                except ValueError as exc:
+                    raise Conflict(str(exc)) from exc
+            if entering:
+                try:
+                    action = entry_action(case.stage, previous, request.switch_wait_id)
+                except ValueError as exc:
+                    raise Conflict(str(exc)) from exc
+                if action == "reuse":
+                    with self.repository.connection(write=True) as db:
+                        db.execute("INSERT INTO api_messages(conversation_id,request_id,run_id,payload,status,created_at,result_json) "
+                                   "VALUES (?,?,?,?,?,?,?)", (conversation_id, request.request_id, last_id, payload,
+                                   previous.status, datetime.now(timezone.utc).isoformat(), previous.model_dump_json()))
+                    return self.receipt(conversation_id, request.request_id)
+                run_id = last_id if action == "resume" else "run_" + uuid4().hex
+                history_id = last_id
+            elif previous and previous.status == "waiting_user":
                 if request.reply is None:
                     raise Conflict("answer the pending wait with reply and wait_id")
                 if request.wait_id != previous.wait.wait_id:
@@ -236,19 +261,27 @@ class Conversations:
             # Globally unique trusted correlation ID, bounded independently of user IDs.
             correlation = "api_" + hashlib.sha256(
                 (conversation_id + ":" + request.request_id).encode()).hexdigest()
-            if request.reply is not None:
+            feedback = request.event if isinstance(request, RouteSubmission) else None
+            if isinstance(request, RouteSubmission) and request.operation == "enter_litigation":
+                info = self.runner.enter_litigation(
+                    case_id, conversation_id=conversation_id, run_id=run_id, history_run_id=history_id,
+                    request_id=correlation, actor_id="api_user", switch_wait_id=request.switch_wait_id,
+                    expected_case_version=request.expected_case_version)
+            elif request.reply is not None:
                 reply = request.reply.as_user_reply(request.attachments)
                 if request.attachments:
                     reply.text = text
                 info = self.runner.resume_run(
                     run_id, reply, wait_id=request.wait_id,
+                    conversation_id=conversation_id,
                     expected_case_version=request.expected_case_version,
-                    request_id=correlation, actor_id="api_user",
+                    request_id=correlation, actor_id="api_user", litigation_feedback=feedback,
                 )
             else:
                 info = self.runner.start_run(
-                    case_id, text, run_id=run_id, history_run_id=history_id,
-                    request_id=correlation, actor_id="api_user",
+                    case_id, text, run_id=run_id, history_run_id=history_id, conversation_id=conversation_id,
+                    request_id=correlation, actor_id="api_user", litigation_feedback=feedback,
+                    expected_case_version=request.expected_case_version,
                 )
             status = info.status
             result_json = info.model_dump_json()
@@ -258,7 +291,7 @@ class Conversations:
             status, error = "failed", "Execution failed; inspect the server log and saved run before retrying"
             if self.runner.store.exists(run_id):
                 cp = self.runner.store.load_checkpoint(run_id)
-                if cp.status not in TERMINAL_STATUSES:
+                if cp.status == "running":
                     cp.stop("failed", error)
                     self.runner.store.end(cp)
         finally:

@@ -20,11 +20,10 @@ from backend.agent.runner import RunConflict, RunStateError, VersionConflict
 from backend.case.errors import CaseNotFound
 from backend.common.config import ROOT, load_dotenv
 from .conversations import CapacityError, Conflict, Conversations
-from .schemas import ConversationView, CreateConversation, MessageReceipt, MessageRequest
+from .schemas import ConversationView, CreateConversation, LitigationEntry, LitigationFeedback, MessageReceipt, MessageRequest, Reply, RouteSubmission
+from backend.agent.litigation import ENTRY_TEXT, EVENTS
 
-MAX_UPLOAD_BYTES = 20 * 1024 * 1024
-UPLOAD_TYPES = {"application/pdf", "text/plain", "image/png", "image/jpeg", "image/webp",
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}
+from backend.case.materials.upload import MAX_UPLOAD_BYTES, UPLOAD_TYPES
 
 
 def build_conversations():
@@ -63,9 +62,8 @@ def build_conversations():
     )
     setup = build_runner(
         llm=model, case_service=service, retrieval_service=RetrievalService.from_config(),
-        store=RunStore(directory / "runs"), dotenv=None,
-        config=RunConfig(max_steps=40, max_model_calls=12, max_tool_calls=16,
-                         max_total_tokens=180000, max_run_seconds=300, max_output_tokens=2200),
+        store=RunStore(directory / "runs", database=service.repository.path), dotenv=None,
+        config=RunConfig.interactive(),
     )
     return Conversations(setup.runner, service)
 
@@ -127,6 +125,18 @@ def create_app(conversations: Conversations | None = None, *, token: str | None 
     @app.post("/api/conversations/{conversation_id}/messages", status_code=202, response_model=MessageReceipt)
     def message(conversation_id: str, body: MessageRequest, service=Depends(authorized)):
         return service.submit(conversation_id, body)
+
+    @app.post("/api/conversations/{conversation_id}/routes/litigation/enter", status_code=202, response_model=MessageReceipt)
+    def enter_litigation(conversation_id: str, body: LitigationEntry, service=Depends(authorized)):
+        return service.submit(conversation_id, RouteSubmission(
+            **body.model_dump(), operation="enter_litigation", text=ENTRY_TEXT))
+
+    @app.post("/api/conversations/{conversation_id}/routes/litigation/feedback", status_code=202, response_model=MessageReceipt)
+    def litigation_feedback(conversation_id: str, body: LitigationFeedback, service=Depends(authorized)):
+        text = f"{EVENTS[body.event][2]}：{body.note}"
+        content = {"reply": Reply(text=text)} if body.wait_id else {"text": text}
+        return service.submit(conversation_id, RouteSubmission(
+            **body.model_dump(exclude={"note"}), **content, operation="litigation_feedback"))
 
     @app.get("/api/conversations/{conversation_id}/events")
     async def events(
@@ -193,15 +203,27 @@ def create_app(conversations: Conversations | None = None, *, token: str | None 
         finally:
             await file.close()
 
+    def attachment(content, media_type, filename):
+        filename = filename.replace("\\", "/").rsplit("/", 1)[-1]
+        return Response(content, media_type=media_type, headers={
+            "Content-Disposition": "attachment; filename*=UTF-8''" + quote(filename, safe=""),
+            "X-Content-Type-Options": "nosniff",
+        })
+
+    @app.get("/api/form-templates/{template_id}/{version}")
+    def download_blank(template_id: str, version: str, service=Depends(authorized)):
+        try:
+            record, content = service.service.official_forms.library.get(template_id, version)
+        except (ValueError, FileNotFoundError):
+            raise HTTPException(404, "Blank form or version unavailable") from None
+        return attachment(content, "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                          record["title"] + ".docx")
+
     @app.get("/api/conversations/{conversation_id}/artifacts/{artifact_id}")
     def download(conversation_id: str, artifact_id: str, service=Depends(authorized)):
         conversation = service.context(conversation_id)
         artifact = service.service.assets.get_artifact(conversation["case_id"], artifact_id)
-        filename = artifact["filename"].replace("\\", "/").rsplit("/", 1)[-1]
-        return Response(artifact["content"], media_type=artifact["media_type"], headers={
-            "Content-Disposition": "attachment; filename*=UTF-8''" + quote(filename, safe=""),
-            "X-Content-Type-Options": "nosniff",
-        })
+        return attachment(artifact["content"], artifact["media_type"], artifact["filename"])
 
     return app
 

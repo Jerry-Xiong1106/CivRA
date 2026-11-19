@@ -12,6 +12,7 @@ class ToolPolicy(BaseModel):
     max_retries: int = Field(default=1, ge=0)
     side_effects: bool = False
     feedback_loop: str | None = None
+    invalid_args_limit: int | None = Field(default=None, ge=1)
 
 
 def set_policy(tool: BaseTool, **policy) -> BaseTool:

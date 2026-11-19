@@ -32,11 +32,17 @@
 
 2026-11-17两条主路由：`RunConfig.conversation_route`默认`auto`，新运行先通过同一模型的一次无工具JSON分类，区分`consultation`（咨询解答）和`case_work`（案件办理）。一般规则、概念及明确限定的解释使用咨询入口；用户描述现实纠纷并希望处理、追讨或了解眼前怎么办，即进入办理，不要求知道工具名称。明确请求检查材料、计算、比较路线或起草也属办理。`agent/routing.py`维护语义分类说明，无关键词规则。前端明确按钮可传`conversation_route="case_work"`跳过分类，咨询入口可显式传`consultation`。
 
-咨询入口只开放法条检索、必要追问、路线选择及结束，不能更新事实或生成成果；办理入口使用案件阶段和enabled_tools允许的业务工具。分类失败回退咨询，记录原因，不开放额外业务能力。分类调用及用量计入主模型预算和轨迹（purpose=conversation_routing）；类型及依据保存在检查点，`RunInfo.conversation_route`用于展示。追问回复不会重新分类。若咨询过程中用户明确在菜单选定路线，程序保存路线并将入口提升为案件办理；路线选择和生成办理清单仍是操作事件，没有route_choice/route_plan两个分类。新问题开始新运行并重新识别，不因案件已选诉讼就把所有后续问题当作办理。
+咨询入口开放法条检索、空白原表查询、必要追问、路线选择及结束，不能更新事实或生成成果；办理入口使用案件阶段和enabled_tools允许的业务工具。分类失败回退咨询，记录原因，不开放额外业务能力。分类调用及用量计入主模型预算和轨迹（purpose=conversation_routing）；类型及依据保存在检查点，`RunInfo.conversation_route`用于展示。追问回复不会重新分类。若咨询过程中用户明确在菜单选定路线，程序保存路线并将入口提升为案件办理；路线选择和生成办理清单仍是操作事件，没有route_choice/route_plan两个分类。新问题开始新运行并重新识别，不因案件已选诉讼就把所有后续问题当作办理。
 
-额度检查和动态计数整理位于 `runtime/middleware.py`。`RunConfig.max_search_calls=3`、`max_clarification_rounds=2`、`max_questions_per_round=2`适用于所有输入，包括材料/文书操作；不存在未匹配到任务就放宽限制的回退。前两个计数上限可设为None，但仍受全局预算限制。精确重复的追问会拒绝，语义改写的重复主要由提示约束。追问必要性和是否需要比较路线由当前用户目标及上下文判断，程序不按关键词替用户决定。路线比较允许依据和费用计算为空，未知项保留；自然语言明确选路线目前仍通过菜单提交确认，未实现直接提交动作。
+额度检查和动态计数整理位于 `runtime/middleware.py`。`RunConfig.max_search_calls=3`、`max_clarification_rounds=3`、`max_questions_per_round=2`适用于所有输入，包括材料/文书操作；不存在未匹配到任务就放宽限制的回退。前两个计数上限可设为None，但仍受全局预算限制。精确重复的追问会拒绝，语义改写的重复主要由提示约束。追问必要性和是否需要比较路线由当前用户目标及上下文判断，程序不按关键词替用户决定。路线比较允许依据和费用计算为空，未知项保留；自然语言明确选路线目前仍通过菜单提交确认，未实现直接提交动作。
 
 已检索次数、追问轮数、问题记录和本轮是否选过路线保存在检查点，resume不重置检索或追问额度。用户选路线不消耗事实追问额度，额度耗尽也不会关闭路线选择或其他业务工具。旧检查点中的task_type额外字段会被忽略，既有计数保留，缺少计数时按默认值读取。工具总预算仍在每次执行前检查；公共检索/追问额度耗尽后仍可交付已有结果。全局Token、时间和模型预算耗尽仍按原规则终止，尚未实现最终回答预留预算。
+
+法规检索的参数校验错误使用单独的纠错计数，仍计入全局工具预算。实际检索无候选也会占用检索次数。
+
+API 和交互终端共用 `RunConfig.interactive()`：每次运行最多 56 步、16 次模型调用、24 次业务工具调用、240,000 个累计 token；工具纠错和检索仍各有上限。自动弹出的路线入口问题只记录一次，与最多三轮业务追问分开计数。模型可见本轮剩余预算。token 使用量按调用回执累计，单次响应可能使总量超过阈值。
+
+交付时用 `finish.task_result.gaps` 按优先级列出缺口（label、kind、可选 question）。同一轮最多提出配置允许数量的 user_input 问题，一个 wait_id 逐题接收回答。material、verification、external 分别表示材料、核验和外部反馈，可由 Agent 单独发起材料请求。task.missing 保留短名，task.missing_kinds 标明分类；问句在 wait.questions 中。已答不代表已核实，模型在下一次提报时更新仍存在的缺口。旧 next_question 和未分类字符串仍可读取。未满足验收时为 partial（能力不足为 blocked），waiting_input 对应真实追问。
 
 ~~~powershell
 .\.venv-rag\Scripts\python.exe -m pip install -r requirements-dev.txt
@@ -62,7 +68,7 @@ info = setup.runner.start_run("case-1", "我的车被追尾了")
 
 factory接受`case_service`，装配十项真实业务工具与法规检索，使用同一repository的RepositoryCasePort。传入已初始化的`retrieval_service`可复用检索资源。未传case_service时沿用内存演示工具；关闭mock_business_tools保留演示update_case。`build_tools(...)`及`setup.tools`返回`list[BaseTool]`，`AgentRunner(llm, tools, cases, store)`直接接收此列表。原`build_registry`、`register_*_tools`和`setup.registry`入口已移除；改用`create_case_tools(service)`、`create_knowledge_tools(...)`和`create_mock_tools(cases, ...)`。每次drive/resume退出时释放执行池，无需调用registry.close。
 
-十项案件工具在`backend/tools/case_tools.py`的`create_case_tools`中逐项通过原生`@tool`定义，每项明确绑定`service.xxx`方法。参数由`backend/tools/case_contracts.py`从业务类型投影，隐藏可信上下文及用户消息写入字段；案件阶段限制由 backend/case/operations.py 提供，工具与客户端共用。`CASE_TOOL_SPECS`和`get_case_tool_contracts()`仅为从原生工具派生的业务契约导出视图，不参与Agent注册。
+十项案件业务工具在 `backend/tools/case_tools.py` 中定义。案件阶段限制由工具与业务客户端共用，业务契约导出独立于 Agent 注册。真实案件服务另提供一个只读工具 `find_form_template`，咨询和办理均可调用。它按文书类型、案由关键词和可选领域查询官方空白原表，每页八项；候选提供原件地址和本地下载路径。仅支持生成 CivRA 草稿的候选返回 `draft_document_args`，其中的 ID 和版本可交给既有的 `draft_document`。原表的 `filling_supported` 描述业务层填写预览能力；下载空白表不会登记已填写成果。
 
 十个案件工具共用一个绑定业务服务的执行适配，统一转换返回字典；运行策略在函数末尾集中声明，只读与核验反馈设置归工具层，案件阶段限制从业务层读取。RAG与演示工具直接在原生函数内调用业务并返回结果，控制工具保持原有JSON Schema约束的紧凑声明。`ToolPolicy`只保存配置，自动超时与重试仍只由运行时的`ToolExecutor`执行。
 
@@ -79,17 +85,14 @@ Runner使用同步invoke及max_concurrency=1，让框架按模型返回顺序执
 ask_user结束当次框架调用并保存同一thread_id。resume_run先验证wait_id、案件版本和重复request_id，再向同一框架线程追加用户回复。框架负责恢复完整消息历史，middleware每次调用模型前重新读取案件状态。
 
 ~~~text
-var/runs/
-├── agent.sqlite3           # LangGraph SQLite检查点，按run_id/thread_id隔离
-└── run_id/
-    ├── checkpoint.json     # 项目状态、预算、wait和引用，不再重复保存消息历史
-    ├── cancel.requested    # 收到取消请求时创建，独立于checkpoint保存
-    ├── trace.jsonl
-    ├── events.jsonl
-    └── results/step_NNNN.json
+<工作区>/
+├── cases.sqlite3           # 案件、会话、回执、agent_runs 及取消标记
+└── runs/
+    ├── agent.sqlite3       # 消息和任务，按会话隔离
+    └── <run_id>/           # trace.jsonl、events.jsonl、results/step_NNNN.json
 ~~~
 
-SQLite与JSON元数据需要一起保留；缺少框架检查点时拒绝继续，不能从头重跑已执行工具。案件数据由CaseStatePort提供。传入case_service时，用户输入和追问回复先写入业务案件库，再进入create_agent；应用已保存的消息通过message_id避免重复写入。其余演示入口使用InMemoryCaseStore。
+两个 SQLite 数据库需要一起保留。缺少框架检查点时拒绝重放工具。案件数据由 CaseStatePort 提供。使用 case_service 时，应用先在业务库登记用户输入，再调用 Agent。
 
 完整历史通过RunStore.read_messages(run_id)按需从框架检查点读取。旧v2元数据中的messages镜像会被忽略，后续保存时不再写入；恢复始终依赖同一LangGraph线程。提示压缩直接处理原生消息，并保留消息ID及附加字段。取消信号由共享RunStore读取，另一Runner实例也可请求取消，保存旧checkpoint不会覆盖取消标记。
 
@@ -116,5 +119,11 @@ SQLite与JSON元数据需要一起保留；缺少框架检查点时拒绝继续�
 成员三真实工具的create_agent装配已提供，接口与复现见`docs/case/submission-handoff.md`。真实生成/embedding效果、案例检索及最终答案的法律依据支持核验仍待联调。此前旧实现的DeepSeek试运行观察不能作为新实现的效果报告，也不能因迁移框架就宣称引用或法律结论得到改善。
 
 办理交付约束：路线比较与清单属于过程；用户只要求比较或清单时，它们才构成本次交付。用户希望继续处理时，根据原始目标准备可用内容或调用 ask_user 获取关键输入。选路线不自动触发 get_route_workflow；结构化清单或进度计划明确需要时再调用。未知事实不得猜测，未执行的保存、核验和追问不得写成已完成。上述是模型行为指引，离线脚本测试只能验证流程支持，需通过真实模型验收判断遵循效果。
+
+赔付调解方案的结束检查优先补问已付款和付款偏好。已答或已问过的信息和用户明确希望先看草案的情形跳过补问。待外部核实的事项可在条件化方案中说明，已用尽追问额度时保留未确认缺口。
+
+办理任务保存在 LangGraph 的 tasks 通道（agent.sqlite3）。每项有稳定 ID、当前交付物、状态、缺口和材料／成果引用。新建运行沿用同一会话上一运行的任务，回复等待项继续原线程；/new 隔离案例。暂停任务可按 ID 接续，选择处理路线不自动更换交付物。运行 completed 只表示本次执行结束，任务仍可等待材料、部分交付或因能力缺失而受阻。/state 与 API 的 run.tasks 提供查看入口。旧图检查点没有 tasks 时按空列表读取。
+
+入口模型同时判定任务变化。真实材料引用和文书文件由后端核对，语义判断（用户究竟要什么、分项范围、证据的证明力）仍需独立验收。指定办理入口跳过分类时先保留用户原话作为通用目标，可在控制工具中进一步明确。
 
 提示管理：角色与公共规则、入口分类、两路由提示及运行限制模板集中在 model/prompts.py。分类和业务调用均通过 LangChain ChatPromptTemplate 渲染；原生消息历史由 MessagesPlaceholder 保留。routing.py 只处理分类数据和工具开放范围，runtime/middleware.py 检查限制并提供动态计数。公共提示不包含特定纠纷案例或固定追问示例；不同纠纷放在 tests/agent/test_prompts.py 和 scripts/agent/smoke_routes.py 中验证。运行清单的 prompt_sha256 覆盖全部集中提示文本。模板离线测试验证数据与消息保真，不等于真实模型语义验收。

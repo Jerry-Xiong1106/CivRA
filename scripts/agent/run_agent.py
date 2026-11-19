@@ -161,9 +161,10 @@ def print_step(step: TraceStep) -> None:
     print(f"  · #{step.step_id:<2} {step.step_type:<11} {name:<16} {step.status:<12} {seconds:>6}  {step.result_summary[:70]}")
 
 
-def ask_user(wait: Wait, auto_reply: str | None) -> UserReply | None:
+def ask_user(wait: Wait, auto_reply: str | None, *, read=None) -> UserReply | None:
     """None means the user cancelled."""
     print()
+    read = read or input
     if wait.kind == "route_selection":
         print(f"Agent 请你选择处理路线：\n{wait.comparison}")
         for i, option in enumerate(wait.options, 1):
@@ -171,7 +172,7 @@ def ask_user(wait: Wait, auto_reply: str | None) -> UserReply | None:
         if auto_reply is not None:
             return UserReply(route_choice=wait.options[0].route)
         while True:
-            choice = input("输入编号（q 取消）：").strip()
+            choice = read("输入编号（q 取消）：").strip()
             if choice.lower() == "q":
                 return None
             if choice.isdigit() and 1 <= int(choice) <= len(wait.options):
@@ -185,7 +186,7 @@ def ask_user(wait: Wait, auto_reply: str | None) -> UserReply | None:
             print(f"  （自动回答）{auto_reply}")
             answers[q.question_id] = auto_reply
             continue
-        answer = input("  你的回答（直接回车跳过，q 取消）：").strip()
+        answer = read("  你的回答（直接回车跳过，q 取消）：").strip()
         if answer.lower() == "q":
             return None
         if answer:
@@ -210,15 +211,23 @@ def report(runner: AgentRunner, info: RunInfo) -> None:
         elif final.source_refs:
             print("\n检索到的来源：" + "、".join(f"{s.title}{s.locator}" for s in final.source_refs))
         if final.open_issues:
-            print("\n未解决事项：")
-            for issue in final.open_issues:
-                print(f"  · {issue}")
+            from backend.agent.tasks import current
+            task = current(info.tasks) or next((t for t in reversed(info.tasks) if t.delivery_run_id == info.run_id), None)
+            kinds = task.missing_kinds if task else {}
+            titles = {"user_input": "用户可补充", "material": "待补或待读材料", "verification": "待核验",
+                      "external": "等待外部反馈", None: "其他未解决事项" if kinds else "未解决事项"}
+            for kind, title in titles.items():
+                issues = [i for i in final.open_issues if kinds.get(i) == kind]
+                if issues:
+                    print(f"\n{title}：")
+                    for issue in issues:
+                        print(f"  · {issue}")
     u = info.usage
     cost = f"{u.estimated_cost} {u.cost_currency}" if u.estimated_cost is not None else "未知（未配置单价）"
     tokens = f"{u.prompt_tokens + u.completion_tokens}" + ("" if u.tokens_complete else "（部分调用未报告）")
     print(f"\n用量：{u.model_calls} 次模型调用，{u.tool_calls} 次工具调用，{tokens} tokens，"
           f"费用 {cost}，耗时 {u.duration_ms / 1000:.1f}s")
-    print(f"记录：var/runs/{info.run_id}/")
+    print(f"记录：{runner.store.root / info.run_id}")
 
 
 if __name__ == "__main__":
