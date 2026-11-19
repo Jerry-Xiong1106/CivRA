@@ -57,17 +57,11 @@ class RunStore:
                 run_id TEXT PRIMARY KEY, case_id TEXT NOT NULL, thread_id TEXT NOT NULL,
                 state_json TEXT NOT NULL, cancel_requested INTEGER NOT NULL DEFAULT 0)""")
             db.execute("CREATE INDEX IF NOT EXISTS agent_runs_thread ON agent_runs(thread_id)")
-            for path in self.root.glob("*/checkpoint.json"):
-                run_id = path.parent.name
-                if db.execute("SELECT 1 FROM agent_runs WHERE run_id=?", (run_id,)).fetchone():
-                    continue
-                raw = path.read_text(encoding="utf-8")
-                record = json.loads(raw)
-                if record.get("run_id") != run_id:
-                    raise ValueError(f"Run directory does not match legacy record: {path}")
-                db.execute("INSERT OR IGNORE INTO agent_runs VALUES (?,?,?,?,?)",
-                           (run_id, record["case_id"], record.get("thread_id") or run_id, raw,
-                            int((path.parent / "cancel.requested").exists())))
+            # Lookups that previously deserialized every run record.
+            db.execute("CREATE INDEX IF NOT EXISTS agent_runs_start_request "
+                       "ON agent_runs(json_extract(state_json,'$.start_request_id'))")
+            db.execute("CREATE INDEX IF NOT EXISTS agent_runs_case_status "
+                       "ON agent_runs(case_id, json_extract(state_json,'$.status'))")
 
     def exists(self, run_id: str) -> bool:
         with self._db() as db:
@@ -126,7 +120,7 @@ class RunStore:
             db.execute("""INSERT INTO agent_runs(run_id,case_id,thread_id,state_json) VALUES (?,?,?,?)
                           ON CONFLICT(run_id) DO UPDATE SET
                           thread_id=excluded.thread_id,state_json=excluded.state_json""",
-                       (cp.run_id, cp.case_id, cp.thread_id or cp.run_id, cp.model_dump_json()))
+                       (cp.run_id, cp.case_id, cp.thread_id, cp.model_dump_json()))
 
     def load_checkpoint(self, run_id: str) -> Checkpoint:
         with self._db() as db:
@@ -137,6 +131,24 @@ class RunStore:
         if record.get("engine") != CURRENT_ENGINE:
             raise ValueError("运行记录格式已变化，请新建会话；历史原始文件未改动。")
         return Checkpoint.model_validate(record)
+
+    def run_for_start_request(self, request_id: str) -> str | None:
+        """The run a start request already created, for idempotent retries."""
+        with self._db() as db:
+            row = db.execute("SELECT run_id FROM agent_runs "
+                             "WHERE json_extract(state_json,'$.start_request_id')=? "
+                             "AND json_extract(state_json,'$.engine')=? LIMIT 1",
+                             (request_id, CURRENT_ENGINE)).fetchone()
+        return row[0] if row else None
+
+    def running_run(self, case_id: str) -> str | None:
+        """A run of this case that is currently executing, if any."""
+        with self._db() as db:
+            row = db.execute("SELECT run_id FROM agent_runs WHERE case_id=? "
+                             "AND json_extract(state_json,'$.status')='running' "
+                             "AND json_extract(state_json,'$.engine')=? LIMIT 1",
+                             (case_id, CURRENT_ENGINE)).fetchone()
+        return row[0] if row else None
 
     def list_checkpoints(self) -> Iterator[Checkpoint]:
         with self._db() as db:
@@ -219,10 +231,10 @@ class RunStore:
             return []
         with self.graph_checkpointer() as saver:
             cp = self.load_checkpoint(run_id)
-            config = {"thread_id": cp.thread_id or run_id}
+            config = {"thread_id": cp.thread_id}
             if cp.graph_checkpoint_id:
                 config["checkpoint_id"] = cp.graph_checkpoint_id
-            elif cp.thread_id and cp.status in TERMINAL_STATUSES:
+            elif cp.status in TERMINAL_STATUSES:
                 return []
             checkpoint = saver.get_tuple({"configurable": config})
             return checkpoint.checkpoint["channel_values"].get(channel, []) if checkpoint else []
@@ -231,30 +243,21 @@ class RunStore:
         """Remember the graph snapshot visible when this invocation stopped."""
         if (self.root / "agent.sqlite3").exists():
             with self.graph_checkpointer() as saver:
-                state = saver.get_tuple({"configurable": {"thread_id": cp.thread_id or cp.run_id}})
+                state = saver.get_tuple({"configurable": {"thread_id": cp.thread_id}})
                 if state:
                     cp.graph_checkpoint_id = state.checkpoint["id"]
 
     def continue_thread(self, previous, thread_id):
-        """Validate continuity, seeding a legacy per-run thread exactly once."""
-        old_thread = previous.thread_id or previous.run_id
-        source = {"thread_id": old_thread}
+        """Return the graph checkpoint a new run in the same conversation continues from."""
+        if previous.thread_id != thread_id:
+            raise ValueError("会话和运行的线程不匹配。")
+        source = {"thread_id": thread_id}
         if previous.graph_checkpoint_id:
             source["checkpoint_id"] = previous.graph_checkpoint_id
         with self.graph_checkpointer() as saver:
             saved = saver.get_tuple({"configurable": source})
             if saved is None:
                 raise ValueError("缺少上一运行的框架检查点，无法承接历史。")
-            target = {"thread_id": thread_id, "checkpoint_ns": ""}
-            if old_thread != thread_id:
-                if previous.thread_id:
-                    raise ValueError("会话和运行的线程不匹配。")
-                latest = saver.get_tuple({"configurable": target})
-                if latest is None:
-                    saver.put({"configurable": target}, saved.checkpoint, saved.metadata,
-                              saved.checkpoint["channel_versions"])
-                elif latest.checkpoint["id"] != saved.checkpoint["id"]:
-                    raise ValueError("此会话已有更新的运行。")
             return saved.checkpoint["id"]
 
     def emit(self, cp: Checkpoint, type_: str, step_id: int | None = None, *, checkpoint=False, **data) -> None:

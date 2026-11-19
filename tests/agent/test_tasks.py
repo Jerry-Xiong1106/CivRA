@@ -111,28 +111,6 @@ def test_failed_calculation_preserves_grounded_inputs_and_specific_gap(tmp_path)
     assert info.wait is None and info.tasks[0].status == "partial" and not info.tasks[0].delivery_run_id
 
 
-def test_next_question_waits_for_a_real_reply_before_text_delivery(tmp_path):
-    s = setup(tmp_path, [
-        route("new", "text", "准备交接短信"),
-        finish("先核对交接地点", missing=["地点"], next_question="在哪里交接？"),
-        finish("请在西门交接。", missing=[], answer_is_deliverable=True),
-    ])
-    info = s.runner.start_run("c", "请拟交接短信")
-    assert info.status == "waiting_user" and info.tasks[0].status == "waiting_input"
-    info = s.runner.resume_run(info.run_id, UserReply(text="西门"), wait_id=info.wait.wait_id)
-    assert info.final.answer == "请在西门交接。" and info.tasks[0].status == "delivered"
-
-
-def test_exhausted_question_budget_keeps_blocker_without_fake_wait(tmp_path):
-    s = setup(tmp_path, [route("new", "text", "准备交接短信"),
-                         finish("先约地点。", next_question="在哪里交接？", missing=["地点"])],
-              max_clarification_rounds=0)
-    info = s.runner.start_run("c", "请拟交接短信")
-    assert info.wait is None and info.tasks[0].status == "partial"
-    assert info.final.open_issues == ["地点"]
-    assert info.tasks[0].missing == ["地点"]
-
-
 def test_finish_batches_user_gaps_in_last_round_and_keeps_other_work_separate(tmp_path):
     gaps = [
         {"label":"交接地点", "kind":"user_input", "question":"在哪里交接？"},

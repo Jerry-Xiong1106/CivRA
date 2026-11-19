@@ -83,11 +83,7 @@ class Conversations:
                 "SELECT DISTINCT run_id FROM api_messages WHERE status IN ('queued','running')"
             ).fetchall()
         for (run_id,) in rows:
-            if self.runner.store.exists(run_id):
-                cp = self.runner.store.load_checkpoint(run_id)
-                if cp.status == "running":
-                    cp.stop("failed", "Server restarted during execution; inspect saved results before retrying")
-                    self.runner.store.end(cp)
+            self.runner.fail_if_running(run_id, "Server restarted during execution; inspect saved results before retrying")
         with self.repository.connection(write=True) as db:
             db.execute("UPDATE api_messages SET status='failed', error=? WHERE status IN ('queued','running')",
                        ("Execution interrupted by server restart; not automatically retried",))
@@ -130,7 +126,7 @@ class Conversations:
                  "run": RunInfo.model_validate_json(r[6]) if r[6] else self._info(r[1])} for r in rows]
 
     def _info(self, run_id):
-        return self.runner.get_run(run_id) if self.runner.store.exists(run_id) else None
+        return self.runner.get_run(run_id) if self.runner.has_run(run_id) else None
 
     def get(self, conversation_id):
         conversation = self.context(conversation_id)
@@ -194,7 +190,7 @@ class Conversations:
                 raise Conflict("请先进入诉讼路线")
             if isinstance(request, RouteSubmission) and request.event:
                 try:
-                    self.runner.cases.litigation.validate_feedback(case, request.event, request.text or request.reply.text)
+                    self.runner.validate_litigation_feedback(case.case_id, request.event, request.text or request.reply.text)
                 except ValueError as exc:
                     raise Conflict(str(exc)) from exc
             if entering:
@@ -289,11 +285,7 @@ class Conversations:
             # Never echo raw provider exceptions, tokens or material contents.
             log.error("Conversation execution failed: run_id=%s type=%s", run_id, type(exc).__name__)
             status, error = "failed", "Execution failed; inspect the server log and saved run before retrying"
-            if self.runner.store.exists(run_id):
-                cp = self.runner.store.load_checkpoint(run_id)
-                if cp.status == "running":
-                    cp.stop("failed", error)
-                    self.runner.store.end(cp)
+            self.runner.fail_if_running(run_id, error)
         finally:
             try:
                 with self.repository.connection(write=True) as db:

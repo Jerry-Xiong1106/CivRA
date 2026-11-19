@@ -35,7 +35,8 @@ for prefix in ('backend.agent', 'backend.tools', 'evaluation', 'langchain', 'pad
 
 
 def test_custom_repository_uses_injected_storage_and_intake_facade(tmp_path):
-    from backend.case import CaseService, SQLiteCaseRepository, load_development_case
+    from backend.case import CaseService, SQLiteCaseRepository
+    from scripts.case.fixtures import load_development_case
     from backend.case.storage.assets import SQLiteAssetStore
 
     repository = SQLiteCaseRepository(tmp_path / "case.sqlite3")
@@ -62,7 +63,8 @@ def test_custom_repository_uses_injected_storage_and_intake_facade(tmp_path):
 
 
 def test_sqlite_connection_rolls_back_failed_write(tmp_path):
-    from backend.case import SQLiteCaseRepository, load_development_case
+    from backend.case import SQLiteCaseRepository
+    from scripts.case.fixtures import load_development_case
 
     repository = SQLiteCaseRepository(tmp_path / "case.sqlite3")
     case = repository.create_case(load_development_case())

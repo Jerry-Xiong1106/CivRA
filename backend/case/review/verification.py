@@ -12,7 +12,7 @@ from pydantic import ValidationError
 
 from .contracts import VerificationData, VerifyOutputRequest
 from ..calculation.contracts import CalculationData, CalculateCostsRequest
-from ..models import BusinessError, BusinessResult, Finding, Money
+from ..models import BusinessError, BusinessResult, Finding
 from ..business_support import deadline, digest, unique
 from .verification_support import validate_semantic, resolve_review_sources, correction_tasks
 from ..materials.evidence import check_evidence

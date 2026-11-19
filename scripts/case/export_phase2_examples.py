@@ -9,7 +9,8 @@ from tempfile import TemporaryDirectory
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case  # noqa: E402
+from backend.case import CaseService, SQLiteCaseRepository
+from scripts.case.fixtures import load_development_case
 from backend.case.materials.contracts import BuildEvidenceDirectoryRequest, CheckEvidenceRequest
 from backend.case.contracts import InvocationContext
 from backend.case.intake.contracts import UpdateCaseRequest

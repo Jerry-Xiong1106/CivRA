@@ -8,7 +8,8 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case
+from backend.case import CaseService, SQLiteCaseRepository
+from scripts.case.fixtures import load_development_case
 from backend.case.models import CaseSnapshot, SourcePointer
 from backend.case.errors import VersionConflict
 from backend.case.drafting.documents import MeteredLLMDraftingGateway

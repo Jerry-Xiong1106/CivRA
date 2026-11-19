@@ -5,7 +5,8 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case
+from backend.case import CaseService, SQLiteCaseRepository
+from scripts.case.fixtures import load_development_case
 
 try:
     from backend.common.schemas import ToolSpec

@@ -12,7 +12,7 @@ CURRENT_ENGINE = "langchain-create-agent-v2"
 
 class Checkpoint(BaseModel):
     run_id: str
-    thread_id: str | None = None  # Old records used run_id as the graph thread.
+    thread_id: str
     graph_checkpoint_id: str | None = None
     engine: str = CURRENT_ENGINE
     case_id: str

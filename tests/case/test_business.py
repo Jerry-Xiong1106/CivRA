@@ -12,7 +12,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case
+from backend.case import CaseService, SQLiteCaseRepository
+from scripts.case.fixtures import load_development_case
 from backend.case.materials.contracts import BuildEvidenceDirectoryRequest, CheckEvidenceRequest
 from backend.case.intake.contracts import CaseChanges, UpdateCaseRequest
 from backend.case.contracts import InvocationContext

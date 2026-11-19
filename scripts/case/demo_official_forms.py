@@ -7,7 +7,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case
+from backend.case import CaseService, SQLiteCaseRepository
+from scripts.case.fixtures import load_development_case
 from backend.case.models import CaseSnapshot
 from backend.agent.case_adapter import RepositoryCasePort
 

@@ -8,7 +8,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case
+from backend.case import CaseService, SQLiteCaseRepository
+from scripts.case.fixtures import load_development_case
 from backend.tools.case_results import to_runtime_tool_result
 from backend.case.calculation.cost_summary import MATERIAL_SUMMARY_VERSION, summarize_material_amounts
 from backend.case.calculation.fee_rules import PROPERTY_FEE_RULE_VERSION

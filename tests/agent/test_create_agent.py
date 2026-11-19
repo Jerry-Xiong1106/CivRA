@@ -156,28 +156,11 @@ def test_pause_skips_later_side_effect_and_resumes_new_runner(tmp_path):
     info = first.start_run("c", "hi")
     assert info.status == "waiting_user" and cases.get_snapshot("c").case_version == 1
     assert (tmp_path / "agent.sqlite3").exists()
-    # A previous release may have stored a readable mirror. Resume must ignore
-    # that copy and use the durable framework history, even if they disagree.
-    path = tmp_path / info.run_id / "checkpoint.json"
-    metadata = store.load_checkpoint(info.run_id).model_dump(mode="json")
-    # Reconstruct the previous on-disk format, including a run-scoped graph.
-    import sqlite3
-    thread = metadata.pop("thread_id")
-    metadata.pop("graph_checkpoint_id")
-    with sqlite3.connect(tmp_path / "agent.sqlite3") as graph:
-        graph.execute("UPDATE checkpoints SET thread_id=? WHERE thread_id=?", (info.run_id, thread))
-        graph.execute("UPDATE writes SET thread_id=? WHERE thread_id=?", (info.run_id, thread))
-    with sqlite3.connect(store.database) as db:
-        db.execute("DELETE FROM agent_runs WHERE run_id=?", (info.run_id,))
-    metadata["messages"] = [{"role": "user", "content": "stale mirror must not be replayed"}]
-    path.write_text(json.dumps(metadata), encoding="utf-8")
     second_model = ScriptedLLM([tool_call("finish", answer="done")])
     second = AgentRunner(second_model, tool_fixture(cases, real_statutes=False), cases, RunStore(tmp_path), default_config=RunConfig(conversation_route="case_work"))
-    info = second.resume_run(info.run_id, UserReply(text="yes"), wait_id=info.wait.wait_id, conversation_id="conv_migrated")
+    info = second.resume_run(info.run_id, UserReply(text="yes"), wait_id=info.wait.wait_id)
     assert info.status == "completed" and len(second_model.calls) == 1
-    assert not any("stale mirror" in m.get("content", "") for m in second_model.calls[0]["messages"])
-    assert second.store.load_checkpoint(info.run_id).thread_id == "conv_migrated"
-    assert path.read_text(encoding="utf-8") == json.dumps(metadata)
+    assert cases.get_snapshot("c").case_version == 1
     assert cases.get_snapshot("c").case_version == 1
 
 
@@ -196,7 +179,7 @@ def test_old_format_is_not_loaded_or_resumed(tmp_path):
     cases = InMemoryCaseStore()
     cases.create("c", {})
     store = RunStore(tmp_path)
-    store.save_checkpoint(Checkpoint(run_id="old", engine="obsolete", case_id="c", status="waiting_user",
+    store.save_checkpoint(Checkpoint(run_id="old", thread_id="conv_old", engine="obsolete", case_id="c", status="waiting_user",
         config=RunConfig(conversation_route="case_work", ), messages=[], case_version=1, stage="consultation",
         wait=Wait(wait_id="old-wait", kind="clarification", questions=[WaitQuestion(question_id="q", text="?")])))
     runner = AgentRunner(ScriptedLLM([tool_call("finish", answer="new")]),
@@ -206,26 +189,6 @@ def test_old_format_is_not_loaded_or_resumed(tmp_path):
     with pytest.raises(RunStateError, match="格式"):
         runner.resume_run("old", UserReply(text="yes"), wait_id="old-wait")
     assert runner.start_run("c", "new run").status == "completed"
-
-
-def test_incompatible_source_records_do_not_block_new_runs(tmp_path):
-    cases = InMemoryCaseStore()
-    cases.create("c", {})
-    record = Checkpoint(run_id="old", engine="langchain-create-agent-v1", case_id="c",
-                        status="running", config=RunConfig(conversation_route="case_work", ), messages=[], case_version=1,
-                        stage="consultation").model_dump()
-    record["source_refs"] = [{"source_id": "old", "source_type": "statute", "title": "law",
-                              "locator": "第一条", "version": "2021-01-01", "excerpt": "old text"}]
-    path = tmp_path / "old" / "checkpoint.json"
-    path.parent.mkdir()
-    original = json.dumps(record)
-    path.write_text(original, encoding="utf-8")
-    store = RunStore(tmp_path)
-    assert list(store.list_checkpoints()) == []
-    runner = AgentRunner(ScriptedLLM([tool_call("finish", answer="new")]),
-                         tool_fixture(cases, real_statutes=False), cases, store, default_config=RunConfig(conversation_route="case_work"))
-    assert runner.start_run("c", "hi").status == "completed"
-    assert path.read_text(encoding="utf-8") == original
 
 
 def test_missing_framework_checkpoint_does_not_restart_tools(tmp_path):

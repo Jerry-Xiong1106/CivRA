@@ -126,24 +126,8 @@ def test_compaction_serializes_each_message_view_once():
 def _checkpoint():
     from backend.agent.runtime.state import Checkpoint
     from backend.common.schemas import RunConfig
-    return Checkpoint(run_id="r", case_id="c", status="running",
+    return Checkpoint(run_id="r", thread_id="conv_r", case_id="c", status="running",
                       config=RunConfig(), case_version=1, stage="consultation")
-
-
-def test_import_is_idempotent_and_preserves_cancellation(tmp_path):
-    cp = _checkpoint()
-    path = tmp_path / "r" / "checkpoint.json"
-    path.parent.mkdir()
-    path.write_text(cp.model_dump_json(), encoding="utf-8")
-    (path.parent / "cancel.requested").touch()
-    store = RunStore(tmp_path)
-    assert store.is_cancel_requested("r")
-    cp.step_id = 3
-    store.save_checkpoint(cp)
-    reopened = RunStore(tmp_path)
-    assert reopened.load_checkpoint("r").step_id == 3
-    assert reopened.is_cancel_requested("r")
-    assert json.loads(path.read_text(encoding="utf-8"))["step_id"] == 0
 
 
 def test_progress_reads_and_checkpoint_writes_can_run_concurrently(tmp_path):

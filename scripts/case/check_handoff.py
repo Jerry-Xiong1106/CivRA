@@ -10,7 +10,8 @@ from tempfile import TemporaryDirectory
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from backend.case import get_contract_manifest
+from evaluation.adapters.case_results import evaluate_case_tool
+from backend.tools.case_manifest import get_contract_manifest
 from backend.case.operations import RESULT_MODELS
 from jsonschema import Draft202012Validator, ValidationError as SchemaValidationError
 from phase4_support import assert_expected, load_scenarios, prepare_scenario
@@ -24,7 +25,7 @@ def run_handoff_check(directory):
     failures = []
     for scenario in load_scenarios():
         service, client, invocation = prepare_scenario(scenario, directory / scenario["scenario_id"])
-        response = client.evaluate(scenario["tool"], invocation)
+        response = evaluate_case_tool(client, scenario["tool"], invocation)
         failure = None
         try:
             assert_expected(response, scenario["expected"])

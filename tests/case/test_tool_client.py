@@ -9,7 +9,11 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from backend.case import CaseService, CaseToolClient, SQLiteCaseRepository, ToolInvocation, load_development_case
+from evaluation.adapters.case_results import evaluate_case_tool
+from backend.case import CaseService, SQLiteCaseRepository
+from backend.tools.case_client import CaseToolClient
+from backend.tools.case_contracts import ToolInvocation
+from scripts.case.fixtures import load_development_case
 from backend.tools.case_tools import get_case_tool_contracts
 from backend.case.contracts import InvocationContext
 from backend.agent.case_adapter import RepositoryCasePort
@@ -33,7 +37,7 @@ class CaseToolClientTests(unittest.TestCase):
         )
 
     def test_evaluation_preserves_insufficient_and_correlation(self):
-        result = self.client.evaluate("check_evidence", self.invocation())
+        result = evaluate_case_tool(self.client, "check_evidence", self.invocation())
         self.assertEqual(result["status"], "ok")
         self.assertEqual(result["data"]["status"], "insufficient")
         self.assertEqual(result["request_id"], "client-test")
@@ -86,7 +90,7 @@ class CaseToolClientTests(unittest.TestCase):
 
     def test_stale_version_is_not_silently_replaced(self):
         RepositoryCasePort(self.repo).set_stage(self.case.case_id, "route_selection")
-        result = self.client.evaluate("check_evidence", self.invocation())
+        result = evaluate_case_tool(self.client, "check_evidence", self.invocation())
         self.assertEqual(result["error"]["code"], "version_conflict")
         self.assertEqual(result["error"]["details"]["case_version"], 2)
 
@@ -140,7 +144,7 @@ class CaseToolClientTests(unittest.TestCase):
         def fail(request):
             raise OSError("private material content")
         self.service.check_evidence = fail
-        result = self.client.evaluate("check_evidence", self.invocation())
+        result = evaluate_case_tool(self.client, "check_evidence", self.invocation())
         self.assertEqual(result["error"]["code"], "tool_error")
         self.assertNotIn("private material content", json.dumps(result))
 
@@ -155,7 +159,8 @@ class CaseToolClientTests(unittest.TestCase):
                 self.assertEqual(spec["max_retries"], 0)
         self.assertNotIn("upsert_statements", json.dumps(contracts["update_case"]["parameters"]))
         self.assertTrue(contracts["build_evidence_directory"]["side_effects"])
-        from backend.tools.case_contracts import ARGUMENT_MODELS, OPERATION_STAGES
+        from backend.case.operations import OPERATION_STAGES
+        from backend.tools.case_contracts import ARGUMENT_MODELS
         self.assertEqual(set(contracts), set(ARGUMENT_MODELS))
         for name, spec in contracts.items():
             self.assertEqual(spec["stages"], list(OPERATION_STAGES[name]))
@@ -164,7 +169,7 @@ class CaseToolClientTests(unittest.TestCase):
     def test_invalid_case_version_returns_structured_error(self):
         payload = self.invocation().model_dump(mode="json")
         payload["case_version"] = True
-        result = self.client.evaluate("check_evidence", payload)
+        result = evaluate_case_tool(self.client, "check_evidence", payload)
         self.assertEqual(result["error"]["code"], "invalid_request")
 
     def test_catalog_imports_in_either_order_without_agent_runtime(self):
@@ -173,7 +178,7 @@ class CaseToolClientTests(unittest.TestCase):
             with self.subTest(first=first):
                 code = (
                     f"import {first}\n"
-                    "from backend.case import get_contract_manifest, get_case_tool_contracts\n"
+                    "from backend.tools.case_manifest import get_contract_manifest\nfrom backend.tools.case_tools import get_case_tool_contracts\n"
                     "from backend.tools.case_tools import get_case_tool_contracts as catalog\n"
                     "assert get_contract_manifest()['tool_operations'] == catalog() == get_case_tool_contracts()\n"
                     "import sys\n"

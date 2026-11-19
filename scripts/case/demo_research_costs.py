@@ -9,7 +9,8 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case
+from backend.case import CaseService, SQLiteCaseRepository
+from scripts.case.fixtures import load_development_case
 from backend.tools.case_results import to_runtime_tool_result
 from backend.case.calculation.cost_summary import MATERIAL_SUMMARY_VERSION
 from backend.case.calculation.fee_rules import PROPERTY_FEE_RULE_VERSION

@@ -95,7 +95,9 @@ python scripts/case/demo_contracts.py --schema
 已经可调用的入口：
 
 ```python
-from backend.case import load_development_case, validate_case_snapshot, get_contract_manifest
+from backend.case import validate_case_snapshot
+from backend.tools.case_manifest import get_contract_manifest
+from scripts.case.fixtures import load_development_case
 from backend.case.materials.contracts import CheckEvidenceRequest
 from backend.case.contracts import InvocationContext
 
@@ -149,7 +151,8 @@ schema = get_contract_manifest()["schemas"]["check_evidence_request"]
 以下例子在接入成员四分支后运行：
 
 ```python
-from backend.case import runtime_case_view, to_runtime_tool_result
+from backend.agent.case_adapter import runtime_case_view
+from backend.tools.case_results import to_runtime_tool_result
 from backend.agent.case_port import CaseSnapshot as RuntimeCaseSnapshot
 from backend.common.schemas import ToolResult
 
@@ -165,7 +168,7 @@ tool_result = to_runtime_tool_result(result, result_type=ToolResult)
 ### Evaluation v0.1
 
 ```python
-from backend.case import to_evaluation_result
+from evaluation.adapters.case_results import to_evaluation_result
 
 evaluation_result = to_evaluation_result(result, context, duration_ms=0, attempt_count=1)
 ```

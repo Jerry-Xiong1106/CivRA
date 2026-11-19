@@ -65,6 +65,9 @@ class RepositoryCasePort:
             return None
         return None
 
+    def business_case(self, case_id):
+        return self.repository.get_case(case_id)
+
     def get_snapshot(self, case_id):
         from backend.agent.case_port import CaseSnapshot as RuntimeSnapshot
         case = self.repository.get_case(case_id)

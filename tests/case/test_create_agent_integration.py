@@ -14,7 +14,8 @@ from backend.agent.factory import build_runner
 from backend.agent.model.llm import ScriptedLLM, tool_call
 from backend.agent.runner import VersionConflict
 from backend.agent.runtime.store import RunStore
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case
+from backend.case import CaseService, SQLiteCaseRepository
+from scripts.case.fixtures import load_development_case
 from backend.tools.case_results import to_runtime_tool_result
 from backend.case.research.knowledge_bridge import CorpusSourceResolver
 from backend.case.models import BusinessResult, SourcePointer
@@ -74,16 +75,14 @@ class CreateAgentIntegrationTests(unittest.TestCase):
             facts = [
                 {"fact_id": "f_test_liability", "field": "liability_finding",
                  "value_type": "text", "value": "同等责任",
-                 "confirmation": {"message_id": statement.message_id, "confirmed_by": statement.actor_id,
-                                  "confirmed_at": statement.created_at.replace(microsecond=0).isoformat()}},
+                 "confirmation": {"message_id": statement.message_id}},
                 {"fact_id": "f_test_medical", "field": "medical_expense_reported",
                  "value_type": "money", "value": {"amount": "18000", "currency": "CNY"},
                  "confirmation": {"message_id": statement.message_id}},
             ]
             for fact in facts:
                 fact.update(provenance="user_statement", confirmation_status="confirmed", statement_refs=[statement.message_id])
-            return tool_call("update_case", expected_case_version=snapshot.case_version - 1,
-                             changes={"upsert_facts": facts}, change_reason="记录明确确认的事实")
+            return tool_call("update_case", changes={"upsert_facts": facts}, change_reason="记录明确确认的事实")
 
         setup = self.setup_runner([save_facts, tool_call("finish", answer="可以继续准备调解方案。")])
         info = setup.runner.start_run(self.case.case_id, "我确认双方同等责任，目前看到的医疗费票据是18000元。")

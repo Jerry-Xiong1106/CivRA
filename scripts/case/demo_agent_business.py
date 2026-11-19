@@ -10,7 +10,8 @@ from tempfile import TemporaryDirectory
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case  # noqa: E402
+from backend.case import CaseService, SQLiteCaseRepository
+from scripts.case.fixtures import load_development_case
 from backend.agent.case_adapter import RepositoryCasePort  # noqa: E402
 from demo_support import DEMO_REPLY, confirmed_demo_changes  # noqa: E402
 
@@ -40,8 +41,11 @@ def run_agent_demo(directory):
 
     def apply_recorded_reply(messages, tools):
         snapshot = repository.get_case(original.case_id)
-        return tool_call("update_case", expected_case_version=snapshot.case_version,
-            changes=confirmed_demo_changes(snapshot).model_dump(mode="json", exclude={"upsert_statements"}),
+        changes = confirmed_demo_changes(snapshot).model_dump(mode="json", exclude={"upsert_statements"})
+        for fact in changes.get("upsert_facts", []):
+            if fact.get("confirmation"):
+                fact["confirmation"] = {"message_id": fact["confirmation"]["message_id"]}
+        return tool_call("update_case", changes=changes,
             change_reason="应用记录合成用户回复后，按确认记录更新业务状态")
 
     def choose_route_after_recheck(messages, tools):

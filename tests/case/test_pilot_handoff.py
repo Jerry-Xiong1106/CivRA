@@ -4,7 +4,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case
+from backend.case import CaseService, SQLiteCaseRepository
+from scripts.case.fixtures import load_development_case
 from backend.case.research.knowledge_bridge import CorpusSourceResolver, executable_research_plan
 from backend.case.models import CaseSnapshot, SourcePointer
 

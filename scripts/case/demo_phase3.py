@@ -13,7 +13,8 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
 
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case
+from backend.case import CaseService, SQLiteCaseRepository
+from scripts.case.fixtures import load_development_case
 from backend.case.contracts import InvocationContext
 from backend.case.operations import REQUEST_MODELS, RESULT_MODELS
 from backend.case.materials.ocr import OcrEngineRegistry

@@ -281,7 +281,7 @@ def test_one_running_run_per_case(cases, tmp_path):
     store = RunStore(tmp_path)
     runner = AgentRunner(ScriptedLLM([]), mock_tool_fixture(cases), cases, store, default_config=RunConfig(conversation_route="case_work"))
     from backend.agent.runtime.store import Checkpoint
-    store.save_checkpoint(Checkpoint(run_id="run_x", engine=CURRENT_ENGINE, case_id=CASE, status="running", config=RunConfig(conversation_route="case_work", ),
+    store.save_checkpoint(Checkpoint(run_id="run_x", thread_id="conv_x", engine=CURRENT_ENGINE, case_id=CASE, status="running", config=RunConfig(conversation_route="case_work", ),
                                      messages=[], case_version=1, stage="consultation"))
     with pytest.raises(RunConflict):
         runner.start_run(CASE, "hi")

@@ -5,7 +5,9 @@ from datetime import datetime,timedelta,timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from backend.case import CaseService,SQLiteCaseRepository,load_development_case,get_contract_manifest
+from backend.case import CaseService, SQLiteCaseRepository
+from scripts.case.fixtures import load_development_case
+from backend.tools.case_manifest import get_contract_manifest
 
 try:
     from tests.native_tools import NativeTools

@@ -255,7 +255,7 @@ def test_return_to_litigation_after_a_side_task_and_restart(api):
 
 def test_litigation_prepares_real_directory_and_draft_then_confirms_submission(api):
     from datetime import datetime, timezone
-    from backend.case import load_development_case
+    from scripts.case.fixtures import load_development_case
     from backend.case.models import CaseSnapshot
     from backend.case.drafting.templates import CURRENT_VERSION
     from tests.agent.test_tasks import route
@@ -577,7 +577,7 @@ def test_restart_marks_unfinished_work_failed_without_replay(api):
         case_id = client.get(f"/api/conversations/{conversation}").json()["case_id"]
     run_id = "run_interrupted"
     service.runner.store.save_checkpoint(Checkpoint(
-        run_id=run_id, case_id=case_id, config=RunConfig(), status="running",
+        run_id=run_id, thread_id=conversation, case_id=case_id, config=RunConfig(), status="running",
         case_version=1, stage="consultation",
     ))
     request = MessageRequest(request_id="interrupted", text="Do not replay me")
@@ -599,7 +599,7 @@ def test_restart_marks_unfinished_work_failed_without_replay(api):
 @pytest.mark.parametrize(("scope", "task_status"), [("draft", "delivered"), ("complete", "partial")])
 def test_backend_drafts_word_and_pdf_and_http_downloads_them(api, scope, task_status):
     from datetime import datetime, timezone
-    from backend.case import load_development_case
+    from scripts.case.fixtures import load_development_case
     from backend.case.models import CaseSnapshot
     from backend.case.drafting.templates import CURRENT_VERSION
 

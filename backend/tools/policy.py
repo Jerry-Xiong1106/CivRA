@@ -33,6 +33,6 @@ def parameters_of(tool: BaseTool) -> dict:
 
 
 def describe_tool(tool: BaseTool) -> ToolSpec:
-    """Legacy manifest view only; native tools own their name/description/schema."""
+    """Manifest view of a native tool: its own name/description/schema plus project policy."""
     return ToolSpec(name=tool.name, description=tool.description,
                     parameters=parameters_of(tool), **policy_of(tool).model_dump())

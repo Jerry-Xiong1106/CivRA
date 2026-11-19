@@ -81,15 +81,15 @@ class AgentRunner:
     # ------------------------------------------------------------ public API
 
     def litigation_progress(self, case_id, info=None, inventory=None):
-        guide = getattr(self.cases, "litigation", None)
+        guide = self.cases.litigation
         if guide is None:
             return None
-        return guide.view(self.cases.repository.get_case(case_id), info.tasks if info else (),
+        return guide.view(self.cases.business_case(case_id), info.tasks if info else (),
                           info.wait if info else None, inventory)
 
     def enter_litigation(self, case_id, *, conversation_id, run_id=None, history_run_id=None,
                          request_id=None, actor_id="user", switch_wait_id=None, expected_case_version=None):
-        if not getattr(self.cases, "litigation", None):
+        if not self.cases.litigation:
             raise RunStateError("诉讼引导需要案件业务存储。")
         latest = self.store.latest_run(conversation_id) or history_run_id
         previous = self.get_run(latest) if latest else None
@@ -137,10 +137,8 @@ class AgentRunner:
         run_id/history_run_id are trusted application inputs, never model arguments.
         Repeating a request_id returns its existing run.
         """
-        if request_id is not None:
-            for existing in self.store.list_checkpoints():
-                if existing.start_request_id == request_id:
-                    return self.get_run(existing.run_id)
+        if request_id is not None and (existing := self.store.run_for_start_request(request_id)):
+            return self.get_run(existing)
         self._ensure_not_running(case_id)
         tasks = []
         latest = self.store.latest_run(conversation_id) if conversation_id else None
@@ -153,13 +151,12 @@ class AgentRunner:
             previous = self.store.load_checkpoint(history_run_id)
             if previous.case_id != case_id or previous.status not in TERMINAL_STATUSES:
                 raise RunStateError("History must belong to a finished run of the same case")
-            if previous.thread_id:
-                expected_previous = previous.run_id
-                if conversation_id and conversation_id != previous.thread_id:
-                    raise RunStateError("History belongs to a different conversation")
-                if self.store.latest_run(previous.thread_id) != history_run_id:
-                    raise RunStateError("会话已有更新的运行。")
-            conversation_id = conversation_id or previous.thread_id or f"conv_{uuid.uuid4().hex}"
+            expected_previous = previous.run_id
+            if conversation_id and conversation_id != previous.thread_id:
+                raise RunStateError("History belongs to a different conversation")
+            if self.store.latest_run(previous.thread_id) != history_run_id:
+                raise RunStateError("会话已有更新的运行。")
+            conversation_id = previous.thread_id
             parent_checkpoint_id = self.store.continue_thread(previous, conversation_id)
             tasks = self.store.read_tasks(history_run_id)
         if run_id is not None:
@@ -171,9 +168,9 @@ class AgentRunner:
         if expected_case_version is not None and snap.case_version != expected_case_version:
             raise VersionConflict("案件版本已更新，请刷新。")
         if litigation_feedback:
-            if not getattr(self.cases, "litigation", None) or litigation_feedback not in EVENTS:
+            if not self.cases.litigation or litigation_feedback not in EVENTS:
                 raise RunStateError("不支持此办理反馈。")
-            self.cases.litigation.validate_feedback(self.cases.repository.get_case(case_id),
+            self.cases.litigation.validate_feedback(self.cases.business_case(case_id),
                                                    litigation_feedback, user_message)
         cp = Checkpoint(
             run_id=run_id or f"run_{datetime.now():%Y%m%d}_{uuid.uuid4().hex[:6]}",
@@ -309,15 +306,10 @@ class AgentRunner:
                 reply = reply.model_copy(update={"answers": {wait.questions[0].question_id: reply.text}, "text": None})
         reply_text = _reply_text(reply, wait)
         if litigation_feedback:
-            self.cases.litigation.validate_feedback(self.cases.repository.get_case(cp.case_id),
+            self.cases.litigation.validate_feedback(self.cases.business_case(cp.case_id),
                                                    litigation_feedback, reply_text)
-        if conversation_id and cp.thread_id not in (None, conversation_id):
+        if conversation_id and cp.thread_id != conversation_id:
             raise RunStateError("Run belongs to a different conversation")
-        if cp.thread_id is None:
-            thread = conversation_id or f"conv_{uuid.uuid4().hex}"
-            cp.graph_checkpoint_id = self.store.continue_thread(cp, thread)
-            cp.thread_id = thread
-            self.store.save_checkpoint(cp)
         saved_id = self._record_user_message(cp, reply_text, f"resume:{run_id}:{wait_id}", message_id, actor_id)
         if litigation_feedback:
             self._litigation_feedback(cp, litigation_feedback, saved_id, actor_id, reply.text or reply_text)
@@ -350,8 +342,7 @@ class AgentRunner:
         factory enables this hook for CLI/evaluation callers using CaseService.
         A deterministic ID also makes a retry after a partial save safe.
         """
-        record = getattr(self.cases, "record_user_reply", None)
-        if not self.record_user_messages or message_id is not None or record is None:
+        if not self.record_user_messages or message_id is not None:
             return message_id
         snapshot = self.cases.get_snapshot(cp.case_id)
         identifier = "runtime_msg_" + hashlib.sha256(key.encode("utf-8")).hexdigest()[:32]
@@ -362,19 +353,37 @@ class AgentRunner:
                 raise RunStateError("同一用户消息标识已保存不同内容。")
             cp.case_version = snapshot.case_version
             return identifier
-        result = record(case_id=cp.case_id, expected_case_version=snapshot.case_version,
-                        request_id=identifier, message_id=identifier, actor_id=actor_id,
-                        text=text, created_at=datetime.now(timezone.utc))
+        result = self.cases.record_user_reply(case_id=cp.case_id, expected_case_version=snapshot.case_version,
+                                             request_id=identifier, message_id=identifier, actor_id=actor_id,
+                                             text=text, created_at=datetime.now(timezone.utc))
         if result.status != "ok":
             raise RunStateError("用户消息保存失败，请刷新案件版本后重试。")
         cp.case_version = result.case_version
         return identifier
 
     def _litigation_feedback(self, cp, event, statement_id, actor_id, text):
-        if event not in EVENTS or not statement_id or not getattr(self.cases, "litigation", None):
+        if event not in EVENTS or not statement_id or not self.cases.litigation:
             raise RunStateError("需要当前案件中已保存的用户办理反馈。")
-        self.cases.litigation.record(self.cases.repository.get_case(cp.case_id), event,
+        self.cases.litigation.record(self.cases.business_case(cp.case_id), event,
                                      statement_id, actor_id, text, statement_id)
+
+    def has_run(self, run_id: str) -> bool:
+        return self.store.exists(run_id)
+
+    def fail_if_running(self, run_id: str, reason: str) -> None:
+        """Mark a run failed when its executor died (server restart, crashed worker)."""
+        if not self.store.exists(run_id):
+            return
+        cp = self.store.load_checkpoint(run_id)
+        if cp.status == "running":
+            cp.stop("failed", reason)
+            self.store.end(cp)
+
+    def validate_litigation_feedback(self, case_id: str, event: str, text: str = "") -> None:
+        """Raise ValueError when the user's litigation feedback cannot be recorded now."""
+        if not self.cases.litigation:
+            raise ValueError("诉讼引导需要案件业务存储。")
+        self.cases.litigation.validate_feedback(self.cases.business_case(case_id), event, text)
 
     def cancel_run(self, run_id: str, *, request_id: str | None = None) -> RunInfo:
         cp = self.store.load_checkpoint(run_id)
@@ -460,7 +469,7 @@ class AgentRunner:
                         record_mediation_answer(task, question.field, answer)
             middleware.reply_evidence = list(reply.answers.values()) + ([reply.text] if reply.text else [])
             middleware.reply_files = reply.file_ids
-        if reply and reply.route_choice == "litigation" and getattr(self.cases, "litigation", None):
+        if reply and reply.route_choice == "litigation" and self.cases.litigation:
             task = current(middleware.tasks)
             if task and task.kind in ("document", "unsupported_document"):
                 task.route_step = "draft"
@@ -504,9 +513,8 @@ class AgentRunner:
     # ------------------------------------------------------------ helpers
 
     def _ensure_not_running(self, case_id: str) -> None:
-        for other in self.store.list_checkpoints():
-            if other.case_id == case_id and other.status == "running" and other.engine == ENGINE:
-                raise RunConflict(f"case {case_id} already has a running run: {other.run_id}")
+        if other := self.store.running_run(case_id):
+            raise RunConflict(f"case {case_id} already has a running run: {other}")
 
 
 def _sha256(obj: Any) -> str:

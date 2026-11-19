@@ -10,7 +10,11 @@ from tempfile import TemporaryDirectory
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from backend.case import CaseService, CaseToolClient, SQLiteCaseRepository, ToolInvocation, load_development_case
+from evaluation.adapters.case_results import evaluate_case_tool
+from backend.case import CaseService, SQLiteCaseRepository
+from backend.tools.case_client import CaseToolClient
+from backend.tools.case_contracts import ToolInvocation
+from scripts.case.fixtures import load_development_case
 from backend.case.contracts import InvocationContext
 from backend.case.models import CaseSnapshot
 from backend.agent.case_adapter import RepositoryCasePort
@@ -52,6 +56,16 @@ def update_arguments(repo, case_id):
     }
 
 
+def agent_update_arguments(repo, case_id):
+    """The Agent omits what the runtime supplies: case version, confirmer and time."""
+    arguments = update_arguments(repo, case_id)
+    del arguments["expected_case_version"]
+    for fact in arguments["changes"].get("upsert_facts", []):
+        if fact.get("confirmation"):
+            fact["confirmation"] = {"message_id": fact["confirmation"]["message_id"]}
+    return arguments
+
+
 def draft_arguments(repo, case_id):
     case = repo.get_case(case_id)
     return {
@@ -79,7 +93,7 @@ def run_fixed(directory):
                                       experiment_run_id="phase4-fixed", deadline_at=None),
             case_version=case.case_version, arguments=arguments or {},
         )
-        response = client.evaluate(name, invocation)
+        response = evaluate_case_tool(client, name, invocation)
         if response["status"] != "ok":
             raise AssertionError(response)
         result = response["data"]
@@ -124,7 +138,7 @@ def run_agent(directory):
         ])
 
     def update_from_reply(messages, tools):
-        return tool_call("update_case", **update_arguments(repo, case_id))
+        return tool_call("update_case", **agent_update_arguments(repo, case_id))
 
     def compare_from_calculation(messages, tools):
         calculation = last_business_result(messages)["data"]

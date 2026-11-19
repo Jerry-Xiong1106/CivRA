@@ -6,7 +6,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case
+from backend.case import CaseService, SQLiteCaseRepository
+from scripts.case.fixtures import load_development_case
 
 try:
     from tests.native_tools import NativeTools
@@ -41,19 +42,19 @@ class BusinessRuntimeTests(unittest.TestCase):
         self.assertEqual([e['step_id'] for e in activity.data.events],['1','1'])
 
     def test_model_cannot_insert_fabricated_user_messages(self):
-        args = {"expected_case_version": 1, "changes": {"upsert_statements": []}, "change_reason": "test"}
+        args = {"changes": {"upsert_statements": []}, "change_reason": "test"}
         result = self.registry.execute("update_case", args, self.context()).result
         self.assertEqual(result.status, "error")
         self.assertEqual(result.error.code, "INVALID_ARGS")
         self.assertEqual(self.repo.get_case(self.case.case_id).case_version, 1)
 
     def test_empty_update_is_invalid_not_internal_error(self):
-        args = {"expected_case_version": 1, "changes": {}, "change_reason": "test"}
+        args = {"changes": {}, "change_reason": "test"}
         result = self.registry.execute("update_case", args, self.context()).result
         self.assertEqual(result.error.code, "INVALID_ARGS")
 
     def test_same_tool_attempt_can_be_replayed_without_second_write(self):
-        args = {"expected_case_version": 1, "change_reason": "演示用户陈述",
+        args = {"change_reason": "演示用户陈述",
             "changes": {"upsert_facts": [{"fact_id": "f_insurance_tool", "field": "insurance", "value_type": "text",
                 "value": "待核实具体保险关系", "provenance": "user_statement", "confirmation_status": "unconfirmed",
                 "statement_refs": ["msg_001"]}]}}

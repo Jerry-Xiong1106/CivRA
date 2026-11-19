@@ -1,7 +1,8 @@
 from datetime import datetime,timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case
+from backend.case import CaseService, SQLiteCaseRepository
+from scripts.case.fixtures import load_development_case
 from backend.case.models import BusinessOutput, CaseSnapshot
 
 

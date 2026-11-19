@@ -3,7 +3,8 @@ from pathlib import Path
 from unittest.mock import patch
 import json
 import unittest
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case
+from backend.case import CaseService, SQLiteCaseRepository
+from scripts.case.fixtures import load_development_case
 from backend.tools.case_client import CaseToolClient
 from backend.case.models import CaseSnapshot
 from features10_13_support import FeatureFixture

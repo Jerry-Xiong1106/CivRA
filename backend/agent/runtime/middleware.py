@@ -332,8 +332,7 @@ class RunMiddleware(AgentMiddleware):
             if task.route_step == "draft" and task.kind == "general":
                 task.kind = "document"
             if task.kind == "document":
-                reader = getattr(self.cases, "draft_missing_fields", None)
-                if reader and reader(self.cp.case_id, data["output_id"], task.formats) is not None:
+                if self.cases.draft_missing_fields(self.cp.case_id, data["output_id"], task.formats) is not None:
                     task.output_refs = [data["output_id"]]
         elif call.tool_name == "calculate_costs" and task.kind in ("general", "calculation"):
             calculation_type = call.arguments.get("calculation_type")
@@ -378,15 +377,13 @@ class RunMiddleware(AgentMiddleware):
     def _document_notices(self, task):
         candidate = self.draft_attempts.get(task.task_id)
         refs = [candidate] if candidate else task.output_refs
-        reader = getattr(self.cases, "draft_missing_fields", None)
         task.output_refs = []
         notices = []
-        if reader:
-            for ref in refs:
-                fields = reader(self.cp.case_id, ref, task.formats)
-                if fields is not None:
-                    task.output_refs.append(ref)
-                    notices.extend(f"文书待补或复核：{field}" for field in fields)
+        for ref in refs:
+            fields = self.cases.draft_missing_fields(self.cp.case_id, ref, task.formats)
+            if fields is not None:
+                task.output_refs.append(ref)
+                notices.extend(f"文书待补或复核：{field}" for field in fields)
         return notices
 
     def _control(self, call: ToolCall, request, handler) -> ToolResult:
@@ -420,11 +417,11 @@ class RunMiddleware(AgentMiddleware):
             if confirmations:
                 event = confirmations[0]["field"].split(".", 1)[1]
                 if (len(call.arguments["questions"]) != 1 or event not in EVENTS or cp.stage != "litigation"
-                        or not getattr(self.cases, "litigation", None)):
+                        or not self.cases.litigation):
                     result = ToolResult.fail("INVALID_ARGS", "请在诉讼路线中一次确认一项实际办理反馈。")
                 else:
                     try:
-                        self.cases.litigation.validate_feedback(self.cases.repository.get_case(cp.case_id), event)
+                        self.cases.litigation.validate_feedback(self.cases.business_case(cp.case_id), event)
                         confirmations[0]["text"] = f"是否确认记录「{EVENTS[event][2]}」？确定已发生请只答“确认”；其他回答作为情况说明。"
                         if confirmations[0]["text"] in cp.asked_questions:
                             result = ToolResult.fail("INVALID_ARGS", "本轮已经询问过此项办理反馈。")
@@ -476,13 +473,6 @@ class RunMiddleware(AgentMiddleware):
             if task:
                 task.missing_kinds = kinds
                 task.missing = list(kinds)
-        elif question := report.get("next_question", "").strip():
-            # Older clients submitted an unlinked question as well as missing labels.
-            # Preserve the labels once, without guessing which label the question answers.
-            labels = report.get("missing", task.missing if task else []) or [question]
-            report["missing"] = labels
-            args["open_issues"] = list(dict.fromkeys([*args.get("open_issues", []), *labels]))
-            questions.append({"text": question, "gap": question if question in labels else None})
         if (not questions or task and (task.mediation_preliminary or task.kind == "unsupported_document")
                 or not allowed("ask_user", cp.search_calls, cp.clarification_rounds, cp.config)
                 or cp.budget_reason(time.monotonic() - self.started_at)):
@@ -602,9 +592,7 @@ class RunMiddleware(AgentMiddleware):
                 if task.kind == "item_review":
                     refs = [ref for ref in task.input_refs
                             if not task.review_file_ids or json.loads(ref)["file_id"] in task.review_file_ids]
-                    reader = getattr(self.cases, "extracted_text", None)
-                    if reader:
-                        texts = [reader(self.cp.case_id, ref) for ref in refs]
+                    texts = [self.cases.extracted_text(self.cp.case_id, ref) for ref in refs]
                     verified_missing = self._material_gaps(task, refs)
                 if task.kind == "document":
                     notices = self._document_notices(task)
@@ -625,10 +613,9 @@ class RunMiddleware(AgentMiddleware):
                 if task.kind == "mediation_plan":
                     verified_missing = [label for label, _ in mediation_gaps(task).values()]
                 if task.kind == "evidence_directory":
-                    reader = getattr(self.cases, "directory_gaps", None)
                     refs = []
                     for ref in task.output_refs:
-                        gaps = reader(self.cp.case_id, ref) if reader else None
+                        gaps = self.cases.directory_gaps(self.cp.case_id, ref)
                         if gaps is not None:
                             refs.append(ref)
                             verified_missing.extend(gaps)

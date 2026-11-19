@@ -9,7 +9,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case
+from backend.case import CaseService, SQLiteCaseRepository
+from scripts.case.fixtures import load_development_case
 from backend.case.contracts import InvocationContext
 from backend.case.intake.contracts import UpdateCaseRequest
 from backend.case.drafting.documents import DocumentTemplate, TemplateRegistry, MeteredLLMDraftingGateway

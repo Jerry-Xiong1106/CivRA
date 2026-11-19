@@ -4,7 +4,10 @@ from backend.common.schemas import RunConfig
 import unittest
 from tempfile import TemporaryDirectory
 
-from backend.case import load_development_case, runtime_case_view, to_runtime_tool_result, validate_case_snapshot
+from backend.case import validate_case_snapshot
+from scripts.case.fixtures import load_development_case
+from backend.agent.case_adapter import runtime_case_view
+from backend.tools.case_results import to_runtime_tool_result
 
 try:
     from backend.agent.case_port import CaseSnapshot as RuntimeCaseSnapshot

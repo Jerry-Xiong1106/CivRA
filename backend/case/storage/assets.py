@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import hashlib
-import json
 from datetime import datetime, timezone
 
 from pydantic import Field
 
-from ..models import BusinessOutput, ContractModel, Identifier, SourcePointer
+from ..models import BusinessOutput, ContractModel, Identifier
 from ..errors import CaseNotFound, VersionConflict
 from .repository import SQLiteCaseRepository
 
