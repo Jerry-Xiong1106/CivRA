@@ -26,7 +26,7 @@ def cases():
 
 
 def make_runner(cases, tmp_path, script, **kw):
-    kw.setdefault("default_config", RunConfig(conversation_route="case_work"))
+    kw.setdefault("default_config", RunConfig())
     return AgentRunner(ScriptedLLM(script), mock_tool_fixture(cases), cases, RunStore(tmp_path), **kw)
 
 
@@ -60,7 +60,7 @@ def test_tool_feedback_leads_to_question_then_resume_after_restart(cases, tmp_pa
     ]
     llm = ScriptedLLM(script)
     store = RunStore(tmp_path)
-    runner = AgentRunner(llm, mock_tool_fixture(cases), cases, store, default_config=RunConfig(conversation_route="case_work"))
+    runner = AgentRunner(llm, mock_tool_fixture(cases), cases, store, default_config=RunConfig())
 
     info = runner.start_run(CASE, "我的车被追尾了，想要对方赔偿维修费。")
     assert info.status == "waiting_user"
@@ -68,7 +68,7 @@ def test_tool_feedback_leads_to_question_then_resume_after_restart(cases, tmp_pa
     assert [q.question_id for q in info.wait.questions] == ["q1", "q2"]
 
     # Simulate a process restart: a new runner with the same store continues from the checkpoint.
-    runner2 = AgentRunner(llm, mock_tool_fixture(cases), cases, store, default_config=RunConfig(conversation_route="case_work"))
+    runner2 = AgentRunner(llm, mock_tool_fixture(cases), cases, store, default_config=RunConfig())
     info = runner2.resume_run(info.run_id, UserReply(answers={"q1": "对方全责", "q2": "交强险+商业三者险100万"}),
                               wait_id=info.wait.wait_id, expected_case_version=1)
 
@@ -121,25 +121,23 @@ def test_stage_gating_hides_and_rejects_litigation_tools(cases, tmp_path):
     assert step.status == "error" and step.error.code == "NOT_ALLOWED"
 
 
-def test_route_choice_moves_stage_and_unlocks_tools(cases, tmp_path):
-    def check_litigation_tools(messages, tools):
-        assert "draft_document" in [t.name for t in tools]
-        return tool_call("draft_document", template_id="traffic_complaint")
+def test_route_selection_moves_stage_and_unlocks_route_tools(cases, tmp_path):
+    def consultation_tools(messages, tools):
+        names = [t.name for t in tools]
+        assert "draft_document" not in names and "confirm_step" not in names
+        return tool_call("finish", answer="可以在界面上选择诉讼准备。")
 
-    script = [
-        tool_call("request_route_choice", comparison="协商成本低；诉讼周期长但有强制力。",
-                  options=[{"route": "negotiation", "label": "协商和解"}, {"route": "litigation", "label": "诉讼"}]),
-        check_litigation_tools,
-        tool_call("finish", answer="草稿已生成", output_refs=["draft_mock_1"]),
-    ]
-    runner = make_runner(cases, tmp_path, script)
+    def litigation_tools(messages, tools):
+        names = [t.name for t in tools]
+        assert "draft_document" in names and "confirm_step" in names
+        return tool_call("finish", answer="已进入诉讼准备", output_refs=["draft_mock_1"])
+
+    runner = make_runner(cases, tmp_path, [consultation_tools, litigation_tools])
     info = runner.start_run(CASE, "我想走法律途径")
-    assert info.status == "waiting_user" and info.wait.kind == "route_selection"
-
+    assert info.status == "completed" and cases.get_snapshot(CASE).stage == "consultation"
     with pytest.raises(RunStateError):
-        runner.resume_run(info.run_id, UserReply(route_choice="mediation"), wait_id=info.wait.wait_id)  # not offered
-
-    info = runner.resume_run(info.run_id, UserReply(route_choice="litigation"), wait_id=info.wait.wait_id)
+        runner.select_route(CASE, "arbitration", history_run_id=info.run_id)
+    info = runner.select_route(CASE, "litigation", history_run_id=info.run_id)
     assert info.status == "completed"
     assert cases.get_snapshot(CASE).stage == "litigation"
     assert info.final.output_refs == ["draft_mock_1"]
@@ -163,7 +161,7 @@ def test_plain_text_answer_finishes_run(cases, tmp_path):
 
 def test_budget_exhausted(cases, tmp_path):
     script = [tool_call("search_statutes", query="q")] * 10
-    runner = make_runner(cases, tmp_path, script, default_config=RunConfig(conversation_route="case_work", max_tool_calls=2))
+    runner = make_runner(cases, tmp_path, script, default_config=RunConfig(max_tool_calls=2))
     info = runner.start_run(CASE, "查")
     assert info.status == "budget_exhausted"
     assert info.usage.tool_calls == 2 and info.final.open_issues
@@ -172,7 +170,7 @@ def test_budget_exhausted(cases, tmp_path):
 def test_token_budget(cases, tmp_path):
     # ScriptedLLM reports 120 tokens per call.
     script = [tool_call("search_statutes", query="q")] * 10
-    runner = make_runner(cases, tmp_path, script, default_config=RunConfig(conversation_route="case_work", max_total_tokens=300))
+    runner = make_runner(cases, tmp_path, script, default_config=RunConfig(max_total_tokens=300))
     info = runner.start_run(CASE, "查")
     assert info.status == "budget_exhausted" and info.usage.model_calls == 3
     assert "token" in info.final.open_issues[0]
@@ -182,26 +180,48 @@ def _registry_with_failing_search(cases):
     reg = mock_tool_fixture(cases)
     reg._tools.pop("search_statutes")
     reg.register(
-        ToolSpec(name="search_statutes", description="t", owner="m2", feedback_loop="retrieve_verify",
+        ToolSpec(name="search_statutes", description="t", owner="m2",
                  parameters={"type": "object", "properties": {"query": {"type": "string"}}}),
         lambda a, c: ToolResult(status="empty", summary="没有找到"),
     )
     return reg
 
 
-def test_retrieve_verify_round_limit(cases, tmp_path):
-    def expect_blocked(messages, tools):
-        result = last_tool_result(messages)
-        assert result["error"]["code"] == "NOT_ALLOWED" and "3 轮" in result["error"]["message"]
-        return tool_call("finish", answer="依据不足", open_issues=["未找到直接相关条文"])
+def test_repeated_tool_failures_withdraw_the_tool_for_the_run(cases, tmp_path):
+    reg = mock_tool_fixture(cases)
+    reg._tools.pop("search_statutes")
+    reg.register(ToolSpec(name="search_statutes", description="t", owner="m2",
+                          parameters={"type": "object", "properties": {"query": {"type": "string"}}}),
+                 lambda a, c: ToolResult.fail("UPSTREAM", "检索服务不可用"))
 
-    script = [tool_call("search_statutes", query="q")] * 3 + [tool_call("search_statutes", query="q4"), expect_blocked]
-    runner = AgentRunner(ScriptedLLM(script), _registry_with_failing_search(cases), cases, RunStore(tmp_path),
-                         default_config=RunConfig(conversation_route="case_work", max_search_calls=4))
+    def search_withdrawn(messages, tools):
+        assert "search_statutes" not in [t.name for t in tools]
+        return tool_call("finish", answer="依据暂缺", open_issues=["未能检索法条"])
+
+    script = [tool_call("search_statutes", query=f"q{i}") for i in range(3)] + [search_withdrawn]
+    runner = AgentRunner(ScriptedLLM(script), reg, cases, RunStore(tmp_path))
     info = runner.start_run(CASE, "查")
+    assert info.status == "completed" and info.usage.tool_calls == 3
+    assert any("search_statutes 连续 3 次未成功" in i for i in info.final.open_issues)
+
+
+def test_a_user_reply_gives_a_withdrawn_tool_another_chance(cases, tmp_path):
+    reg = mock_tool_fixture(cases)
+    reg._tools.pop("search_statutes")
+    reg.register(ToolSpec(name="search_statutes", description="t", owner="m2",
+                          parameters={"type": "object", "properties": {"query": {"type": "string"}}}),
+                 lambda a, c: ToolResult.fail("UPSTREAM", "检索服务不可用"))
+
+    def offered_again(messages, tools):
+        assert "search_statutes" in [t.name for t in tools]
+        return tool_call("finish", answer="好的")
+
+    script = [tool_call("search_statutes", query=f"q{i}") for i in range(3)] + [
+        tool_call("ask_user", questions=[{"question_id": "q", "text": "还有别的信息吗？"}]), offered_again]
+    runner = AgentRunner(ScriptedLLM(script), reg, cases, RunStore(tmp_path))
+    info = runner.start_run(CASE, "查")
+    info = runner.resume_run(info.run_id, UserReply(text="没有"), wait_id=info.wait.wait_id)
     assert info.status == "completed"
-    assert info.usage.tool_calls == 4  # the 4th was recorded but not executed
-    assert any("3 轮" in i for i in info.final.open_issues) and "未找到直接相关条文" in info.final.open_issues
 
 
 def test_round_limit_resets_after_user_reply(cases, tmp_path):
@@ -211,7 +231,7 @@ def test_round_limit_resets_after_user_reply(cases, tmp_path):
         lambda m, t: tool_call("finish", answer="ok") if last_tool_result(m)["status"] == "empty" else None,
     ]
     runner = AgentRunner(ScriptedLLM(script), _registry_with_failing_search(cases), cases, RunStore(tmp_path),
-                         default_config=RunConfig(conversation_route="case_work", max_search_calls=4))
+                         default_config=RunConfig(max_search_calls=4))
     info = runner.start_run(CASE, "查")
     info = runner.resume_run(info.run_id, UserReply(answers={"q1": "上海"}), wait_id=info.wait.wait_id)
     assert info.status == "completed"
@@ -241,7 +261,7 @@ def test_long_history_is_compacted_but_stored_in_full(cases, tmp_path):
         sizes.append(sum(len(json.dumps(m, ensure_ascii=False)) for m in messages))
         return tool_call("finish", answer="ok") if len(sizes) == 12 else tool_call("search_statutes", query="q")
 
-    cfg = RunConfig(conversation_route="case_work", max_context_chars=20_000, max_tool_calls=50, max_steps=60, max_search_calls=None)
+    cfg = RunConfig(max_context_chars=20_000, max_tool_calls=50, max_steps=60, max_search_calls=None)
     runner = AgentRunner(ScriptedLLM([measure] * 12), reg, cases, RunStore(tmp_path), default_config=cfg)
     info = runner.start_run(CASE, "我的车被追尾了")
     assert info.status == "completed"
@@ -255,7 +275,7 @@ def test_long_history_is_compacted_but_stored_in_full(cases, tmp_path):
 
     from backend.agent.runtime.store import RunStore as RS
     stored = RS(tmp_path).read_messages(info.run_id)
-    assert "messages" not in json.loads((tmp_path / info.run_id / "checkpoint.json").read_text(encoding="utf-8"))
+    assert "messages" not in RS(tmp_path).load_checkpoint(info.run_id).model_dump()
     assert sum(big in m.content for m in stored if m.type == "tool") == 11  # full history kept
 
 
@@ -279,9 +299,9 @@ def test_cancel_while_waiting_and_conflicts(cases, tmp_path):
 
 def test_one_running_run_per_case(cases, tmp_path):
     store = RunStore(tmp_path)
-    runner = AgentRunner(ScriptedLLM([]), mock_tool_fixture(cases), cases, store, default_config=RunConfig(conversation_route="case_work"))
+    runner = AgentRunner(ScriptedLLM([]), mock_tool_fixture(cases), cases, store, default_config=RunConfig())
     from backend.agent.runtime.store import Checkpoint
-    store.save_checkpoint(Checkpoint(run_id="run_x", engine=CURRENT_ENGINE, case_id=CASE, status="running", config=RunConfig(conversation_route="case_work", ),
+    store.save_checkpoint(Checkpoint(run_id="run_x", thread_id="conv_x", engine=CURRENT_ENGINE, case_id=CASE, status="running", config=RunConfig(),
                                      messages=[], case_version=1, stage="consultation"))
     with pytest.raises(RunConflict):
         runner.start_run(CASE, "hi")
@@ -386,3 +406,47 @@ def test_registry_retry_shares_original_deadline():
             assert calls == [ctx.deadline, ctx.deadline]
         finally:
             release.set()
+
+
+def test_sources_from_earlier_runs_stay_citable(cases, tmp_path):
+    def cite_previous(messages, tools):
+        return tool_call("finish", answer="依据同上", citations=[{"source_id": source_id, "location": "依据同上"}])
+
+    runner = make_runner(cases, tmp_path, [tool_call("search_statutes", query="交强险"),
+                                           tool_call("finish", answer="找到依据"), cite_previous])
+    first = runner.start_run(CASE, "查依据")
+    source_id = first.final.source_refs[0].source_id
+    second = runner.start_run(CASE, "再说一次", history_run_id=first.run_id)
+    assert [c.source_id for c in second.final.citations] == [source_id]
+    assert not any("未经检索" in issue for issue in second.final.open_issues)
+
+
+def test_budgets_restart_at_each_user_reply(cases, tmp_path):
+    cases.select_route(CASE, "negotiation")
+    script = [
+        tool_call("search_statutes", query="q1"),
+        tool_call("confirm_step", step_id="prepare", summary="诉求", answer="诉求清单"),
+        tool_call("search_statutes", query="q2"),
+        tool_call("confirm_step", step_id="communicate", summary="话术", answer="协商话术"),
+    ]
+    runner = AgentRunner(ScriptedLLM(script), mock_tool_fixture(cases), cases, RunStore(tmp_path),
+                         default_config=RunConfig(max_model_calls=2, max_tool_calls=2))
+    info = runner.start_run(CASE, "开始")
+    assert info.status == "waiting_user" and info.wait.step_id == "prepare"
+    # The whole run used more than one reply's budget, but each reply stayed within it.
+    info = runner.resume_run(info.run_id, UserReply(step_decision="done"), wait_id=info.wait.wait_id)
+    assert info.status == "waiting_user" and info.wait.step_id == "communicate"
+    assert info.usage.model_calls == 4 and info.usage.tool_calls == 2
+
+
+def test_step_completion_restores_question_and_search_allowance(cases, tmp_path):
+    cases.select_route(CASE, "negotiation")
+    ask = lambda n: tool_call("ask_user", questions=[{"question_id": f"q{n}", "text": f"问题{n}？"}])
+    script = [ask(1), tool_call("confirm_step", step_id="prepare", summary="诉求", answer="诉求清单"), ask(2)]
+    runner = AgentRunner(ScriptedLLM(script), mock_tool_fixture(cases), cases, RunStore(tmp_path),
+                         default_config=RunConfig(max_clarification_rounds=1))
+    info = runner.start_run(CASE, "开始")
+    info = runner.resume_run(info.run_id, UserReply(text="答"), wait_id=info.wait.wait_id)
+    assert info.wait.kind == "step_confirmation"
+    info = runner.resume_run(info.run_id, UserReply(step_decision="done"), wait_id=info.wait.wait_id)
+    assert info.wait.kind == "clarification" and info.wait.questions[0].text == "问题2？"

@@ -3,9 +3,11 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from backend.common.schemas import RunInfo, UserReply
+from backend.common.schemas import RunInfo, StepDecision, UserReply
 from backend.case.models import BusinessOutput, CaseSnapshot
 from backend.case.storage.assets import FileRecord
+
+Route = Literal["negotiation", "mediation", "litigation"]
 
 
 class Payload(BaseModel):
@@ -22,14 +24,15 @@ class Attachment(Payload):
 
 
 class Reply(Payload):
+    """Answer to the current wait. A step_confirmation wait needs step_decision."""
     text: str | None = Field(default=None, min_length=1, max_length=20000)
-    answers: dict[str, str] = Field(default_factory=dict, max_length=2)
-    route_choice: Literal["negotiation", "mediation", "litigation"] | None = None
+    answers: dict[str, str] = Field(default_factory=dict, max_length=4)
+    step_decision: StepDecision | None = None
 
     @model_validator(mode="after")
     def has_answer(self):
-        if not (self.text or self.answers or self.route_choice):
-            raise ValueError("reply needs text, answers or route_choice")
+        if not (self.text or self.answers or self.step_decision):
+            raise ValueError("reply needs text, answers or step_decision")
         if any(not key.strip() or not value.strip() or len(value) > 20000
                for key, value in self.answers.items()):
             raise ValueError("answers need nonempty question IDs and bounded text")
@@ -64,9 +67,35 @@ class MessageReceipt(BaseModel):
     error: str | None = None
 
 
+class RouteRequest(Payload):
+    """The user picked a route in the interface; the Agent starts guiding its current step."""
+    request_id: str = Field(min_length=1, max_length=128)
+    route: Route
+    expected_case_version: int | None = Field(default=None, ge=1, strict=True)
+
+
 class SubmissionView(MessageReceipt):
-    input: MessageRequest
+    input: RouteRequest | MessageRequest
     created_at: str
+
+
+class RouteStepView(BaseModel):
+    step_id: str
+    title: str
+    status: str
+    materials: list[str]
+    completion_condition: str
+    deliverable: str
+    tools: list[str]
+    note: str | None
+    output_refs: list[str]
+
+
+class RouteProgressView(BaseModel):
+    route: Route
+    current_step: str | None
+    steps: list[RouteStepView]
+    progress_version: int
 
 
 class ConversationView(BaseModel):
@@ -81,3 +110,4 @@ class ConversationView(BaseModel):
     files: list[FileRecord]
     outputs: list[BusinessOutput]
     inventory_truncated: bool = False
+    route_progress: RouteProgressView | None = None

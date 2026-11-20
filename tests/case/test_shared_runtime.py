@@ -1,11 +1,13 @@
 """Shared-entry-point parity against the frozen real Runtime integration."""
 
+from backend.case.intake.updates import set_case_stage
 import sys
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case
+from backend.case import CaseService, SQLiteCaseRepository
+from scripts.case.fixtures import load_development_case
 
 try:
     from backend.common.schemas import ToolSpec
@@ -44,12 +46,11 @@ class SharedRuntimeTests(unittest.TestCase):
         import json
         from datetime import datetime, timedelta, timezone
         from backend.common.schemas import ToolContext
-        from backend.agent.case_adapter import RepositoryCasePort
         from tests.native_tools import register_case_tools
         with TemporaryDirectory() as directory:
             repo = SQLiteCaseRepository(Path(directory) / "cases.db")
             case = repo.create_case(load_development_case())
-            RepositoryCasePort(repo).set_stage(case.case_id, "litigation")
+            set_case_stage(repo, case.case_id, "litigation")
             service = CaseService(repo, source_resolver=lambda pointer: {
                 "source_id": pointer.source_id, "version": pointer.source_version,
                 "source_type": "statute", "title": "合成来源", "locator": "第一条",

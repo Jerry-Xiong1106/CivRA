@@ -8,7 +8,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case
+from backend.case import CaseService, SQLiteCaseRepository
+from scripts.case.fixtures import load_development_case
 from backend.tools.case_results import to_runtime_tool_result
 from backend.case.calculation.cost_summary import MATERIAL_SUMMARY_VERSION, summarize_material_amounts
 from backend.case.calculation.fee_rules import PROPERTY_FEE_RULE_VERSION
@@ -261,6 +262,22 @@ class CostDetailTests(unittest.TestCase):
         self.assertEqual(self.service.calculate_costs(request).error.code, "invalid_request")
         with self.assertRaises(ValueError):
             self.service.calculator.register_rule("property_case_acceptance_fee", PROPERTY_FEE_RULE_VERSION, lambda value: None)
+
+
+    def test_arithmetic_subtraction_supports_multiple_deductions_without_inventing_values(self):
+        def amount(value, currency="CNY"):
+            return {"amount": value, "currency": currency}
+        def subtract(deductions):
+            return self.service.calculate_costs({"context": self.context(), "case_version": 1,
+                "calculation_type": "subtract_amounts", "rule_version": "arithmetic_v1",
+                "inputs": {"base": amount("73.10"), "deductions": deductions}})
+        ok = subtract([amount("20"), amount("0.11")])
+        self.assertEqual(ok.data.amounts["total"].amount, "52.99")
+        excessive = subtract([amount("80")])
+        self.assertEqual(excessive.status, "insufficient")
+        self.assertFalse(excessive.data.amounts)
+        self.assertEqual(subtract([]).error.code, "invalid_request")
+        self.assertEqual(subtract([amount("15", "USD")]).error.code, "invalid_request")
 
 
 if __name__ == "__main__":

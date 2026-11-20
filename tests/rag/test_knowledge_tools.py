@@ -101,7 +101,6 @@ def test_registered_tool_passes_arguments_and_validates():
     assert reg.execute("search_statutes", {"query": "x", "dispute_type": "t"}, ctx()).result.error.code == "INVALID_ARGS"
     assert reg.execute("search_statutes", {"query": "x", "incident_date": "2026/5/12"}, ctx()).result.error.code == "INVALID_ARGS"
     assert len(calls) == 1
-    assert reg.get_spec("search_statutes").feedback_loop == "retrieve_verify"
 
 
 def test_missing_index_is_reported_with_how_to_fix():
@@ -135,7 +134,7 @@ def test_invalid_source_is_not_sent_to_model_or_collected(tmp_path):
     cases = InMemoryCaseStore()
     cases.create(CASE, {})
     runner = AgentRunner(ScriptedLLM([tool_call("search_statutes", query="q"), check_error]),
-                         reg, cases, RunStore(tmp_path), default_config=RunConfig(conversation_route="case_work"))
+                         reg, cases, RunStore(tmp_path), default_config=RunConfig())
     info = runner.start_run(CASE, "test")
     assert info.status == "completed" and info.final.source_refs == []
 
@@ -179,7 +178,7 @@ def test_real_retrieval_through_the_agent_loop(real_search, tmp_path):
                          citations=[{"source_id": source_id, "location": "依据检索到的条文作答。"}])
 
     llm = ScriptedLLM([tool_call("search_statutes", query="机动车交通事故 交强险 赔偿顺序", top_k=3), cite_first_hit])
-    runner = AgentRunner(llm, reg, cases, RunStore(tmp_path), default_config=RunConfig(conversation_route="case_work"))
+    runner = AgentRunner(llm, reg, cases, RunStore(tmp_path), default_config=RunConfig())
     info = runner.start_run(CASE, "交强险怎么赔？")
 
     assert info.status == "completed"

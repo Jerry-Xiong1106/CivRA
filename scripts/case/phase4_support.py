@@ -1,14 +1,17 @@
 """Synthetic development fixtures and explicit checks for Member 3 handoff."""
 
+from backend.case.intake.updates import set_case_stage, record_user_statement
 import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from backend.case import CaseService, CaseToolClient, SQLiteCaseRepository, ToolInvocation, load_development_case
+from backend.case import CaseService, SQLiteCaseRepository
+from backend.tools.case_client import CaseToolClient
+from backend.tools.case_contracts import ToolInvocation
+from scripts.case.fixtures import load_development_case
 from backend.case.contracts import InvocationContext
 from backend.case.intake.contracts import UpdateCaseRequest
 from backend.case.models import BusinessOutput, CaseSnapshot, OutputLink, SourcePointer
-from backend.agent.case_adapter import RepositoryCasePort
 from demo_support import DEMO_REPLY, confirmed_demo_changes
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -32,9 +35,8 @@ def prepare_scenario(scenario, directory):
                 fact["value"] = None
     case = repo.create_case(CaseSnapshot.model_validate(payload))
     service = CaseService(repo)
-    port = RepositoryCasePort(repo)
     if seed in {"resolved", "resolved_litigation"}:
-        reply = port.record_user_reply(
+        reply = record_user_statement(repo, 
             case_id=case.case_id, expected_case_version=case.case_version,
             request_id="setup-reply", message_id="msg_demo_reply", actor_id="synthetic_user",
             text=DEMO_REPLY, created_at=datetime(2026, 11, 2, 8, tzinfo=timezone.utc),
@@ -51,7 +53,7 @@ def prepare_scenario(scenario, directory):
         if result.status != "ok":
             raise AssertionError(result.summary)
     if seed in {"litigation", "resolved_litigation"}:
-        port.set_stage(case.case_id, "litigation")
+        set_case_stage(repo, case.case_id, "litigation")
 
     if scenario["tool"] == "parse_documents":
         content = scenario.get("material_text", "事故日期：2026-05-12\n维修金额：150.75元\n")
@@ -70,7 +72,7 @@ def prepare_scenario(scenario, directory):
             links=[OutputLink(output_location="claimant", fact_ids=["f_claimant"])], source_refs=sources,
         ))
         if scenario.get("candidate") == "stale":
-            port.set_stage(case.case_id, "route_selection")
+            set_case_stage(repo, case.case_id, "route_selection")
     current = repo.get_case(case.case_id)
     version = scenario.get("call_version", current.case_version)
     arguments = _resolve_arguments(scenario["arguments"], version)

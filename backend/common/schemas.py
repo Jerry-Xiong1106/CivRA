@@ -103,9 +103,6 @@ class ToolSpec(BaseModel):
     timeout_s: float = 30.0
     max_retries: int = 1
     side_effects: bool = False
-    # Tools in the same feedback loop share a round limit, e.g. "retrieve_verify" for
-    # search_statutes / search_cases / verify_output. Every non-ok result uses one round.
-    feedback_loop: str | None = None
 
 
 class ToolContext(BaseModel):
@@ -160,9 +157,8 @@ TERMINAL_STATUSES = {"completed", "failed", "cancelled", "budget_exhausted"}
 
 
 class RunConfig(BaseModel):
-    conversation_route: Literal["auto", "consultation", "case_work"] = "auto"
-    max_search_calls: int | None = Field(default=3, ge=0)
-    max_clarification_rounds: int | None = Field(default=2, ge=0)
+    max_search_calls: int | None = Field(default=8, ge=0)
+    max_clarification_rounds: int | None = Field(default=3, ge=0)
     max_questions_per_round: int = Field(default=2, ge=1)
     mode: Literal["direct_llm", "rag", "fixed_workflow", "agent"] = "agent"
     model: str | None = None                 # None = the client's default model
@@ -174,15 +170,24 @@ class RunConfig(BaseModel):
     max_tool_calls: int = 20
     max_total_tokens: int | None = 200_000   # prompt + completion over the run; None = no limit
     max_run_seconds: float | None = 600      # active execution time, excluding waits for the user
-    max_feedback_rounds: int = 3             # per feedback loop, reset when the user replies
+    max_tool_failures: int = Field(default=3, ge=1)  # consecutive failures before a tool is withdrawn until the next reply
     max_context_chars: int = 60_000          # older history is compacted beyond this size
     enabled_tools: list[str] | None = None
+
+    @classmethod
+    def interactive(cls):
+        """Shared per-run envelope for the HTTP service and manual terminal."""
+        return cls(max_steps=56, max_model_calls=16, max_tool_calls=24,
+                   max_total_tokens=240_000, max_run_seconds=300, max_output_tokens=2200)
+
+
+StepDecision = Literal["done", "revise"]
 
 
 class UserReply(BaseModel):
     text: str | None = None
     answers: dict[str, str] = Field(default_factory=dict)  # question_id -> answer
-    route_choice: str | None = None
+    step_decision: StepDecision | None = None              # answer to a step_confirmation wait
     file_ids: list[str] = Field(default_factory=list)
 
 
@@ -193,19 +198,19 @@ class WaitQuestion(BaseModel):
     field: str | None = None
 
 
-class WaitOption(BaseModel):
-    route: str
-    label: str
-
-
 class Wait(BaseModel):
-    """What a waiting run needs from the user. resume_run must quote wait_id."""
+    """What a waiting run needs from the user. resume_run must quote wait_id.
+
+    step_confirmation asks whether the current route step is done; answer it with
+    UserReply.step_decision ("done" records progress and moves on, "revise" keeps working).
+    """
 
     wait_id: str
-    kind: Literal["clarification", "material_request", "route_selection"]
+    kind: Literal["clarification", "material_request", "step_confirmation"]
     questions: list[WaitQuestion] = Field(default_factory=list)
-    options: list[WaitOption] = Field(default_factory=list)
-    comparison: str | None = None
+    message: str | None = None   # what the assistant says with the wait (a step's deliverable, context for questions)
+    step_id: str | None = None
+    summary: str | None = None
 
 
 class RunUsage(BaseModel):
@@ -243,8 +248,7 @@ class FinalOutput(BaseModel):
 
 
 class RunInfo(BaseModel):
-    conversation_route: Literal["consultation", "case_work"] = "consultation"
-    schema_version: str = "0.5"
+    schema_version: str = "0.6"
     run_id: str
     case_id: str
     case_version: int
@@ -275,7 +279,7 @@ class RunEvent(BaseModel):
     at: str = Field(default_factory=now_iso)
 
 
-StepType = Literal["model_call", "tool_call", "ask_user", "route_choice", "verify", "finish", "error"]
+StepType = Literal["model_call", "tool_call", "ask_user", "step_confirmation", "route_selection", "step_completed", "finish", "error"]
 StepStatus = Literal["ok", "empty", "insufficient", "error", "retried", "waiting", "cancelled"]
 
 

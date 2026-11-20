@@ -16,8 +16,8 @@ from uuid import uuid4
 
 from backend.agent.runner import StaleWait, VersionConflict
 from backend.case.models import CaseSnapshot
-from backend.common.schemas import TERMINAL_STATUSES, RunInfo
-from .schemas import MessageReceipt, MessageRequest
+from backend.common.schemas import RunInfo
+from .schemas import MessageReceipt, MessageRequest, RouteRequest
 
 log = logging.getLogger(__name__)
 
@@ -82,11 +82,7 @@ class Conversations:
                 "SELECT DISTINCT run_id FROM api_messages WHERE status IN ('queued','running')"
             ).fetchall()
         for (run_id,) in rows:
-            if self.runner.store.exists(run_id):
-                cp = self.runner.store.load_checkpoint(run_id)
-                if cp.status == "running":
-                    cp.stop("failed", "Server restarted during execution; inspect saved results before retrying")
-                    self.runner.store.end(cp)
+            self.runner.fail_if_running(run_id, "Server restarted during execution; inspect saved results before retrying")
         with self.repository.connection(write=True) as db:
             db.execute("UPDATE api_messages SET status='failed', error=? WHERE status IN ('queued','running')",
                        ("Execution interrupted by server restart; not automatically retried",))
@@ -126,10 +122,12 @@ class Conversations:
                 "WHERE conversation_id=? ORDER BY sequence", (conversation_id,)).fetchall()
         return [{"request_id": r[0], "run_id": r[1], "status": r[2], "error": r[3],
                  "input": json.loads(r[4]), "created_at": r[5],
+                 # Each submission keeps the run snapshot it produced, so the transcript
+                 # can show earlier questions; the conversation's live run is "run".
                  "run": RunInfo.model_validate_json(r[6]) if r[6] else self._info(r[1])} for r in rows]
 
     def _info(self, run_id):
-        return self.runner.get_run(run_id) if self.runner.store.exists(run_id) else None
+        return self.runner.get_run(run_id) if self.runner.has_run(run_id) else None
 
     def get(self, conversation_id):
         conversation = self.context(conversation_id)
@@ -142,6 +140,7 @@ class Conversations:
         conversation["files"] = [f.model_dump(mode="json") for f in inventory["files"]]
         conversation["outputs"] = [o.model_dump(mode="json") for o in inventory["outputs"]]
         conversation["inventory_truncated"] = inventory["truncated"]
+        conversation["route_progress"] = self.runner.route_progress(conversation["case_id"])
         return conversation
 
     def receipt(self, conversation_id, request_id):
@@ -154,6 +153,8 @@ class Conversations:
                               error=row[2], run=RunInfo.model_validate_json(row[3]) if row[3] else self._info(row[0]))
 
     def _input_text(self, case_id, request):
+        if isinstance(request, RouteRequest):
+            return ""
         text = request.text or request.reply.text or ""
         if request.attachments:
             files = []
@@ -163,7 +164,7 @@ class Conversations:
             text += "\n用户提交的已上传材料引用（尚未解析或核验）：\n" + json.dumps(files, ensure_ascii=False)
         return text
 
-    def submit(self, conversation_id, request: MessageRequest):
+    def submit(self, conversation_id, request: MessageRequest | RouteRequest):
         with self._lock:
             if self._closed:
                 raise CapacityError("server is shutting down")
@@ -182,21 +183,22 @@ class Conversations:
                 raise Conflict("conversation already has work in progress")
             last_id = messages[-1]["run_id"] if messages else None
             previous = self._info(last_id) if last_id else None
-            version = self.repository.get_case(conversation["case_id"]).case_version
+            case = self.repository.get_case(conversation["case_id"])
+            version = case.case_version
             if request.expected_case_version is not None and request.expected_case_version != version:
                 raise VersionConflict(f"expected {request.expected_case_version}, current {version}")
-            if previous and previous.status == "waiting_user":
+            if isinstance(request, RouteRequest):
+                # Picking a route answers no wait; a waiting run is cancelled by the runner.
+                run_id = "run_" + datetime.now().strftime("%Y%m%d_") + uuid4().hex
+                history_id = last_id
+            elif previous and previous.status == "waiting_user":
                 if request.reply is None:
                     raise Conflict("answer the pending wait with reply and wait_id")
                 if request.wait_id != previous.wait.wait_id:
                     raise StaleWait("wait_id is stale")
-                if previous.wait.kind == "route_selection":
-                    allowed = {o.route for o in previous.wait.options}
-                    if request.reply.route_choice not in allowed:
-                        raise Conflict("select a route from the current options")
-                elif request.reply.route_choice is not None:
-                    raise Conflict("this wait expects answers, not a route")
-                elif set(request.reply.answers) - {q.question_id for q in previous.wait.questions}:
+                if (previous.wait.kind == "step_confirmation") != (request.reply.step_decision is not None):
+                    raise Conflict("a step confirmation needs step_decision; other waits do not accept it")
+                if set(request.reply.answers) - {q.question_id for q in previous.wait.questions}:
                     raise Conflict("answer references an unknown question")
                 run_id, history_id = last_id, None
             else:
@@ -236,31 +238,31 @@ class Conversations:
             # Globally unique trusted correlation ID, bounded independently of user IDs.
             correlation = "api_" + hashlib.sha256(
                 (conversation_id + ":" + request.request_id).encode()).hexdigest()
-            if request.reply is not None:
+            if isinstance(request, RouteRequest):
+                info = self.runner.select_route(
+                    case_id, request.route, conversation_id=conversation_id, run_id=run_id,
+                    history_run_id=history_id, request_id=correlation, actor_id="api_user",
+                    expected_case_version=request.expected_case_version)
+            elif request.reply is not None:
                 reply = request.reply.as_user_reply(request.attachments)
                 if request.attachments:
                     reply.text = text
                 info = self.runner.resume_run(
-                    run_id, reply, wait_id=request.wait_id,
+                    run_id, reply, wait_id=request.wait_id, conversation_id=conversation_id,
                     expected_case_version=request.expected_case_version,
-                    request_id=correlation, actor_id="api_user",
-                )
+                    request_id=correlation, actor_id="api_user")
             else:
                 info = self.runner.start_run(
-                    case_id, text, run_id=run_id, history_run_id=history_id,
+                    case_id, text, run_id=run_id, history_run_id=history_id, conversation_id=conversation_id,
                     request_id=correlation, actor_id="api_user",
-                )
+                    expected_case_version=request.expected_case_version)
             status = info.status
             result_json = info.model_dump_json()
         except Exception as exc:
             # Never echo raw provider exceptions, tokens or material contents.
             log.error("Conversation execution failed: run_id=%s type=%s", run_id, type(exc).__name__)
             status, error = "failed", "Execution failed; inspect the server log and saved run before retrying"
-            if self.runner.store.exists(run_id):
-                cp = self.runner.store.load_checkpoint(run_id)
-                if cp.status not in TERMINAL_STATUSES:
-                    cp.stop("failed", error)
-                    self.runner.store.end(cp)
+            self.runner.fail_if_running(run_id, error)
         finally:
             try:
                 with self.repository.connection(write=True) as db:

@@ -7,9 +7,10 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case
+from backend.case import CaseService, SQLiteCaseRepository
+from backend.case.intake.updates import record_user_statement  # noqa: E402
+from scripts.case.fixtures import load_development_case
 from backend.case.models import CaseSnapshot
-from backend.agent.case_adapter import RepositoryCasePort
 
 
 def run(output):
@@ -35,7 +36,7 @@ def run(output):
         (output / (kind + "_preview.json")).write_text(preview.model_dump_json(indent=2), encoding="utf-8")
         # This simulated confirmation is confined to synthetic demo data.
         # Production calls this only after the authenticated user clicks Confirm.
-        reply = RepositoryCasePort(repository).record_user_reply(case_id=case.case_id, expected_case_version=case.case_version,
+        reply = record_user_statement(repository, case_id=case.case_id, expected_case_version=case.case_version,
             request_id="synthetic-confirmation", message_id="demo-confirm", actor_id="demo-user",
             text=preview.data.structured_data["confirmation_text"], created_at=datetime.now(timezone.utc))
         if reply.status == "error":

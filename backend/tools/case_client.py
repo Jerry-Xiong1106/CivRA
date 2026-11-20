@@ -13,7 +13,8 @@ from backend.case.contracts import InvocationContext
 from backend.case.operations import REQUEST_MODELS, RESULT_MODELS
 from ..case.models import BusinessError, BusinessResult, ContractModel
 from backend.case.errors import CaseNotFound, VersionConflict
-from .case_contracts import ARGUMENT_MODELS, OPERATION_STAGES, ToolInvocation
+from backend.case.operations import OPERATION_STAGES
+from .case_contracts import ARGUMENT_MODELS, ToolInvocation
 
 
 class CaseToolClient:
@@ -121,15 +122,6 @@ class CaseToolClient:
         except Exception as exc:
             return self._error(context, version, "tool_error", "业务工具执行失败。",
                                {"exception_type": type(exc).__name__})
-
-    def evaluate(self, name: str, invocation: ToolInvocation | dict) -> dict:
-        """Member 5 envelope. Valid context is required for request correlation."""
-        from evaluation.adapters.case_results import to_evaluation_result
-        raw_context = invocation.context if isinstance(invocation, ToolInvocation) else invocation.get("context")
-        context = InvocationContext.model_validate(raw_context)
-        started = monotonic()
-        result = self.invoke(name, invocation)
-        return to_evaluation_result(result, context, duration_ms=round((monotonic() - started) * 1000))
 
     @staticmethod
     def _error(context, version, code, message, details=None):

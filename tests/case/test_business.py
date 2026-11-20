@@ -1,5 +1,6 @@
 """Business boundary checks: independent cases, conflicts, source fidelity and atomic writes."""
 
+from backend.case.intake.updates import set_case_stage, record_user_statement
 import json
 import sqlite3
 import sys
@@ -12,13 +13,13 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case
+from backend.case import CaseService, SQLiteCaseRepository
+from scripts.case.fixtures import load_development_case
 from backend.case.materials.contracts import BuildEvidenceDirectoryRequest, CheckEvidenceRequest
 from backend.case.intake.contracts import CaseChanges, UpdateCaseRequest
 from backend.case.contracts import InvocationContext
 from backend.case.models import CaseSnapshot, Fact, UserStatement
 from backend.case.errors import CaseNotFound, VersionConflict
-from backend.agent.case_adapter import RepositoryCasePort
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts/case"))
 from demo_support import DEMO_REPLY, confirmed_demo_changes
@@ -49,8 +50,7 @@ class BusinessTests(unittest.TestCase):
                 statement_refs=["msg_001"])]), change_reason="new user-provided fact")
 
     def resolve(self):
-        port = RepositoryCasePort(self.repo)
-        recorded = port.record_user_reply(case_id=self.case.case_id, expected_case_version=1,
+        recorded = record_user_statement(self.repo, case_id=self.case.case_id, expected_case_version=1,
             request_id="record", message_id="msg_demo_reply", actor_id="synthetic_user", text=DEMO_REPLY,
             created_at=datetime.now(timezone.utc))
         self.assertEqual(recorded.status, "ok")
@@ -110,8 +110,7 @@ class BusinessTests(unittest.TestCase):
         self.assertEqual(result.status, "error")
 
     def test_unresolved_litigation_directory_retains_conflicts_and_gaps(self):
-        port = RepositoryCasePort(self.repo)
-        port.set_stage(self.case.case_id, "litigation")
+        set_case_stage(self.repo, self.case.case_id, "litigation")
         case = self.repo.get_case(self.case.case_id)
         result = self.service.build_evidence_directory(BuildEvidenceDirectoryRequest(context=self.context(),
             case_version=case.case_version, case_snapshot=case))
@@ -175,11 +174,10 @@ class BusinessTests(unittest.TestCase):
         self.assertEqual(self.repo.get_case(self.case.case_id).case_version, 2)
 
     def test_user_reply_retry_reuses_original_receipt_timestamp(self):
-        port = RepositoryCasePort(self.repo)
         arguments = dict(case_id=self.case.case_id, expected_case_version=1, request_id="reply-retry",
             message_id="msg_retry", actor_id="synthetic_user", text="固定用户回复", created_at=datetime.now(timezone.utc))
-        first = port.record_user_reply(**arguments)
-        replay = port.record_user_reply(**arguments)
+        first = record_user_statement(self.repo, **arguments)
+        replay = record_user_statement(self.repo, **arguments)
         self.assertEqual(first.status, "ok")
         self.assertEqual(first, replay)
         self.assertEqual(self.repo.get_case(self.case.case_id).case_version, 2)
@@ -255,7 +253,7 @@ class BusinessTests(unittest.TestCase):
 
     def test_directory_after_resolution_keeps_only_active_evidence(self):
         current = self.resolve()
-        RepositoryCasePort(self.repo).set_stage(current.case_id, "litigation")
+        set_case_stage(self.repo, current.case_id, "litigation")
         current = self.repo.get_case(current.case_id)
         result = self.service.build_evidence_directory(BuildEvidenceDirectoryRequest(context=self.context(),
             case_version=current.case_version, case_snapshot=current))

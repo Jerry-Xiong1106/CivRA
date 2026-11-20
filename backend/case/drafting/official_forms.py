@@ -47,6 +47,13 @@ class OfficialTemplateLibrary:
     def records(self):
         return json.loads((self.root / "catalog.json").read_text(encoding="utf-8"))["records"]
 
+    def find_blanks(self, query="", document_type=None, domain=None):
+        terms = query.casefold().split()
+        return [r for r in self.records() if r["kind"] == "blank"
+                and (not document_type or r["document_type"] == document_type)
+                and (not domain or r["domain"] == domain)
+                and all(term in f"{r['title']} {r.get('dispute_type') or ''}".casefold() for term in terms)]
+
     def get(self, template_id, version):
         matches = [r for r in self.records() if r["template_id"] == template_id and r["version"] == version and r["kind"] == "blank"]
         if len(matches) != 1:
@@ -165,7 +172,7 @@ class OfficialFormService:
         request = RecommendFormsRequest.model_validate(request)
         try:
             case = self._case(request)
-            candidates = [r for r in self.library.records() if r["filling_supported"] and
+            candidates = [r for r in self.library.find_blanks(document_type="complaint") if r["filling_supported"] and
                           r["dispute_type"] == case.dispute_type and request.role == "plaintiff"]
             cards = [{key: r[key] for key in ("template_id", "version", "title", "source_url", "sha256", "dispute_type")}
                      for r in candidates]

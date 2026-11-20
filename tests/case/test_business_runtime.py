@@ -1,12 +1,14 @@
 """Integration checks requiring Member 4's actual NativeTools and AgentRunner."""
 
+from backend.case.intake.updates import set_case_stage
 import sys
 import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case
+from backend.case import CaseService, SQLiteCaseRepository
+from scripts.case.fixtures import load_development_case
 
 try:
     from tests.native_tools import NativeTools
@@ -41,19 +43,19 @@ class BusinessRuntimeTests(unittest.TestCase):
         self.assertEqual([e['step_id'] for e in activity.data.events],['1','1'])
 
     def test_model_cannot_insert_fabricated_user_messages(self):
-        args = {"expected_case_version": 1, "changes": {"upsert_statements": []}, "change_reason": "test"}
+        args = {"changes": {"upsert_statements": []}, "change_reason": "test"}
         result = self.registry.execute("update_case", args, self.context()).result
         self.assertEqual(result.status, "error")
         self.assertEqual(result.error.code, "INVALID_ARGS")
         self.assertEqual(self.repo.get_case(self.case.case_id).case_version, 1)
 
     def test_empty_update_is_invalid_not_internal_error(self):
-        args = {"expected_case_version": 1, "changes": {}, "change_reason": "test"}
+        args = {"changes": {}, "change_reason": "test"}
         result = self.registry.execute("update_case", args, self.context()).result
         self.assertEqual(result.error.code, "INVALID_ARGS")
 
     def test_same_tool_attempt_can_be_replayed_without_second_write(self):
-        args = {"expected_case_version": 1, "change_reason": "演示用户陈述",
+        args = {"change_reason": "演示用户陈述",
             "changes": {"upsert_facts": [{"fact_id": "f_insurance_tool", "field": "insurance", "value_type": "text",
                 "value": "待核实具体保险关系", "provenance": "user_statement", "confirmation_status": "unconfirmed",
                 "statement_refs": ["msg_001"]}]}}
@@ -69,8 +71,7 @@ class BusinessRuntimeTests(unittest.TestCase):
         self.assertEqual(result.error.code, "NOT_ALLOWED")
 
     def test_registry_rejects_stale_case_context(self):
-        from backend.agent.case_adapter import RepositoryCasePort
-        RepositoryCasePort(self.repo).set_stage(self.case.case_id, "route_selection")
+        set_case_stage(self.repo, self.case.case_id, "route_selection")
         result = self.registry.execute("check_evidence", {}, self.context()).result
         self.assertEqual(result.error.details["business_code"], "version_conflict")
         self.assertEqual(result.case_version, 2)

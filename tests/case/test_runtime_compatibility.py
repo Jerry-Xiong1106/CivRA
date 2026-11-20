@@ -4,7 +4,10 @@ from backend.common.schemas import RunConfig
 import unittest
 from tempfile import TemporaryDirectory
 
-from backend.case import load_development_case, runtime_case_view, to_runtime_tool_result, validate_case_snapshot
+from backend.case import validate_case_snapshot
+from scripts.case.fixtures import load_development_case
+from backend.agent.case_adapter import runtime_case_view
+from backend.tools.case_results import to_runtime_tool_result
 
 try:
     from backend.agent.case_port import CaseSnapshot as RuntimeCaseSnapshot
@@ -59,7 +62,7 @@ class RuntimeCompatibilityTests(unittest.TestCase):
 
         llm = ScriptedLLM([tool_call("validate_case_snapshot"), tool_call("finish", answer="Structure validated")])
         with TemporaryDirectory() as directory:
-            runner = AgentRunner(llm, registry, ReadOnlyCasePort(), RunStore(directory), default_config=RunConfig(conversation_route="case_work"))
+            runner = AgentRunner(llm, registry, ReadOnlyCasePort(), RunStore(directory), default_config=RunConfig())
             info = runner.start_run(snapshot.case_id, "Validate the development case structure")
             self.assertEqual(info.status, "completed")
             self.assertEqual(info.case_version, 1)

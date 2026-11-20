@@ -8,7 +8,14 @@ from ..contracts import InvocationContext
 from typing import Literal
 
 
+# Dispute types the complaint templates support (drafting/templates.py PROFILES), plus "other".
+DisputeType = Literal["traffic_accident", "private_lending", "sales_contract", "other"]
+
+
 class CaseChanges(ContractModel):
+    dispute_type: DisputeType | None = Field(
+        default=None, description="案由类型：机动车交通事故 traffic_accident、民间借贷 private_lending、"
+                                  "买卖合同 sales_contract，其他 other；起诉状模板据此选择。")
     upsert_statements: list[UserStatement] = Field(default_factory=list)
     upsert_facts: list[Fact] = Field(default_factory=list)
     upsert_evidence: list[Evidence] = Field(default_factory=list)
@@ -16,7 +23,8 @@ class CaseChanges(ContractModel):
 
     @model_validator(mode="after")
     def nonempty(self):
-        if not (self.upsert_statements or self.upsert_facts or self.upsert_evidence or self.upsert_claims):
+        if not (self.dispute_type or self.upsert_statements or self.upsert_facts or self.upsert_evidence
+                or self.upsert_claims):
             raise ValueError("changes must contain at least one operation")
         for items, key in [(self.upsert_statements, "message_id"), (self.upsert_facts, "fact_id"),
                            (self.upsert_evidence, "evidence_id"), (self.upsert_claims, "claim_id")]:

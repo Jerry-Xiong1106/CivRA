@@ -47,7 +47,7 @@ def create_mock_tools(cases: InMemoryCaseStore, *, statutes: bool = True,
         result.summary = '模拟检索：' + result.summary
         return result.model_dump(mode='json', exclude_none=True)
 
-    set_policy(search_statutes, owner='member2', feedback_loop='retrieve_verify')
+    set_policy(search_statutes, owner='member2')
 
     @tool(
         'check_evidence',
@@ -92,7 +92,7 @@ def create_mock_tools(cases: InMemoryCaseStore, *, statutes: bool = True,
     def verify_output(runtime: ToolRuntime[ToolContext], **args) -> dict:
         return ToolResult(status='ok', summary='未发现问题（mock）。', data={'issues': []}).model_dump(mode='json', exclude_none=True)
 
-    set_policy(verify_output, owner='member3', feedback_loop='retrieve_verify')
+    set_policy(verify_output, owner='member3')
 
     @tool(
         'draft_document',

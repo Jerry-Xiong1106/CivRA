@@ -1,0 +1,13 @@
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import App from './App.vue';
+import { createWorkspaceRouter } from './router.js';
+import './assets/workspace.css';
+import './assets/references.css';
+import './assets/classic-pages.css';
+import './assets/conversation-workspace.css';
+const app = createApp(App);
+const pinia = createPinia();
+app.use(pinia);
+app.use(createWorkspaceRouter(pinia));
+app.mount('#app');

@@ -10,12 +10,13 @@ from tempfile import TemporaryDirectory
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case  # noqa: E402
+from backend.case import CaseService, SQLiteCaseRepository
+from backend.case.intake.updates import set_case_stage, record_user_statement  # noqa: E402
+from scripts.case.fixtures import load_development_case
 from backend.case.materials.contracts import BuildEvidenceDirectoryRequest, CheckEvidenceRequest
 from backend.case.contracts import InvocationContext
 from backend.case.intake.contracts import UpdateCaseRequest
 from backend.case.models import CaseSnapshot  # noqa: E402
-from backend.agent.case_adapter import RepositoryCasePort  # noqa: E402
 from demo_support import DEMO_REPLY, confirmed_demo_changes  # noqa: E402
 
 
@@ -30,8 +31,7 @@ def run_demo(database):
 
     before = service.check_evidence(CheckEvidenceRequest(context=context("check-before"),
         case_version=snapshot.case_version, case_snapshot=snapshot))
-    port = RepositoryCasePort(repository)
-    recorded = port.record_user_reply(case_id=snapshot.case_id, expected_case_version=1,
+    recorded = record_user_statement(repository, case_id=snapshot.case_id, expected_case_version=1,
         request_id="record-demo-reply", message_id="msg_demo_reply", actor_id="synthetic_user", text=DEMO_REPLY,
         created_at=datetime.now(timezone.utc))
     if recorded.status != "ok":
@@ -46,7 +46,7 @@ def run_demo(database):
     snapshot = repository.get_case(snapshot.case_id)
     after = service.check_evidence(CheckEvidenceRequest(context=context("check-after"),
         case_version=snapshot.case_version, case_snapshot=snapshot))
-    port.set_stage(snapshot.case_id, "litigation")  # Explicit demo user route, not model-selected.
+    set_case_stage(repository, snapshot.case_id, "litigation")  # Explicit demo user route, not model-selected.
     snapshot = repository.get_case(snapshot.case_id)
     directory = service.build_evidence_directory(BuildEvidenceDirectoryRequest(context=context("directory"),
         case_version=snapshot.case_version, case_snapshot=snapshot))

@@ -391,6 +391,8 @@ class FinalOutput(BaseModel):
 
 运行失败、取消或达到预算上限时，`final` 仍然会返回，内容是已完成的部分：已检索到的来源、模型最后一次给出的文字说明，以及说明原因的 `open_issues`。
 
+RunInfo.tasks 按运行固定的图检查点读取。同一会话的运行共享 thread_id = conversation_id，运行完成不会关闭任务或案件。
+
 ### 4.3 建议的 HTTP 映射（成员1负责实现和最终定稿）
 
 当前已实现会话式 HTTP 层，前端接入以 [API 文档](../backend/api/README.md) 为准。下表保留早期按 run 暴露接口的建议；实际接口由 conversation 协调 start/resume，并补齐上传、下载和持续历史，不逐项照搬下表。
@@ -449,7 +451,7 @@ data: {"seq": 7, "run_id": "run_20261031_ab12cd", "type": "step.finished", "step
 
 ### 5.2 执行记录 `TraceStep`
 
-每一步由create_agent middleware与生命周期适配在实际调用前后追加写入，不依赖模型自己报告。每次运行的文件放在 `var/runs/{run_id}/`：`trace.jsonl`（执行记录）、`events.jsonl`（事件）、`checkpoint.json`（检查点）、`results/step_NNNN.json`（每步的完整参数和结果）。后续需要时迁移到数据库。`data/` 只放法律资料、案例、模板和示例数据；运行时产生的文件放在 `var/`，该目录已在 `.gitignore` 中，不提交到仓库。
+每一步由 middleware 和生命周期适配记录。runs/<run_id>/ 保存 trace.jsonl、events.jsonl 和 results/step_NNNN.json。运行状态及取消标记保存在 cases.sqlite3 的 agent_runs 表。
 
 ```python
 class TraceStep(BaseModel):
@@ -480,7 +482,7 @@ class TraceStep(BaseModel):
 
 执行记录展示的是实际动作、结果和决策摘要，不代表模型内部的完整思维过程，也不能证明法律判断正确。
 
-新运行另在var/runs/agent.sqlite3保存框架SQLite检查点，以run_id作为thread_id。checkpoint.json保存engine=langchain-create-agent-v2、预算、wait和引用；它不再重复保存消息历史，也不能单独恢复新会话。完整原生消息通过RunStore.read_messages(run_id)按需读取；已有v2记录中的messages字段被忽略，恢复以框架历史为准。取消请求写入独立cancel.requested标记，由执行边界读取，避免旧checkpoint覆盖取消状态。追问后middleware结束当次invoke并保存线程，用户回复通过同一thread_id继续；框架检查点缺失时失败，不重放工具。迁移前的旧engine记录不兼容恢复，需新建运行。案件数据仍由CaseStatePort提供。
+runs/agent.sqlite3 保存 LangGraph 消息与任务。agent_runs 保存预算、等待、最终结果及图检查点 ID。旧 checkpoint.json 在打开工作区时导入，原件保留。续用旧对话时迁移最后的图快照，历史运行仍可按原 ID 查询。缺少框架检查点时拒绝重放工具，不兼容的旧 engine 仍需新建会话。
 
 ---
 

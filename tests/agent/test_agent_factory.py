@@ -76,7 +76,7 @@ def test_llm_from_env_overrides_and_rejects_removed_backend(monkeypatch):
 
 def test_missing_key_is_a_clear_error(tmp_path):
     with pytest.raises(MissingAPIKey, match="SILICONFLOW_API_KEY"):
-        build_runner(config=RunConfig(conversation_route="case_work"), dotenv=tmp_path / "none.env", store=RunStore(tmp_path))
+        build_runner(config=RunConfig(), dotenv=tmp_path / "none.env", store=RunStore(tmp_path))
 
 
 def test_registry_options(tmp_path):
@@ -102,7 +102,7 @@ def test_pilot_config_maps_to_run_config():
 
 def test_max_model_calls_budget(tmp_path):
     setup = build_runner(llm=ScriptedLLM([tool_call("search_statutes", query="q")] * 5), store=RunStore(tmp_path),
-                         real_statutes=False, config=RunConfig(conversation_route="case_work", max_model_calls=2), dotenv=None)
+                         real_statutes=False, config=RunConfig(max_model_calls=2), dotenv=None)
     setup.cases.create("c", {})
     info = setup.runner.start_run("c", "hi")
     assert info.status == "budget_exhausted" and info.usage.model_calls == 2
@@ -181,7 +181,7 @@ def test_full_agent_over_http_through_member5_adapter(provider, tmp_path):
             {"source_id": "民法典::第一千二百一十三条", "location": "先由交强险赔偿。"}]})], finish="tool_calls"),
     ])
     client = make_chat_model(base_url=fake.url, api_key="sk-test", model="Qwen/Qwen2.5-7B-Instruct")
-    setup = build_runner(config=RunConfig(conversation_route="case_work"), llm=client, store=RunStore(tmp_path), mock_business_tools=False, dotenv=None,
+    setup = build_runner(config=RunConfig(), llm=client, store=RunStore(tmp_path), mock_business_tools=False, dotenv=None,
                          statute_search=lambda q, k=None: {"status": "ok", "query": q, "warnings": [],
                                                            "results": [to_result(provision, 1, 9.0, ["keyword"])]})
     setup.cases.create("eval-case-1", {"facts": {}})
@@ -192,7 +192,7 @@ def test_full_agent_over_http_through_member5_adapter(provider, tmp_path):
         disclosed.append(wait.questions[0].text)
         return UserReply(answers={"q1": "有交强险"})
 
-    out = AgentAdapter(setup.runner).run("eval-case-1", "我的车被追尾了", RunConfig(conversation_route="case_work", max_output_tokens=800),
+    out = AgentAdapter(setup.runner).run("eval-case-1", "我的车被追尾了", RunConfig(max_output_tokens=800),
                                          "exp-001", reply_to_wait)
     run = out["run"]
     assert run["status"] == "completed" and run["experiment_run_id"] == "exp-001"
@@ -204,8 +204,7 @@ def test_full_agent_over_http_through_member5_adapter(provider, tmp_path):
     # What actually went over the wire on the second call: the disclosed answer and real tool schemas.
     second = fake.requests[1]["body"]
     assert any("有交强险" in (m.get("content") or "") for m in second["messages"])
-    assert {t["function"]["name"] for t in second["tools"]} == {"search_statutes", "update_case", "ask_user",
-                                                                "request_route_choice", "finish"}
+    assert {t["function"]["name"] for t in second["tools"]} == {"search_statutes", "update_case", "ask_user", "finish"}
     assert second.get("max_tokens", second.get("max_completion_tokens")) == 800
     # Every assistant tool_call got its tool reply before the next request (OpenAI format requirement).
     third = fake.requests[2]["body"]["messages"]

@@ -1,21 +1,26 @@
-"""Native control tools; middleware applies pause, route-choice and finish actions."""
+"""Native control tools. They only return their arguments; middleware applies the action."""
 from langchain.tools import tool
+
+from backend.common.schemas import ALL_STAGES
 from backend.tools.policy import set_policy
 
-ROUTES = ["negotiation", "mediation", "litigation"]
+ROUTE_STAGES = ["negotiation", "mediation", "litigation"]
+
 
 @tool(
     'ask_user',
-    description='仅对完成本次任务必需的信息提出问题，并暂停等待回答；遵守本次任务的追问上限。一般规则和初步路线比较不收集完整案情，已跳过的问题保留未知。请求材料时kind为material_request，不询问工具可以查到的内容。',
+    description='向用户追问推进当前事项必需、且工具查不到的信息，并暂停等待回答。一次只问最关键的问题；'
+                '已知或已跳过的不要重问。请求上传材料时 kind 用 material_request。',
     args_schema={
         'type': 'object', 'additionalProperties': False, 'required': ['questions'],
         'properties': {
             'kind': {'enum': ['clarification', 'material_request']},
             'questions': {'type': 'array', 'minItems': 1, 'items': {
-                'type': 'object', 'required': ['question_id', 'text'],
-                'properties': {'question_id': {'type': 'string'},
+                'type': 'object', 'additionalProperties': False, 'required': ['question_id', 'text'],
+                'properties': {'question_id': {'type': 'string', 'minLength': 1},
                                'text': {'type': 'string', 'minLength': 1},
-                               'reason': {'type': 'string'}, 'field': {'type': 'string'}},
+                               'reason': {'type': 'string'},
+                               'field': {'type': 'string', 'description': '答案对应的事实字段名（如有）'}},
             }},
         },
     },
@@ -23,34 +28,35 @@ ROUTES = ["negotiation", "mediation", "litigation"]
 def ask_user(**args) -> dict:
     return args
 
-set_policy(ask_user, owner='member4')
+
+set_policy(ask_user, owner='member4', stages=list(ALL_STAGES))
+
 
 @tool(
-    'request_route_choice',
-    description='用户需要选择处理方式时，展示协商和解、调解、诉讼等选项并暂停等待选择；不要求先收集完整案情或查全法规，未知费用可保留未知。各路线均可选，不预设先后顺序；用户选择后由程序保存路线。',
+    'confirm_step',
+    description='当前路线步骤的交付物已在本轮回答中给出，或这一步依赖用户在现实中完成的事（如与对方沟通、'
+                '提交材料）时，请用户确认这一步是否完成，并暂停等待。step_id 必须是当前步骤；summary '
+                '用一两句话概括本步结果。不要替用户确认，不要跳过当前步骤。',
     args_schema={
-        'type': 'object', 'additionalProperties': False, 'required': ['comparison', 'options'],
+        'type': 'object', 'additionalProperties': False, 'required': ['step_id', 'summary', 'answer'],
         'properties': {
-            'comparison': {'type': 'string', 'minLength': 1},
-            'options': {'type': 'array', 'minItems': 1, 'items': {
-                'type': 'object', 'required': ['route', 'label'],
-                'properties': {'route': {'enum': ROUTES}, 'label': {'type': 'string'}},
-            }},
+            'step_id': {'type': 'string', 'minLength': 1},
+            'summary': {'type': 'string', 'minLength': 1, 'maxLength': 500},
+            'answer': {'type': 'string', 'minLength': 1, 'description': '给用户看的本步完整回答（交付物正文）'},
         },
     },
 )
-def request_route_choice(**args) -> dict:
+def confirm_step(**args) -> dict:
     return args
 
-set_policy(
-    request_route_choice,
-    owner='member4',
-    stages=['consultation', 'route_selection', 'negotiation', 'mediation', 'litigation'],
-)
+
+set_policy(confirm_step, owner='member4', stages=ROUTE_STAGES)
+
 
 @tool(
     'finish',
-    description='结束本次运行并交付当前任务的具体结果，不等于案件办结。路线或计划不能替代用户请求的实际准备成果；关键缺口仍需输入且追问额度允许时应使用ask_user。只列当前相关缺口，不声称已执行未执行的动作。',
+    description='交付本轮回答并结束运行。处于路线步骤中、要请用户确认本步时改用 confirm_step。'
+                'citations 只引用工具实际返回的来源；open_issues 只列与当前事项相关的未解决问题。',
     args_schema={
         'type': 'object', 'additionalProperties': False, 'required': ['answer'],
         'properties': {
@@ -58,7 +64,7 @@ set_policy(
             'open_issues': {'type': 'array', 'items': {'type': 'string'}},
             'output_refs': {'type': 'array', 'items': {'type': 'string'}},
             'citations': {
-                'description': '回答中依赖来源的句子或段落，以及对应的 source_id（来自工具返回的 data.matches[].source_ref）',
+                'description': '回答中依赖来源的句子或段落，及对应 source_id（来自工具返回的 data.matches[].source_ref）',
                 'type': 'array', 'items': {
                     'type': 'object', 'required': ['source_id', 'location'],
                     'properties': {'source_id': {'type': 'string'}, 'location': {'type': 'string'}},
@@ -70,6 +76,7 @@ set_policy(
 def finish(**args) -> dict:
     return args
 
-set_policy(finish, owner='member4')
 
-BUILTINS = {t.name: t for t in (ask_user, request_route_choice, finish)}
+set_policy(finish, owner='member4', stages=list(ALL_STAGES))
+
+BUILTINS = {t.name: t for t in (ask_user, confirm_step, finish)}

@@ -3,6 +3,7 @@ import argparse
 from datetime import datetime, timezone
 from getpass import getpass
 import json
+import mimetypes
 import os
 from pathlib import Path
 import sys
@@ -13,6 +14,7 @@ sys.path.insert(0,str(ROOT))
 sys.path.insert(0,str(ROOT/'scripts/agent'))
 from backend.common.config import load_dotenv
 from backend.agent.factory import build_runner
+from backend.case.materials.upload import MAX_UPLOAD_BYTES, UPLOAD_TYPES
 from backend.agent.model.llm import make_chat_model,response_from_message
 from backend.agent.runtime.store import RunStore
 from backend.common.schemas import RunConfig
@@ -23,7 +25,23 @@ from backend.case.drafting.documents import MeteredLLMDraftingGateway
 from backend.case.review.verification import MeteredLLMReviewGateway
 from backend.knowledge.retrieval.service import RetrievalService
 from langchain_core.messages import convert_to_messages
-from run_agent import Progress,ask_user,report
+from run_agent import converse, report
+
+
+def upload_local(assets, case_id, raw_path):
+    path = Path(raw_path.strip().strip('"').strip("'")).expanduser()
+    media = mimetypes.guess_type(path.name)[0]
+    if media not in UPLOAD_TYPES or not path.is_file():
+        raise ValueError("请选择 PDF、TXT、PNG、JPEG、WebP 或 DOCX 文件。")
+    with path.open("rb") as stream:
+        content = stream.read(MAX_UPLOAD_BYTES + 1)
+    if not 0 < len(content) <= MAX_UPLOAD_BYTES:
+        raise ValueError("文件须为 1 字节至 20 MiB。")
+    record = assets.put_file(case_id=case_id, file_id="file_" + uuid.uuid4().hex, file_version="1",
+                             file_name=path.name, document_type="material", media_type=media, content=content)
+    print(f"已上传 {record.file_name}（{record.file_id}），可在本案中读取。")
+    return record.file_id
+
 
 def create_blank_case(repo):
     stamp=datetime.now(timezone.utc)
@@ -65,17 +83,17 @@ def main():
             record.update(status='error',error_type=type(exc).__name__);raise
     service=CaseService(repo,source_resolver=CorpusSourceResolver.from_directory(),
         drafting_gateway=MeteredLLMDraftingGateway(call_model),semantic_gateway=MeteredLLMReviewGateway(call_model))
-    config=RunConfig(max_steps=40,max_model_calls=12,max_tool_calls=16,max_total_tokens=180000,
-                     max_run_seconds=300,max_output_tokens=2200)
+    config=RunConfig.interactive()
     setup=build_runner(llm=model,case_service=service,retrieval_service=RetrievalService.from_config(),
                        store=RunStore(directory/'runs'),config=config)
     case_id=None
     print('Real tools: '+', '.join(t.name for t in setup.tools))
     print('Records: '+str(directory))
-    print('Start with an empty case. Commands: /new, /state, /exit')
+    print('可用命令：/route negotiation|mediation|litigation、/upload <路径>、/state、/new、/exit')
     try:
         while True:
             if case_id is None:
+                conversation_id = "conv_" + uuid.uuid4().hex
                 case=create_blank_case(repo)
                 case_id=case.case_id
                 print('New empty case: '+case_id)
@@ -83,27 +101,26 @@ def main():
             if not question:continue
             if question=='/exit':break
             if question=='/new':case_id=None;continue
-            if question=='/state':print(repo.get_case(case_id).model_dump_json(indent=2));continue
+            if question=='/state':
+                print(json.dumps({"case": repo.get_case(case_id).model_dump(mode="json"),
+                                  "route_progress": setup.runner.route_progress(case_id)},
+                                 ensure_ascii=False, indent=2))
+                continue
+            if question.startswith("/upload"):
+                try:
+                    upload_local(service.assets, case_id, question.removeprefix("/upload"))
+                except (OSError, ValueError) as exc:
+                    print(exc)
+                continue
             gateway_calls.clear()
-            progress=Progress(setup.runner,case_id)
-            # Progress must follow the new run rather than the case's previous run.
-            existing={cp.run_id for cp in setup.runner.store.list_checkpoints()}
-            original_print=progress._print_new_steps
-            def print_new():
-                if progress.run_id is None:
-                    progress.run_id=next((cp.run_id for cp in setup.runner.store.list_checkpoints()
-                        if cp.case_id==case_id and cp.run_id not in existing),None)
-                    if progress.run_id is None:return
-                    print('正在识别咨询或办理入口；检索和追问受公共限制。',flush=True)
-                original_print()
-            progress._print_new_steps=print_new
             try:
-                info=progress.run(lambda:setup.runner.start_run(case_id,question,actor_id='synthetic_user'))
-                while info.status=='waiting_user':
-                    reply=ask_user(info.wait,None)
-                    if reply is None:info=setup.runner.cancel_run(info.run_id);break
-                    info=progress.run(lambda:setup.runner.resume_run(info.run_id,reply,wait_id=info.wait.wait_id,
-                        expected_case_version=info.case_version,actor_id='synthetic_user'))
+                if question.startswith("/route"):
+                    route = question.removeprefix("/route").strip()
+                    info = converse(setup.runner, case_id, lambda: setup.runner.select_route(
+                        case_id, route, conversation_id=conversation_id, actor_id="synthetic_user"), None)
+                else:
+                    info = converse(setup.runner, case_id, lambda: setup.runner.start_run(
+                        case_id, question, actor_id="synthetic_user", conversation_id=conversation_id), None)
                 report(setup.runner,info)
                 (directory/(info.run_id+'-gateway.json')).write_text(json.dumps(gateway_calls,ensure_ascii=False,indent=2),encoding='utf-8')
                 print('本次额外起草/审查模型调用：'+str(len(gateway_calls))+'；与上方主Agent用量分开统计。')

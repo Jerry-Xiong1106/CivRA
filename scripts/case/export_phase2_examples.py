@@ -9,11 +9,12 @@ from tempfile import TemporaryDirectory
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from backend.case import CaseService, SQLiteCaseRepository, load_development_case  # noqa: E402
+from backend.case import CaseService, SQLiteCaseRepository
+from backend.case.intake.updates import set_case_stage  # noqa: E402
+from scripts.case.fixtures import load_development_case
 from backend.case.materials.contracts import BuildEvidenceDirectoryRequest, CheckEvidenceRequest
 from backend.case.contracts import InvocationContext
 from backend.case.intake.contracts import UpdateCaseRequest
-from backend.agent.case_adapter import RepositoryCasePort  # noqa: E402
 
 
 def main():
@@ -37,7 +38,7 @@ def main():
                     "provenance": "user_statement", "confirmation_status": "unconfirmed", "statement_refs": ["msg_example_insurance"]}]},
             change_reason="保存合成用户的明确未知回复，不将未知改成已投保")
         calls = {"check_evidence": (check, service.check_evidence(check)), "update_case": (update, service.update_case(update))}
-        RepositoryCasePort(repo).set_stage(snapshot.case_id, "litigation")
+        set_case_stage(repo, snapshot.case_id, "litigation")
         selected = repo.get_case(snapshot.case_id)
         directory_request = BuildEvidenceDirectoryRequest(context=context("directory-example"),
             case_version=selected.case_version, case_snapshot=selected)

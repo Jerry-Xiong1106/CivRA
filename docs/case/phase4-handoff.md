@@ -40,10 +40,12 @@ check_handoff.py 默认在临时目录完成 40 个场景并打印汇总。保�
 CaseToolClient 接受工具名称和 ToolInvocation。应用或评测控制器提供 context、case_version，arguments 存放工具业务参数。案件快照由服务读取，调用方可以通过 get_case_tool_contracts 查询每个工具的参数 Schema。
 
 ```python
-from backend.case import (
-    CaseService, CaseToolClient, SQLiteCaseRepository, ToolInvocation,
-    get_case_tool_contracts, load_development_case,
-)
+from backend.case import CaseService, SQLiteCaseRepository
+from backend.tools.case_client import CaseToolClient
+from backend.tools.case_contracts import ToolInvocation
+from backend.tools.case_tools import get_case_tool_contracts
+from evaluation.adapters.case_results import evaluate_case_tool
+from scripts.case.fixtures import load_development_case
 from backend.case.contracts import InvocationContext
 
 repo = SQLiteCaseRepository("var/phase4-client-new.sqlite3")
@@ -66,7 +68,7 @@ request = ToolInvocation(
         ]},
     },
 )
-response = client.evaluate("calculate_costs", request)
+response = evaluate_case_tool(client, "calculate_costs", request)
 assert response["data"]["data"]["amounts"]["total"]["amount"] == "0.3"
 parameters = get_case_tool_contracts()["calculate_costs"]["parameters"]
 ```

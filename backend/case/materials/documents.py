@@ -34,22 +34,30 @@ class DocumentParser:
             if current.case_version != version:
                 raise VersionConflict(version,current.case_version)
             documents,segments,facts,warnings=[],[],[],[]
+            unreadable = {}
             for file_id in request.file_ids:
                 if request.context.deadline_at and datetime.now(timezone.utc)>=request.context.deadline_at:
                     warnings.append("已达到解析截止时间，未完成的文件需要重试。")
-                    break
+                    unreadable[file_id] = [f"{file_id}：解析超时，请重试。"]
+                    continue
+                label = file_id
+                missing_pages = []
                 try:
                     evidence_versions={item.file_version for item in current.evidence if item.file_id==file_id}
                     selected_version=request.file_versions.get(file_id)
                     if selected_version is None:
                         selected_version=next(iter(evidence_versions)) if len(evidence_versions)==1 else None
                     record,content=self.assets.get_file(case_id,file_id,selected_version)
+                    label = record.file_name
                     file_warnings=[]
                     file_segments=self._parse(record,content,request.ocr_mode,
-                        warnings=file_warnings,deadline_at=request.context.deadline_at)
+                        warnings=file_warnings,deadline_at=request.context.deadline_at, unreadable=missing_pages)
+                    if missing_pages:
+                        unreadable[file_id] = missing_pages
                     if not file_segments:
                         warnings.extend(file_warnings)
                         warnings.append(f"{file_id}: 未提取到文字，不能当作材料为空。")
+                        unreadable.setdefault(file_id, [f"{label}：未提取到文字，请重试或提供清晰材料。"])
                         continue
                     evidence_id="e_"+hashlib.sha256((file_id+":"+record.file_version).encode()).hexdigest()[:20]
                     extracted,field_warnings=extract_labelled_fields(record,evidence_id,file_segments)
@@ -68,11 +76,14 @@ class DocumentParser:
                     # A malformed file or an engine error must not hide other files' results.
                     # Interrupts and process exits are deliberately not caught here.
                     warnings.append(f"{file_id}: {type(exc).__name__}: {str(exc)[:160]}")
+                    unreadable[file_id] = [f"{label}：未能读取文件，请核对文件或重试。"]
             if not documents:
-                return self._error(case_id,version,"tool_error","未成功解析任何文件。",{"warnings":warnings})
+                return self._error(case_id,version,"tool_error","未成功解析任何文件。",
+                                   {"warnings":warnings, "unreadable":unreadable})
             return BusinessResult[ParseDocumentsData](case_id=case_id,case_version=version,
                 status="insufficient" if warnings else "ok",summary=f"解析 {len(documents)} 个文件，提取 {len(facts)} 项未确认候选事实。",
-                data=ParseDocumentsData(documents=documents,text_segments=segments,extracted_facts=facts,warnings=warnings))
+                data=ParseDocumentsData(documents=documents,text_segments=segments,extracted_facts=facts,
+                                        warnings=warnings,unreadable=unreadable))
         except VersionConflict as exc:
             return self._error(case_id,exc.actual,"version_conflict",str(exc))
         except (ValidationError,ValueError) as exc:
@@ -80,8 +91,7 @@ class DocumentParser:
         except CaseNotFound:
             return self._error(case_id,version,"not_found","案件不存在。")
 
-    def _parse(self, record, content, mode, *, warnings=None, deadline_at=None):
-        warnings = warnings if warnings is not None else []
+    def _parse(self, record, content, mode, *, warnings, unreadable, deadline_at=None):
         if record.media_type=="text/plain":
             if mode=="always":
                 raise ValueError("always OCR is only valid for image/PDF inputs")
@@ -119,6 +129,7 @@ class DocumentParser:
                 for number,page in enumerate(reader.pages,1):
                     if deadline_at and datetime.now(timezone.utc)>=deadline_at:
                         warnings.append(f"{record.file_id}/第{number}页起: 已达到解析截止时间，剩余页需要重试。")
+                        unreadable.append(f"{record.file_name}：第 {number} 页起未完成解析，请重试。")
                         break
                     try:
                         text=""
@@ -136,6 +147,8 @@ class DocumentParser:
                         elif mode=="never":
                             warnings.append(f"{record.file_id}/第{number}页: 缺少可用文字层且 OCR 已关闭，需要补充清晰材料。")
                             page_segments=self._segments(record,number,text,"text",[],engine="pypdf",engine_version=package_version("pypdf"))
+                            if page_segments:
+                                unreadable.append(f"{record.file_name}：第 {number} 页文字不足，请重试或提供清晰材料。")
                         else:
                             import pypdfium2
                             if renderer is None:
@@ -157,9 +170,11 @@ class DocumentParser:
                                 rendered_page.close()
                         if not page_segments:
                             warnings.append(f"{record.file_id}/第{number}页: 未提取到文字，不能当作本页没有材料。")
+                            unreadable.append(f"{record.file_name}：第 {number} 页未提取到文字，请重试或提供清晰材料。")
                         segments.extend(page_segments)
                     except Exception as exc:
                         warnings.append(f"{record.file_id}/第{number}页: {type(exc).__name__}: {str(exc)[:160]}；本页未完成，需要重试。")
+                        unreadable.append(f"{record.file_name}：第 {number} 页未能读取，请重试或提供清晰材料。")
             finally:
                 if renderer is not None:
                     renderer.close()

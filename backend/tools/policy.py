@@ -11,7 +11,6 @@ class ToolPolicy(BaseModel):
     timeout_s: float = Field(default=30.0, gt=0)
     max_retries: int = Field(default=1, ge=0)
     side_effects: bool = False
-    feedback_loop: str | None = None
 
 
 def set_policy(tool: BaseTool, **policy) -> BaseTool:
@@ -32,6 +31,6 @@ def parameters_of(tool: BaseTool) -> dict:
 
 
 def describe_tool(tool: BaseTool) -> ToolSpec:
-    """Legacy manifest view only; native tools own their name/description/schema."""
+    """Manifest view of a native tool: its own name/description/schema plus project policy."""
     return ToolSpec(name=tool.name, description=tool.description,
                     parameters=parameters_of(tool), **policy_of(tool).model_dump())

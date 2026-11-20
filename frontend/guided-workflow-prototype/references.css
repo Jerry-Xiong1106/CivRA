@@ -1,0 +1,21 @@
+/* Scoped additions: the v2 shell and all other pages retain their original styles. */
+.case-reference-section>summary{cursor:pointer;font-size:14px;font-weight:600;line-height:1.8}
+.case-reference-section>summary .note{font-weight:400;margin-left:8px}
+.case-reference-section .reference-body{margin-top:18px}
+.case-reference-section .reference-note{font-size:11px;color:#8a957f;margin:12px 0 18px;line-height:1.9}
+.case-reference-section .reference-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:16px}
+.case-reference-section .reference-filters label{font-size:11px;color:#7d8b72}
+.case-reference-section .reference-filters select{margin-top:7px;padding:8px 10px}
+.case-reference-section .reference-chart{max-width:650px;padding:18px 20px;border:1px solid var(--line);border-radius:9px;margin:0 0 20px}
+.case-reference-section .reference-bar{font-size:11px;color:#839176;margin-top:15px}
+.case-reference-section .reference-track{height:6px;background:#eff3e9;border-radius:5px;overflow:hidden;margin-top:7px}
+.case-reference-section .reference-track span{display:block;height:100%;background:#8ca480;border-radius:5px}
+.case-reference-section .reference-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.case-reference-section .reference-card{padding:18px;border:1px solid var(--line);border-radius:10px;min-width:0}
+.case-reference-section .reference-card h3{font-size:13px;line-height:1.7;margin:15px 0 10px}
+.case-reference-section .reference-card small{font-size:9px;color:#96a08d}
+.case-reference-section .reference-card p{font-size:11px;line-height:1.9;margin:8px 0 16px}
+.case-reference-section .reference-meta{font-size:10px;line-height:1.9;color:#97a28b;margin-bottom:12px}
+.case-reference-section .reference-empty{font-size:12px;color:#8a957f;padding:24px 0;line-height:1.9}
+@media(max-width:1100px){.case-reference-section .reference-cards{grid-template-columns:1fr 1fr}}
+@media(max-width:680px){.case-reference-section .reference-cards,.case-reference-section .reference-filters{grid-template-columns:1fr}.case-reference-section{padding:20px}.case-reference-section .reference-chart{padding:16px}}

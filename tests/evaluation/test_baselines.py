@@ -102,8 +102,8 @@ class BaselineTests(unittest.TestCase):
         cases.create('adapter-case')
         script = [tool_call('ask_user', questions=[{'question_id':'q1','text':'Any repayment?'}]), tool_call('finish', answer='done')]
         with tempfile.TemporaryDirectory() as tmp:
-            runner = AgentRunner(ScriptedLLM(script), mock_tool_fixture(cases), cases, RunStore(Path(tmp)), default_config=RunConfig(conversation_route="case_work"))
-            result = AgentAdapter(runner).run('adapter-case','question',RunConfig(conversation_route="case_work", ),'adapter-exp',
+            runner = AgentRunner(ScriptedLLM(script), mock_tool_fixture(cases), cases, RunStore(Path(tmp)), default_config=RunConfig())
+            result = AgentAdapter(runner).run('adapter-case','question',RunConfig(),'adapter-exp',
                                              lambda wait: UserReply(answers={'q1':'yes'}))
             self.assertEqual(result['run']['status'],'completed')
             self.assertEqual(len(result['disclosures']),1)

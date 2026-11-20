@@ -7,7 +7,7 @@ from pydantic import Field, JsonValue, create_model
 
 from ..case.intake.contracts import CaseChanges
 from ..case.contracts import InvocationContext
-from ..case.operations import REQUEST_MODELS, BUSINESS_STAGES, OPERATION_STAGES
+from ..case.operations import REQUEST_MODELS
 from ..case.models import ContractModel, Identifier, PositiveInt, SCHEMA_VERSION
 
 
