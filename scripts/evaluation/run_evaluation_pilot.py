@@ -1,4 +1,4 @@
-"""Execute the declared two-mode development pilot; credentials stay in memory."""
+"""Run a two- or four-setting development pilot; credentials stay in memory."""
 
 import argparse
 import getpass
@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import ssl
 import sys
+from tempfile import TemporaryDirectory
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -17,6 +18,8 @@ from backend.knowledge.config import RetrievalConfig  # noqa: E402
 from backend.knowledge.retrieval.service import RetrievalService  # noqa: E402
 from evaluation.adapters.team import ModelAdapter, RetrievalAdapter  # noqa: E402
 from evaluation.runners.pilot import run_pilot  # noqa: E402
+from evaluation.runners.consultation import ConsultationPilot  # noqa: E402
+from evaluation.schemas.tasks import HiddenTask, load_public_tasks, read_records  # noqa: E402
 
 
 def main():
@@ -25,6 +28,8 @@ def main():
     parser.add_argument("--public", type=Path, default=ROOT / "evaluation/datasets/pilot/tasks.jsonl")
     parser.add_argument("--output-root", type=Path, default=ROOT / "evaluation/results")
     parser.add_argument("--prompt-key", action="store_true")
+    parser.add_argument("--four-mode", action="store_true", help="Run the four-setting consultation pilot")
+    parser.add_argument("--hidden", type=Path, help="Controller-only hidden-fact JSONL for --four-mode")
     args = parser.parse_args()
     load_dotenv()
     config = json.loads(args.config.read_text())
@@ -48,7 +53,23 @@ def main():
     service = RetrievalService.from_config(RetrievalConfig.from_mode(
         config["retrieval"]["mode"], variant=config["retrieval"]["variant"],
         top_k=config["retrieval"]["top_k"]))
-    run_pilot(args.public, config, ModelAdapter(client), RetrievalAdapter(service), args.output_root, ROOT)
+    model, retrieval = ModelAdapter(client), RetrievalAdapter(service)
+    if not args.four_mode:
+        run_pilot(args.public, config, model, retrieval, args.output_root, ROOT)
+        return
+    if args.hidden is None:
+        parser.error("--four-mode requires --hidden")
+    tasks = load_public_tasks(args.public)
+    hidden = {row.task_id: row for row in read_records(args.hidden, HiddenTask)}
+    if set(hidden) != {task.task_id for task in tasks} or any(
+        task.dataset_version != hidden[task.task_id].dataset_version
+        or (task.task_type == "static" and (hidden[task.task_id].facts or hidden[task.task_id].route_choice))
+        for task in tasks
+    ):
+        parser.error("The hidden-fact records do not match the public development tasks")
+    with TemporaryDirectory(prefix="civra-evaluation-") as directory:
+        consultation = ConsultationPilot(model, retrieval, hidden, Path(directory))
+        run_pilot(args.public, config, model, retrieval, args.output_root, ROOT, consultation=consultation)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,9 @@
 # 成员5进度与试点结果说明 / Member 5 Progress and Pilot Results
 
+2026-11-21 的集成回归与四模式咨询结果见[新一轮试点报告](integration_validation_20261121.md)。下文保留 2026-11-09 的首轮两模式记录。
+
+See the [2026-11-21 integration and four-setting pilot report](integration_validation_20261121.md) for the latest results. The original two-setting run from 2026-11-09 follows below.
+
 更新日期 / Updated: 2026-11-09
 
 实验批次 / Batch: `20261109T104304Z-dd61ec`

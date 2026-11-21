@@ -60,8 +60,10 @@ class AgentAdapter:
                                      experiment_run_id=experiment_run_id,
                                      request_id=f"{experiment_run_id}:start")
         disclosures = []
+        stop_reason = None
         while info.status == "waiting_user":
             if len(disclosures) >= max_turns:
+                stop_reason = "interaction_limit"
                 info = self.runner.cancel_run(info.run_id)
                 break
             wait = info.wait
@@ -82,5 +84,5 @@ class AgentAdapter:
                 raise RuntimeError("Trace export did not advance")
             cursor = page.next_cursor
         return {"run": info.model_dump(mode="json"), "trace": steps,
-                "disclosures": disclosures,
+                "disclosures": disclosures, "stop_reason": stop_reason,
                 "manifest": self.runner.get_runtime_manifest().model_dump(mode="json")}

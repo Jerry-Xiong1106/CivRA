@@ -1,0 +1,146 @@
+{
+  "batch_id": "20261121T085600Z-80f287",
+  "status": "development_pilot_pending_team_review",
+  "delivery": {
+    "direct_llm": {
+      "runtime_completed": 5,
+      "delivered": 5,
+      "empty_output": 0,
+      "model_calls": 5,
+      "known_model_tokens": 2341,
+      "token_coverage": 5,
+      "explicit_citation_runs": 0,
+      "mean_duration_ms": 5554
+    },
+    "rag": {
+      "runtime_completed": 5,
+      "delivered": 5,
+      "empty_output": 0,
+      "model_calls": 5,
+      "known_model_tokens": 12642,
+      "token_coverage": 5,
+      "explicit_citation_runs": 1,
+      "mean_duration_ms": 9328
+    },
+    "fixed_workflow": {
+      "runtime_completed": 5,
+      "delivered": 5,
+      "empty_output": 0,
+      "model_calls": 5,
+      "known_model_tokens": 13139,
+      "token_coverage": 5,
+      "explicit_citation_runs": 0,
+      "mean_duration_ms": 10729
+    },
+    "agent": {
+      "runtime_completed": 5,
+      "delivered": 4,
+      "empty_output": 1,
+      "model_calls": 7,
+      "known_model_tokens": 55500,
+      "token_coverage": 5,
+      "explicit_citation_runs": 0,
+      "mean_duration_ms": 18183
+    }
+  },
+  "scoring": {
+    "annotation_status": [
+      "draft"
+    ],
+    "review_kinds": [
+      "assistant_provisional"
+    ],
+    "groups": [
+      {
+        "mode": "agent",
+        "task_type": "interactive",
+        "tasks": 1,
+        "completed": 1,
+        "task_successes": 1,
+        "dimensions": {
+          "behavior": 0,
+          "evidence": 2
+        }
+      },
+      {
+        "mode": "agent",
+        "task_type": "static",
+        "tasks": 4,
+        "completed": 4,
+        "task_successes": 1,
+        "dimensions": {
+          "citation": 2,
+          "guidance": 0,
+          "task_outcome": 0.6666666666666666
+        }
+      },
+      {
+        "mode": "direct_llm",
+        "task_type": "interactive",
+        "tasks": 1,
+        "completed": 1,
+        "task_successes": 1,
+        "dimensions": {
+          "evidence": 2
+        }
+      },
+      {
+        "mode": "direct_llm",
+        "task_type": "static",
+        "tasks": 4,
+        "completed": 4,
+        "task_successes": 2,
+        "dimensions": {
+          "citation": 2,
+          "guidance": 2,
+          "task_outcome": 0.6666666666666666
+        }
+      },
+      {
+        "mode": "fixed_workflow",
+        "task_type": "interactive",
+        "tasks": 1,
+        "completed": 1,
+        "task_successes": 1,
+        "dimensions": {
+          "behavior": 2,
+          "evidence": 2
+        }
+      },
+      {
+        "mode": "fixed_workflow",
+        "task_type": "static",
+        "tasks": 4,
+        "completed": 4,
+        "task_successes": 3,
+        "dimensions": {
+          "citation": 2,
+          "guidance": 1,
+          "task_outcome": 1.6666666666666667
+        }
+      },
+      {
+        "mode": "rag",
+        "task_type": "interactive",
+        "tasks": 1,
+        "completed": 1,
+        "task_successes": 1,
+        "dimensions": {
+          "evidence": 2
+        }
+      },
+      {
+        "mode": "rag",
+        "task_type": "static",
+        "tasks": 4,
+        "completed": 4,
+        "task_successes": 3,
+        "dimensions": {
+          "citation": 2,
+          "guidance": 2,
+          "task_outcome": 1.3333333333333333
+        }
+      }
+    ]
+  }
+}
