@@ -244,3 +244,9 @@ evaluation/results/20261121T094615Z-d64eba/*
 .DS_Store
 .venv-evaluation/
 docs/evaluation/.~*
+
+!evaluation/results/20261121T100114Z-921b75/
+evaluation/results/20261121T100114Z-921b75/*
+!evaluation/results/20261121T100114Z-921b75/shared_*.json
+!evaluation/results/20261121T100114Z-921b75/README.md
+!evaluation/results/20261121T100114Z-921b75/quality_comparison.png

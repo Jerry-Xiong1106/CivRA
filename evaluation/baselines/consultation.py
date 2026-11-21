@@ -88,7 +88,7 @@ def run_baseline(task, mode, model, config, retrieval=None, *, context=()):
         if use_labels and response["content"]:
             result["output"], result["citation_labels"] = resolve_source_labels(response["content"], source_ids)
         total = response["usage"]["total_tokens"]
-        if total is not None and total > config["budgets"]["max_total_tokens"]:
+        if total is not None and config["budgets"]["max_total_tokens"] is not None and total > config["budgets"]["max_total_tokens"]:
             result["status"] = "budget_exhausted"
         if time.monotonic() - start > config["budgets"]["max_active_seconds"]:
             result["status"] = "budget_exhausted"

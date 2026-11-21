@@ -97,6 +97,7 @@ def test_baseline_records_empty_length_stop_as_truncated():
 def test_token_budget_checks_cumulative_usage_and_preserves_missing_usage():
     record = {"mode": "agent", "usage": {"prompt_tokens": 24000, "completion_tokens": 852, "tokens_complete": True}}
     assert token_budget_audit(record, 24000) == {"status": "exceeded", "total_tokens": 24852, "limit": 24000}
+    assert token_budget_audit(record, None)["status"] == "not_limited"
     record["usage"]["tokens_complete"] = False
     assert token_budget_audit(record, 24000)["status"] == "unknown"
     baseline = {"mode": "rag", "model_response": {"usage": {"total_tokens": 24000}}}

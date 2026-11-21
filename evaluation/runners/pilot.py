@@ -36,7 +36,7 @@ def token_budget_audit(record, limit):
         total = usage["prompt_tokens"] + usage["completion_tokens"] if usage.get("tokens_complete") else None
     else:
         total = ((record.get("model_response") or {}).get("usage") or {}).get("total_tokens")
-    status = "unknown" if total is None else ("exceeded" if total > limit else "within_limit")
+    status = "not_limited" if limit is None else ("unknown" if total is None else ("exceeded" if total > limit else "within_limit"))
     return {"status": status, "total_tokens": total, "limit": limit}
 
 
@@ -113,7 +113,7 @@ def run_pilot(public_path, config, model, retrieval, output_root, root, *, consu
                "delivered_within_token_budget": sum(
                    r["delivery_status"] == "completed" and r["token_budget_audit"]["status"] == "within_limit"
                    for r in records
-               )}
+               ) if config["budgets"]["max_total_tokens"] is not None else None}
     (out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     print(f"Results: {out}", flush=True)
     return out

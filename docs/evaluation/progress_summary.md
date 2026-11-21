@@ -1,5 +1,9 @@
 # 成员5进度与试点结果说明 / Member 5 Progress and Pilot Results
 
+当前质量复测已取消累计 Token 上限，见[渐进式 Agent 质量报告](deepseek_quality_20261121.md)。
+
+The current quality rerun disables the cumulative token cap. See the [progressive Agent quality report](deepseek_quality_20261121.md).
+
 最新一轮使用 DeepSeek Flash 完成 10 道开发题的四模式验证，结果、复现步骤和待修项见 [DeepSeek 试点报告](deepseek_pilot_20261121.md)。
 
 The latest ten-task four-setting run uses DeepSeek Flash. See the [DeepSeek pilot report](deepseek_pilot_20261121.md) for results, reproduction and open issues.

@@ -1,5 +1,9 @@
 # DeepSeek 四模式开发试点 / DeepSeek four-setting development pilot
 
+当前质量复测已取消累计 Token 上限，见[渐进式 Agent 质量报告](deepseek_quality_20261121.md)。
+
+The current quality rerun disables the cumulative token cap. See the [progressive Agent quality report](deepseek_quality_20261121.md).
+
 2026-11-21 · 批次 / Batch `20261121T094615Z-d64eba`
 
 10 道已见开发题，每种模式各跑一次。四种模式均通过 DeepSeek 官方 API 使用 `deepseek-flash`，关闭思考模式，与本地集成 Agent 的配置一致。任务、24,000 Token 累计上限、单次输出上限、法条索引和控制器沿用前次扩展试点。查询嵌入仍使用硅基流动。DeepSeek Flash 的非思考模式使用服务端固定温度，因此两个供应商的实际采样设置不能视为一致。[官方接口说明](https://api-docs.deepseek.com/api/create-chat-completion/)

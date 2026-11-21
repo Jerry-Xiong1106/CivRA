@@ -51,6 +51,8 @@ def plot_comparison(records, summary, batch_id, token_limit, path):
     from matplotlib.lines import Line2D
 
     fig, (delivery, latency) = plt.subplots(1, 2, figsize=(10, 3.8), layout="constrained", sharey=True)
+    if token_limit is None:
+        raise ValueError("Use plot_quality_pilot.py for runs without a cumulative token cap")
     modes = list(summary)
     positions = list(range(len(modes)))
     modes_data = list(summary.values())

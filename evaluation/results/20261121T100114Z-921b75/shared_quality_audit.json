@@ -1,0 +1,405 @@
+[
+  {
+    "task_id": "pilot-001",
+    "mode": "direct_llm",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-001",
+    "mode": "rag",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-001",
+    "mode": "fixed_workflow",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-001",
+    "mode": "agent",
+    "citation_issue": true,
+    "reason": "第680条自然人借款规则省略条件，且按未核验信息称协商成本最低。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "support_or_wording"
+  },
+  {
+    "task_id": "pilot-002",
+    "mode": "direct_llm",
+    "citation_issue": false,
+    "reason": "受控交互项的具体问题由协调员保存。 / Coordinator retains controlled-task details.",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-002",
+    "mode": "rag",
+    "citation_issue": true,
+    "reason": "受控交互项的具体问题由协调员保存。 / Coordinator retains controlled-task details.",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "support_or_wording"
+  },
+  {
+    "task_id": "pilot-002",
+    "mode": "fixed_workflow",
+    "citation_issue": false,
+    "reason": "受控交互项的具体问题由协调员保存。 / Coordinator retains controlled-task details.",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-002",
+    "mode": "agent",
+    "citation_issue": true,
+    "reason": "受控交互项的具体问题由协调员保存。 / Coordinator retains controlled-task details.",
+    "tool_errors": [
+      {
+        "tool": "update_case",
+        "error": {
+          "code": "INVALID_ARGS",
+          "message": "案件变更不合法。",
+          "retryable": false,
+          "details": {
+            "issues": [
+              {
+                "location": [],
+                "type": "value_error",
+                "message": "Value error, a superseding fact must have an explicit confirmation"
+              }
+            ],
+            "business_code": "invalid_request"
+          }
+        }
+      }
+    ],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "source_link"
+  },
+  {
+    "task_id": "pilot-003",
+    "mode": "direct_llm",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-003",
+    "mode": "rag",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-003",
+    "mode": "fixed_workflow",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-003",
+    "mode": "agent",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-004",
+    "mode": "direct_llm",
+    "citation_issue": true,
+    "reason": "第680条款次和引述内容不符，约定不明的表述前后不一致。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "support_or_wording"
+  },
+  {
+    "task_id": "pilot-004",
+    "mode": "rag",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-004",
+    "mode": "fixed_workflow",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-004",
+    "mode": "agent",
+    "citation_issue": true,
+    "reason": "将没有约定利息的规则限定为自然人，未正确区分与约定不明的关系。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "support_or_wording"
+  },
+  {
+    "task_id": "pilot-005",
+    "mode": "direct_llm",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-005",
+    "mode": "rag",
+    "citation_issue": true,
+    "reason": "将第三十年等同整个超过二十年的部分，区间表述不完整。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "support_or_wording"
+  },
+  {
+    "task_id": "pilot-005",
+    "mode": "fixed_workflow",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-005",
+    "mode": "agent",
+    "citation_issue": true,
+    "reason": "将第三个十年的无效区间后果写成第二个十年，表述与前文边界不一致。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "support_or_wording"
+  },
+  {
+    "task_id": "pilot-006",
+    "mode": "direct_llm",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-006",
+    "mode": "rag",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-006",
+    "mode": "fixed_workflow",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-006",
+    "mode": "agent",
+    "citation_issue": true,
+    "reason": "最终只作已说明、已列出的总结，缺具体待核对事项及可定位的法律依据。",
+    "tool_errors": [
+      {
+        "tool": "search_statutes",
+        "error": {
+          "code": "INVALID_ARGS",
+          "message": "无法完整确定法律与条号的对应关系，请逐条写明“法律名称＋完整条号”；暂不支持条号范围。",
+          "retryable": false,
+          "details": {
+            "reason": "unsupported_exact_query"
+          }
+        }
+      }
+    ],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "source_link"
+  },
+  {
+    "task_id": "pilot-007",
+    "mode": "direct_llm",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-007",
+    "mode": "rag",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-007",
+    "mode": "fixed_workflow",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-007",
+    "mode": "agent",
+    "citation_issue": true,
+    "reason": "正文引用条号，但最终 structured citations 为空，缺逐主张来源链接。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "source_link"
+  },
+  {
+    "task_id": "pilot-008",
+    "mode": "direct_llm",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-008",
+    "mode": "rag",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-008",
+    "mode": "fixed_workflow",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-008",
+    "mode": "agent",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [
+      {
+        "tool": "search_statutes",
+        "error": {
+          "code": "INVALID_ARGS",
+          "message": "无法完整确定法律与条号的对应关系，请逐条写明“法律名称＋完整条号”；暂不支持条号范围。",
+          "retryable": false,
+          "details": {
+            "reason": "unsupported_exact_query"
+          }
+        }
+      }
+    ],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-009",
+    "mode": "direct_llm",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-009",
+    "mode": "rag",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-009",
+    "mode": "fixed_workflow",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-009",
+    "mode": "agent",
+    "citation_issue": true,
+    "reason": "正文引用条号，但最终 structured citations 为空，缺逐主张来源链接。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "source_link"
+  },
+  {
+    "task_id": "pilot-010",
+    "mode": "direct_llm",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-010",
+    "mode": "rag",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-010",
+    "mode": "fixed_workflow",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  },
+  {
+    "task_id": "pilot-010",
+    "mode": "agent",
+    "citation_issue": false,
+    "reason": "本次逐题复核未标出明确引用问题，待独立评审。",
+    "tool_errors": [],
+    "review_kind": "assistant_provisional",
+    "issue_kind": "none"
+  }
+]
