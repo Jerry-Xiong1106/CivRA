@@ -1,5 +1,7 @@
 # 成员5进度与试点结果说明 / Member 5 Progress and Pilot Results
 
+[当日中文交接报告](member5_handoff_20261121_zh.md)汇总实现进度、十题四模式结果、复现步骤和修改归属。
+
 当前质量复测已取消累计 Token 上限，见[渐进式 Agent 质量报告](deepseek_quality_20261121.md)。
 
 The current quality rerun disables the cumulative token cap. See the [progressive Agent quality report](deepseek_quality_20261121.md).
