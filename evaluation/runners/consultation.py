@@ -71,9 +71,11 @@ def citation_bindings(answer, matches):
     return list(sources.values()), bindings, sorted(set(unknown))
 
 
-def delivery_status(status, answer):
+def delivery_status(status, answer, model_stops=()):
     if status == "completed" and (not isinstance(answer, str) or not answer.strip()):
         return "empty_output"
+    if status == "completed" and model_stops and model_stops[-1]["finish_reason"] == "length":
+        return "truncated"
     return status
 
 
@@ -119,7 +121,7 @@ class ConsultationPilot:
                     model_stops.append({"step_id": step["step_id"],
                                         "finish_reason": (detail.get("response") or {}).get("finish_reason")})
             return {**envelope, "status": info["status"], "output": answer,
-                    "delivery_status": delivery_status(info["status"], answer), "model_stops": model_stops,
+                    "delivery_status": delivery_status(info["status"], answer, model_stops), "model_stops": model_stops,
                     "usage": usage, "model_calls": usage["model_calls"], "duration_ms": usage["duration_ms"],
                     "disclosure_decisions": disclosure.decisions}
 

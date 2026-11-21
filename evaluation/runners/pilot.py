@@ -10,7 +10,7 @@ import uuid
 
 from backend.knowledge.corpus import load_provisions
 from backend.knowledge.vector.vector_index import load_vector_index
-from evaluation.baselines.consultation import SYSTEM, run_baseline
+from evaluation.baselines.consultation import LABEL_GUIDANCE, SYSTEM, run_baseline
 from evaluation.runners.consultation import delivery_status
 from evaluation.schemas.tasks import load_public_tasks
 
@@ -27,6 +27,17 @@ def assert_current_index(root):
     index = load_vector_index(root / 'data/index/vector_metadata.npz')
     if index.config['corpus_sha256'] != expected:
         raise ValueError('Corpus changed: rebuild vector_metadata.npz before evaluating')
+
+
+def token_budget_audit(record, limit):
+    """Compare cumulative usage across settings, including resumed Agent turns."""
+    if record["mode"] == "agent":
+        usage = record.get("usage") or {}
+        total = usage["prompt_tokens"] + usage["completion_tokens"] if usage.get("tokens_complete") else None
+    else:
+        total = ((record.get("model_response") or {}).get("usage") or {}).get("total_tokens")
+    status = "unknown" if total is None else ("exceeded" if total > limit else "within_limit")
+    return {"status": status, "total_tokens": total, "limit": limit}
 
 
 def run_pilot(public_path, config, model, retrieval, output_root, root, *, consultation=None):
@@ -58,6 +69,7 @@ def run_pilot(public_path, config, model, retrieval, output_root, root, *, consu
         "working_tree_dirty": bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=root, text=True).strip()),
         "config": config, "public_sha256": sha256(public_path),
         "system_prompt_sha256": hashlib.sha256(SYSTEM.encode()).hexdigest(),
+        "citation_guidance_sha256": hashlib.sha256(LABEL_GUIDANCE.encode()).hexdigest(),
         "knowledge_version": getattr(getattr(retrieval, "service", None), "knowledge_version", None),
         "corpus_sha256": {p.name: sha256(p) for p in sorted((root / "data/processed").glob("*.jsonl"))},
         "index_sha256": sha256(root / "data/index/vector_metadata.npz"),
@@ -83,7 +95,8 @@ def run_pilot(public_path, config, model, retrieval, output_root, root, *, consu
             record = {"experiment_run_id": run_id,
                       "task_id": task.task_id, "task_type": task.task_type, "mode": mode, "repetition": 1,
                       **result}
-            record["delivery_status"] = delivery_status(record["status"], record["output"])
+            record["delivery_status"] = delivery_status(record["status"], record["output"], record.get("model_stops", ()))
+            record["token_budget_audit"] = token_budget_audit(record, config["budgets"]["max_total_tokens"])
             records.append(record)
             (out / f"{task.task_id}-{mode}.json").write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n")
             print(f"{task.task_id} {mode}: {record['status']}", flush=True)
@@ -94,8 +107,13 @@ def run_pilot(public_path, config, model, retrieval, output_root, root, *, consu
                "empty_output": sum(r["delivery_status"] == "empty_output" for r in records),
                "failed": sum(r["status"] == "failed" for r in records),
                "cancelled": sum(r["status"] == "cancelled" for r in records),
-               "truncated": sum(r["status"] == "truncated" for r in records),
-               "budget_exhausted": sum(r["status"] == "budget_exhausted" for r in records)}
+               "truncated": sum(r["delivery_status"] == "truncated" for r in records),
+               "budget_exhausted": sum(r["status"] == "budget_exhausted" for r in records),
+               "token_budget_exceeded": sum(r["token_budget_audit"]["status"] == "exceeded" for r in records),
+               "delivered_within_token_budget": sum(
+                   r["delivery_status"] == "completed" and r["token_budget_audit"]["status"] == "within_limit"
+                   for r in records
+               )}
     (out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     print(f"Results: {out}", flush=True)
     return out

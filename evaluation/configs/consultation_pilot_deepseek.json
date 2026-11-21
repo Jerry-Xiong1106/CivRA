@@ -1,0 +1,40 @@
+{
+  "protocol_version": "consultation-pilot-v0.5",
+  "dataset_version": "pilot-v0.3",
+  "status": "development",
+  "first_execution_modes": [
+    "direct_llm",
+    "rag",
+    "fixed_workflow",
+    "agent"
+  ],
+  "later_modes": [],
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "model_selection_status": "local_agent_live_smoke_verified_non_thinking",
+  "temperature": 0.0,
+  "seed": null,
+  "repetitions": 1,
+  "max_output_tokens": 2000,
+  "retrieval": {
+    "mode": "exact-vector",
+    "variant": "metadata",
+    "top_k": 5,
+    "rag_queries_per_task": 1,
+    "query_source": "initial_input",
+    "reference_format": "short_labels_v1"
+  },
+  "budgets": {
+    "max_model_calls": 12,
+    "max_tool_calls": 8,
+    "max_total_tokens": 24000,
+    "max_active_seconds": 300,
+    "max_interaction_turns": 3,
+    "model_retries": 0,
+    "tool_retries": 1
+  },
+  "disclosure_policy": "pilot_repayment_request_only_v1",
+  "unmatched_reply": "暂时没有可补充的信息。",
+  "cost_policy": "unknown_until_price_version_configured",
+  "paid_execution_enabled": true
+}

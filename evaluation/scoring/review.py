@@ -1,7 +1,55 @@
 """Validate item-level reviews and aggregate separately by setting and task type."""
 
 from collections import defaultdict
+from secrets import SystemRandom
 from statistics import mean
+from uuid import uuid4
+
+
+def prepare_static_review(records, public_records, gold_records):
+    """Mask settings for static, mode-common output judgments."""
+    public = {task.task_id: task for task in public_records}
+    gold = {task.task_id: task for task in gold_records}
+    cases, key = [], {}
+    for run in records:
+        task = public[run["task_id"]]
+        annotation = gold[task.task_id]
+        if task.dataset_version != annotation.dataset_version:
+            raise ValueError(f"Dataset version mismatch: {task.task_id}")
+        if task.task_type != "static":
+            continue
+        items = [
+            item.model_dump(exclude={"applicable_modes"})
+            for item in annotation.scoring_items
+            if item.dimension != "behavior" and len(set(item.applicable_modes)) == 4
+        ]
+        if not items:
+            continue
+        review_id = uuid4().hex
+        key[review_id] = run["experiment_run_id"]
+        cases.append({
+            "review_id": review_id,
+            "input": task.to_model_input(),
+            "answer": run["output"],
+            "rubric": items,
+            "annotation_status": annotation.review_status,
+        })
+    SystemRandom().shuffle(cases)
+    return cases, key
+
+
+def restore_review_ids(reviews, key):
+    """Allow ordinary trace reviews alongside masked output reviews."""
+    restored = []
+    for row in reviews:
+        review = dict(row)
+        if "review_id" in review:
+            review_id = review.pop("review_id")
+            if review_id not in key or "experiment_run_id" in review:
+                raise ValueError("Ambiguous or unknown masked review ID")
+            review["experiment_run_id"] = key[review_id]
+        restored.append(review)
+    return restored
 
 
 def summarize_reviews(records, gold_records, reviews):
@@ -30,15 +78,18 @@ def summarize_reviews(records, gold_records, reviews):
             dimensions[item.dimension].append(score)
             if item.required_for_success:
                 required.append(score == 2)
+        delivered = run.get('delivery_status', run['status']) == 'completed'
         groups[(run['mode'], run['task_type'])].append({
             'task_id': run['task_id'], 'completed': run['status'] == 'completed',
-            'task_success': bool(required) and all(required),
+            'delivered': delivered,
+            'task_success': delivered and bool(required) and all(required),
             'dimensions': {name: mean(values) for name, values in dimensions.items()},
         })
     if set(review_map) != used:
         raise ValueError('Review contains an unknown run or inapplicable item')
     return [dict(mode=mode, task_type=kind, tasks=len(rows),
                  completed=sum(r['completed'] for r in rows),
+                 delivered=sum(r['delivered'] for r in rows),
                  task_successes=sum(r['task_success'] for r in rows),
                  dimensions={name: mean(r['dimensions'][name] for r in rows if name in r['dimensions'])
                              for name in sorted({n for r in rows for n in r['dimensions']})})

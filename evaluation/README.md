@@ -2,11 +2,11 @@
 
 **中文**
 
-成员5负责实验协议、任务集、三个基线、运行器、评分及结果分析。目前已实现任务格式v0.1、5题试点、接口适配、Direct LLM/RAG基线、批量运行和显式评分汇总，并完成首次真实两模式试点。Fixed Workflow和真实Agent效果实验仍待完成。
+成员 5 负责实验协议、任务集、三个基线、运行器、评分及结果分析。Direct LLM、RAG、Fixed Workflow 和 CivRA Agent 已使用同一套运行器完成真实开发题试点。当前结果与集成问题见[集成报告](../docs/evaluation/integration_validation_20261121.md)。
 
 **English**
 
-Member 5 owns the evaluation protocol, task sets, three baselines, experiment runner, scoring, and result analysis. Task contract v0.1, a five-task pilot, interface adapters, Direct LLM/RAG baselines, a batch runner, and explicit-review aggregation are implemented. The first real two-mode pilot is complete. Fixed Workflow and real Agent effectiveness runs remain pending.
+Member 5 owns the evaluation protocol, task sets, three baselines, experiment runner, scoring, and result analysis. Direct LLM, RAG, Fixed Workflow, and CivRA Agent have run live development tasks through the same runner. See the [integration report](../docs/evaluation/integration_validation_20261121.md) for results and open issues.
 
 ## Deliverables
 
@@ -37,7 +37,7 @@ Member 5 owns the evaluation protocol, task sets, three baselines, experiment ru
 | `schemas/` | 任务、输出、运行记录和评分格式 |
 | `configs/` | 模型、模式、预算与实验配置 |
 | `datasets/pilot/` | 可共享的开发输入与样例 |
-| `baselines/` | Direct LLM、RAG及计划中的Fixed Workflow |
+| `baselines/` | Direct LLM 和 RAG，Fixed Workflow 复用带检索生成 |
 | `adapters/` | 对接统一模型、检索、业务工具和Agent接口 |
 | `mocks/` | 离线开发所需的确定性回复和工具 |
 | `runners/` | 批量执行、交互控制、保存与失败记录 |
@@ -52,7 +52,7 @@ Member 5 owns the evaluation protocol, task sets, three baselines, experiment ru
 | `schemas/` | Task, output, run-record, and score formats |
 | `configs/` | Model, setting, budget, and experiment configurations |
 | `datasets/pilot/` | Shareable development inputs and examples |
-| `baselines/` | Direct LLM, RAG, and Fixed Workflow implementations |
+| `baselines/` | Direct LLM and RAG, with retrieval-assisted generation reused by Fixed Workflow |
 | `adapters/` | Integration with shared model, retrieval, business-tool, and Agent interfaces |
 | `mocks/` | Deterministic responses and tools for offline development |
 | `runners/` | Batch execution, interaction control, persistence, and failure recording |

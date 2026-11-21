@@ -1,8 +1,8 @@
 # 成员5进度与试点结果说明 / Member 5 Progress and Pilot Results
 
-2026-11-21 的集成回归与四模式咨询结果见[新一轮试点报告](integration_validation_20261121.md)。下文保留 2026-11-09 的首轮两模式记录。
+2026-11-21 的集成回归与四模式咨询结果见[集成报告](integration_validation_20261121.md)。报告末尾记录了 v0.5 的基线修复、复测结果、累计超预算和人工复核方法。下文保留 2026-11-09 的首轮两模式记录。
 
-See the [2026-11-21 integration and four-setting pilot report](integration_validation_20261121.md) for the latest results. The original two-setting run from 2026-11-09 follows below.
+The [2026-11-21 integration report](integration_validation_20261121.md) includes the v0.5 baseline fixes, rerun, cumulative budget finding, and human review procedure. The original two-setting run from 2026-11-09 follows below.
 
 更新日期 / Updated: 2026-11-09
 

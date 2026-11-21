@@ -2,11 +2,11 @@
 
 **中文**
 
-版本：pilot-v0.3；负责人：成员5。状态：本地开发计划，尚非最终测试冻结版或团队已确认契约。
+版本：consultation-pilot-v0.5。负责人：成员 5。适用范围为开发试点。
 
 **English**
 
-Version: pilot-v0.3. Owner: Member 5. Status: local development plan, not a final-test freeze or team-approved contract.
+Version consultation-pilot-v0.5. Owner Member 5. Scope development pilot.
 
 ## Immediate scope
 
@@ -14,13 +14,13 @@ Version: pilot-v0.3. Owner: Member 5. Status: local development plan, not a fina
 
 试点覆盖咨询、事实澄清、引用和依据不足。现有5题：完整借贷事实、缺失还款事实、语料缺少官方统计、未约定利息和超期租赁；4静态、1交互设计。后两题改写自既有检索开发题，不是未见案例。
 
-首轮比较Direct LLM与RAG，两者已实现并完成真实5题运行。Fixed Workflow和Agent效果实验仍待进行；只报告真正实现并执行过的模式。Agent适配只通过脚本回复测试。
+四种模式已接入同一个真实模型。扩展开发集 v0.3 共 10 题，新增提前还款、同意转租、交付差额、费用证据和材料日期冲突。试点按已见开发数据报告。
 
 **English**
 
 Prepare a small, inspectable experiment for consultation, fact clarification, citation handling, and source insufficiency. The dataset has five development tasks: complete lending facts, missing repayment facts, a requested statistic absent from the current legal corpus, no-agreed-interest consultation, and an over-limit lease term. It contains four static tasks and one interactive task. The last two are explicitly adapted from existing retrieval development questions, not unseen cases.
 
-The first executable comparison will be Direct LLM versus RAG. Fixed Workflow and Agent remain planned settings. A mode is reported only after its implementation and dependencies actually run. Direct LLM and RAG are implemented and have completed the first real five-task run. Fixed Workflow and Agent effectiveness remain pending. The Agent adapter has been tested with scripted responses only.
+All four settings use the same live model. The ten-task development set v0.3 extends the original set with early repayment, consent to sublet, delivery shortfalls, evidence of expenses, and conflicting document dates. Report outcomes as development results.
 
 ## Settings
 
@@ -30,7 +30,7 @@ The first executable comparison will be Direct LLM versus RAG. Fixed Workflow an
 | --- | --- |
 | Direct LLM | 同一公开输入，生成一次，不检索、不调用工具、不接收控制器回复 |
 | RAG | 原样使用`initial_input`检索一次，取前5个候选，与同一公开输入一起生成一次；不动态调用工具或接收回复 |
-| Fixed Workflow | 下一阶段按固定次序检查证据、至多一批固定澄清、更新、检索、生成、核验；报告效果前需真实业务工具 |
+| Fixed Workflow | 在隔离案件库中检查证据，对交互借贷题做一次预设追问，再检索、生成和核验；公开材料以文本输入 |
 | Agent | 使用成员4的AgentRunner和同一模型/检索快照，在预算内动态行动，经控制器处理等待 |
 
 模型输入仅由`PublicTask.to_model_input()`生成，不能序列化控制器或评分记录；各模式初始输出要求一致。任务正文为中文，代码字段为英文，说明文档提供双语。
@@ -41,7 +41,7 @@ The first executable comparison will be Direct LLM versus RAG. Fixed Workflow an
 | --- | --- |
 | Direct LLM | One generation using the public case packet; no retrieval, tools, or controller replies |
 | RAG | Use initial_input unchanged as one query; retrieve top five candidates once; generate once from the same public packet plus retrieved text and source identifiers; no dynamic tools or controller replies |
-| Fixed Workflow | Next-stage procedure: check evidence, ask at most one scripted clarification batch if indicated, update state, retrieve once, generate, then verify once. No model-selected action ordering. Requires real business tools before effectiveness reporting |
+| Fixed Workflow | Check evidence in an isolated case store, ask one preset follow-up on the interactive lending task, retrieve once, generate once, and verify once. Public materials are supplied as text |
 | Agent | Use Member 4's AgentRunner with the same model and retrieval snapshot; dynamic actions within declared budgets; handle waits through the disclosure controller |
 
 The public packet is produced only by PublicTask.to_model_input(). Never serialize controller or scoring records into a model request. Initial output requirements are identical across settings. Task content is Chinese; implementation and field names use English, and documentation is bilingual.
@@ -50,9 +50,9 @@ The public packet is produced only by PublicTask.to_model_input(). Never seriali
 
 **中文**
 
-配置保存于[pilot_v1.json](../../evaluation/configs/pilot_v1.json)，目前仍属试点暂定值：
+四模式配置见[原 5 题](../../evaluation/configs/consultation_pilot_v3.json)和[扩展 10 题](../../evaluation/configs/consultation_pilot_extended.json)。
 
-- 供应商硅基流动；前两种模式采用鉴权列表确认可用的`Qwen/Qwen2.5-7B-Instruct`。真实工具调用兼容性未验证；后续沿用同模型，更换时整体实验需另记版本。
+- 供应商硅基流动，四种模式共享 `Qwen/Qwen2.5-7B-Instruct`。更换模型时整体实验另记版本。
 - 温度0，seed不设置，重复1次，每次输出最多2000 Token。
 - exact-vector、metadata输入、top_k=5；检索模式共用语料/索引快照。
 - 通用上限：12次模型、8次工具、24000模型Token、300秒活跃时间、3轮用户交互；前两基线还受更严格的单次流程限制。
@@ -65,9 +65,9 @@ The public packet is produced only by PublicTask.to_model_input(). Never seriali
 
 **English**
 
-The machine-readable plan is [pilot_v1.json](../../evaluation/configs/pilot_v1.json). Its values are provisional pilot decisions:
+See the machine-readable plans for the [original five tasks](../../evaluation/configs/consultation_pilot_v3.json) and the [expanded ten tasks](../../evaluation/configs/consultation_pilot_extended.json).
 
-- Provider: SiliconFlow. The first two baselines use Qwen/Qwen2.5-7B-Instruct, confirmed in the authenticated model list. Tool-calling compatibility is not yet verified; use the same selected model for future comparisons or version the entire experiment when changing it.
+- All four settings use Qwen/Qwen2.5-7B-Instruct through SiliconFlow. Version the entire experiment if the model changes.
 - Temperature: 0.0; seed: unset; repetitions: one; output limit: 2,000 tokens per model call.
 - Retrieval: exact-vector, metadata input, top_k=5, using the same corpus/index snapshot for all retrieval-enabled settings.
 - General run caps: 12 model calls, 8 tool calls, 24,000 total model tokens, 300 active seconds, 3 user-interaction turns.
@@ -86,7 +86,7 @@ Paid execution is enabled in this development plan following user authorization.
 
 小规模试点先由评审按语义匹配披露条件与示例，记录问题、决定、事实ID、回复、wait_id和时间。模糊请求裁决前不披露；未匹配使用固定的无更多信息回复；不一次性透露整个事实池；重复问题一致回答。路线只能采用预设偏好，没有偏好时以未解决事项结束。
 
-本阶段未实现交互控制器。记录格式通过不代表语义匹配已测。
+本轮控制器只识别借贷交互题中关于是否还款或还款金额的请求。它返回文字事实，保留问题、匹配决定和等待标识。单独请求上传材料不会触发披露。路线上下文和通用语义匹配留待正式评测设计。
 
 **English**
 
@@ -94,7 +94,7 @@ Static tasks never receive controller replies. Interactive tasks share one initi
 
 For this small pilot, a reviewer matches questions semantically against the recorded disclosure condition and examples. Log the question, decision, fact identifier, reply, wait_id, and timestamp. Ambiguous requests receive no disclosure until reviewer adjudication. Unmatched requests receive the plan's fixed unavailable-information reply. Never automatically reveal an entire hidden pool. Repeated questions receive consistent answers. Use only a predefined route choice; stop with an unresolved item if none exists.
 
-The interaction controller is not implemented in this stage. Validation of disclosure records does not imply that semantic matching has been tested.
+The current controller handles only the lending question about whether repayment occurred or how much was repaid. It returns a text fact and records the question, decision, and wait ID. Document-only requests do not trigger disclosure. Route scenarios and general semantic matching remain part of the formal evaluation design.
 
 ## Data and review
 
@@ -124,7 +124,7 @@ Existing retrieval development and reviewed-query reports remain regression evid
 
 Agent读取`RunInfo.usage`，不能再叠加步骤统计。`tokens_complete=false`代表统计不完整，未知费用为null；基线记录每次尝试。尽可能分开活跃运行、检索/嵌入、模型及评审/用户等待时间，并说明索引构建是否排除。
 
-保留失败和部分输出，必需缺失项为0；执行完成与任务成功分开。不挑结果，不改gold迎合候选，报告样本数和复核状态，5题不能证明总体法律准确性。
+保留失败和部分输出，缺失的必需评分项计 0。分别报告 Runtime 完成、完整正文交付、累计预算合规和任务成功。按整题累计 Token 核对 24,000 上限，跨回复仍用同一统计口径。报告样本数和复核状态。
 
 **English**
 
@@ -134,7 +134,7 @@ Use task-specific 0–2 items from controlled gold records. Average applicable i
 
 Agent usage comes from RunInfo.usage. Do not add step totals to it. If tokens_complete is false, token totals are incomplete; unknown costs are null. For baselines, record every actual attempt. Separate active runtime, retrieval/embedding costs, model cost, and reviewer/user waiting time where available. Record whether index construction is excluded from per-task online latency/cost.
 
-Retain failures and partial outputs; missing required output scores zero. Report execution completion separately from task success. Do not cherry-pick runs or change gold to match retrieved candidates. Show sample counts and draft/review status; five tasks cannot establish general legal accuracy.
+Retain failures and partial outputs. Missing required output scores zero. Report runtime completion, answer delivery, cumulative token compliance, and task success separately. Check the 24,000-token cap over the whole task, including resumed turns. Report sample counts and review status.
 
 ## Acceptance gates
 
