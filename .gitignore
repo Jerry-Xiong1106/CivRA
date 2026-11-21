@@ -236,6 +236,11 @@ evaluation/results/20261109T104304Z-dd61ec/*
 evaluation/results/20261121T085600Z-80f287/*
 !evaluation/results/20261121T085600Z-80f287/shared_*.json
 !evaluation/results/20261121T085600Z-80f287/README.md
+!evaluation/results/20261121T094615Z-d64eba/
+evaluation/results/20261121T094615Z-d64eba/*
+!evaluation/results/20261121T094615Z-d64eba/shared_*.json
+!evaluation/results/20261121T094615Z-d64eba/README.md
+!evaluation/results/20261121T094615Z-d64eba/comparison.png
 .DS_Store
 .venv-evaluation/
 docs/evaluation/.~*

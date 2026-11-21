@@ -1,5 +1,9 @@
 # 成员5进度与试点结果说明 / Member 5 Progress and Pilot Results
 
+最新一轮使用 DeepSeek Flash 完成 10 道开发题的四模式验证，结果、复现步骤和待修项见 [DeepSeek 试点报告](deepseek_pilot_20261121.md)。
+
+The latest ten-task four-setting run uses DeepSeek Flash. See the [DeepSeek pilot report](deepseek_pilot_20261121.md) for results, reproduction and open issues.
+
 2026-11-21 的集成回归与四模式咨询结果见[集成报告](integration_validation_20261121.md)。报告末尾记录了 v0.5 的基线修复、复测结果、累计超预算和人工复核方法。下文保留 2026-11-09 的首轮两模式记录。
 
 The [2026-11-21 integration report](integration_validation_20261121.md) includes the v0.5 baseline fixes, rerun, cumulative budget finding, and human review procedure. The original two-setting run from 2026-11-09 follows below.

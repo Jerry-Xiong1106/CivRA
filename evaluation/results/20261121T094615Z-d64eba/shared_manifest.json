@@ -1,0 +1,76 @@
+{
+  "batch_id": "20261121T094615Z-d64eba",
+  "created_at": "2026-11-21T09:46:15.153606+00:00",
+  "git_revision": "4088191f244354c8cf1b02beeeaaedaef868e7c5",
+  "working_tree_dirty": true,
+  "config": {
+    "protocol_version": "consultation-pilot-v0.5",
+    "dataset_version": "pilot-v0.3",
+    "status": "development",
+    "first_execution_modes": [
+      "direct_llm",
+      "rag",
+      "fixed_workflow",
+      "agent"
+    ],
+    "later_modes": [],
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "model_selection_status": "local_agent_live_smoke_verified_non_thinking",
+    "temperature": 0.0,
+    "seed": null,
+    "repetitions": 1,
+    "max_output_tokens": 2000,
+    "retrieval": {
+      "mode": "exact-vector",
+      "variant": "metadata",
+      "top_k": 5,
+      "rag_queries_per_task": 1,
+      "query_source": "initial_input",
+      "reference_format": "short_labels_v1"
+    },
+    "budgets": {
+      "max_model_calls": 12,
+      "max_tool_calls": 8,
+      "max_total_tokens": 24000,
+      "max_active_seconds": 300,
+      "max_interaction_turns": 3,
+      "model_retries": 0,
+      "tool_retries": 1
+    },
+    "disclosure_policy": "pilot_repayment_request_only_v1",
+    "unmatched_reply": "暂时没有可补充的信息。",
+    "cost_policy": "unknown_until_price_version_configured",
+    "paid_execution_enabled": true
+  },
+  "public_sha256": "f66059e57854c5c0c4397c4ee991641b66c9eab655b5c70a117d183d73b2d2d6",
+  "system_prompt_sha256": "43d44f5a8615255853cdda033b7b63bf19e204b747861d441522c3c7f8399bfc",
+  "citation_guidance_sha256": "d721b9dbc2c5e8bda75952fc67aec1b2a454cbc3f958aa9712805d46b29463a7",
+  "knowledge_version": "sha256:0edbb3145df7778514fdac90cda2206d8f5bdcde99db6b29d29568dc04daf342",
+  "corpus_sha256": {
+    "civil_code.jsonl": "1de20cdd37cc303f79e7d6633dd268c13a7a3a52e5b7431341e1df7ff48b0521",
+    "civil_procedure_law.jsonl": "151e05cdf3b9b4f552c98f444688b2c6a91df023ac731ea13c9464e024f2fe34",
+    "road_traffic_safety_law.jsonl": "771f4ca4d15439a139bd624933e7306dfc1d0345882e72dbbc7c9f68a27359e9"
+  },
+  "index_sha256": "30612c9347dcd039f8ae86fc3b7c08475184baa9b0e4dc9e218b4e497886e106",
+  "python": "3.12.14",
+  "implementation_sha256": {
+    "evaluation/__init__.py": "3240fd4f692fc0f8df2fde0bd2f6c14fb77e01b740af9b3f3df5e67a32075daa",
+    "evaluation/adapters/__init__.py": "0c833fcf5bc2759ff7b4f24f4e1d9da9ec81a9316bc633ff514976203322cfbe",
+    "evaluation/adapters/case_results.py": "44ea0a37c8dee75b88cbd6d4006dc1f04fecc5b460cdd8f46839dbc5a4a83147",
+    "evaluation/adapters/team.py": "0928b2db1f7097f6440c1fe46f71b97d1767cfef3f3651abc11d930a214058dd",
+    "evaluation/baselines/__init__.py": "b004a7517af6ef09c09fb8ebcc58035f610fbb6927450e6c9c969db80c15c497",
+    "evaluation/baselines/consultation.py": "d5ace3311259696177ce2d80a1d24ba730db9bccb17c531461dd30ef132c8b06",
+    "evaluation/config.py": "01cd50d373e929690f5f5e7b97ce47e1a637a0b28db33768f610fc9b59adc22e",
+    "evaluation/runners/__init__.py": "29add0cffd243041c3ab0b788242c606556dde1d0d009dcfc50e18e3b68108cb",
+    "evaluation/runners/consultation.py": "ba24b0a0e593583a140f8f5b2e1ae08c83bb6b2ff3791c884ad327540291dae5",
+    "evaluation/runners/pilot.py": "ebb496c3ac94efe92cbde61be9919cd8bd3bb77db8aab672f02473b7b3ab2bf0",
+    "evaluation/schemas/__init__.py": "936ab5c1485ee97fdb4f75718c3c3e3f88d86ae689e58ccf083041f459817fc0",
+    "evaluation/schemas/tasks.py": "4ad38f3871a1be563bddf3744ebdb99b9a03bf96426a89f6a80cc2f61c496fb8",
+    "evaluation/scoring/__init__.py": "ce2731d97a047236e5aa200cdd082e741312f82e77bb185be93b686ebd1dd11f",
+    "evaluation/scoring/review.py": "f78bfafed4fd331a2312968ea3b0df964d0780e22e82a3d1bdc676112c7178ac"
+  },
+  "cost": null,
+  "embedding_cost": null,
+  "cost_note": "No versioned prices configured; index build excluded from online latency; embedding client does not expose billed usage."
+}
