@@ -1,0 +1,170 @@
+{
+  "execution": {
+    "batch_id": "20261121T100114Z-921b75",
+    "runs": 40,
+    "completed": 40,
+    "delivered": 40,
+    "empty_output": 0,
+    "failed": 0,
+    "cancelled": 0,
+    "truncated": 0,
+    "budget_exhausted": 0,
+    "token_budget_exceeded": null,
+    "delivered_within_token_budget": null,
+    "token_audit_note": "Not applicable: cumulative token cap disabled; raw summary retained locally."
+  },
+  "comparison": {
+    "direct_llm": {
+      "attempted": 10,
+      "delivered": 10,
+      "required_items_passed": 9,
+      "citation_issue_flagged": 1,
+      "citation_audited": 10,
+      "support_issues": 1,
+      "source_link_issues": 0,
+      "review_kind": "assistant_provisional"
+    },
+    "rag": {
+      "attempted": 10,
+      "delivered": 10,
+      "required_items_passed": 9,
+      "citation_issue_flagged": 2,
+      "citation_audited": 10,
+      "support_issues": 2,
+      "source_link_issues": 0,
+      "review_kind": "assistant_provisional"
+    },
+    "fixed_workflow": {
+      "attempted": 10,
+      "delivered": 10,
+      "required_items_passed": 10,
+      "citation_issue_flagged": 0,
+      "citation_audited": 10,
+      "support_issues": 0,
+      "source_link_issues": 0,
+      "review_kind": "assistant_provisional"
+    },
+    "agent": {
+      "attempted": 10,
+      "delivered": 10,
+      "required_items_passed": 6,
+      "citation_issue_flagged": 7,
+      "citation_audited": 10,
+      "support_issues": 3,
+      "source_link_issues": 4,
+      "review_kind": "assistant_provisional"
+    }
+  },
+  "scores": {
+    "annotation_status": [
+      "draft"
+    ],
+    "review_kinds": [
+      "assistant_provisional"
+    ],
+    "groups": [
+      {
+        "mode": "agent",
+        "task_type": "interactive",
+        "tasks": 1,
+        "completed": 1,
+        "delivered": 1,
+        "task_successes": 1,
+        "dimensions": {
+          "behavior": 2,
+          "evidence": 2
+        }
+      },
+      {
+        "mode": "agent",
+        "task_type": "static",
+        "tasks": 9,
+        "completed": 9,
+        "delivered": 9,
+        "task_successes": 5,
+        "dimensions": {
+          "citation": 2,
+          "evidence": 2,
+          "guidance": 1,
+          "task_outcome": 1.4285714285714286
+        }
+      },
+      {
+        "mode": "direct_llm",
+        "task_type": "interactive",
+        "tasks": 1,
+        "completed": 1,
+        "delivered": 1,
+        "task_successes": 1,
+        "dimensions": {
+          "evidence": 2
+        }
+      },
+      {
+        "mode": "direct_llm",
+        "task_type": "static",
+        "tasks": 9,
+        "completed": 9,
+        "delivered": 9,
+        "task_successes": 8,
+        "dimensions": {
+          "citation": 2,
+          "evidence": 2,
+          "guidance": 2,
+          "task_outcome": 1.8571428571428572
+        }
+      },
+      {
+        "mode": "fixed_workflow",
+        "task_type": "interactive",
+        "tasks": 1,
+        "completed": 1,
+        "delivered": 1,
+        "task_successes": 1,
+        "dimensions": {
+          "behavior": 2,
+          "evidence": 2
+        }
+      },
+      {
+        "mode": "fixed_workflow",
+        "task_type": "static",
+        "tasks": 9,
+        "completed": 9,
+        "delivered": 9,
+        "task_successes": 9,
+        "dimensions": {
+          "citation": 2,
+          "evidence": 2,
+          "guidance": 2,
+          "task_outcome": 2
+        }
+      },
+      {
+        "mode": "rag",
+        "task_type": "interactive",
+        "tasks": 1,
+        "completed": 1,
+        "delivered": 1,
+        "task_successes": 1,
+        "dimensions": {
+          "evidence": 2
+        }
+      },
+      {
+        "mode": "rag",
+        "task_type": "static",
+        "tasks": 9,
+        "completed": 9,
+        "delivered": 9,
+        "task_successes": 8,
+        "dimensions": {
+          "citation": 2,
+          "evidence": 2,
+          "guidance": 2,
+          "task_outcome": 1.8571428571428572
+        }
+      }
+    ]
+  }
+}

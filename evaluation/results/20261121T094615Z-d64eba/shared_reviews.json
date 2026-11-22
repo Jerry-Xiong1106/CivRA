@@ -1,0 +1,370 @@
+[
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-001:direct_llm:1",
+    "item_id": "balance",
+    "score": 2,
+    "reason": "按借条和还款材料计算 10,000 减 2,000，得到 8,000。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-001:direct_llm:1",
+    "item_id": "scope",
+    "score": 2,
+    "reason": "列出可核对材料，单列待确认事项，未生成文书或承诺结果。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-001:rag:1",
+    "item_id": "balance",
+    "score": 2,
+    "reason": "按借条和还款材料计算 10,000 减 2,000，得到 8,000。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-001:rag:1",
+    "item_id": "scope",
+    "score": 2,
+    "reason": "列出可核对材料，单列待确认事项，未生成文书或承诺结果。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-001:fixed_workflow:1",
+    "item_id": "balance",
+    "score": 2,
+    "reason": "按借条和还款材料计算 10,000 减 2,000，得到 8,000。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-001:fixed_workflow:1",
+    "item_id": "scope",
+    "score": 2,
+    "reason": "列出可核对材料，单列待确认事项，未生成文书或承诺结果。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-001:agent:1",
+    "item_id": "balance",
+    "score": 0,
+    "reason": "预算耗尽，只返回待处理说明。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-001:agent:1",
+    "item_id": "scope",
+    "score": 0,
+    "reason": "未交付所需的材料清单。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-002:direct_llm:1",
+    "item_id": "uncertainty",
+    "score": 2,
+    "reason": "受控交互任务的具体判分理由由协调员保存。 / The coordinator retains item-level reasons for the controlled interactive task.",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-002:rag:1",
+    "item_id": "uncertainty",
+    "score": 2,
+    "reason": "受控交互任务的具体判分理由由协调员保存。 / The coordinator retains item-level reasons for the controlled interactive task.",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-002:fixed_workflow:1",
+    "item_id": "uncertainty",
+    "score": 2,
+    "reason": "受控交互任务的具体判分理由由协调员保存。 / The coordinator retains item-level reasons for the controlled interactive task.",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-002:fixed_workflow:1",
+    "item_id": "clarification",
+    "score": 2,
+    "reason": "受控交互任务的具体判分理由由协调员保存。 / The coordinator retains item-level reasons for the controlled interactive task.",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-002:agent:1",
+    "item_id": "uncertainty",
+    "score": 0,
+    "reason": "受控交互任务的具体判分理由由协调员保存。 / The coordinator retains item-level reasons for the controlled interactive task.",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-002:agent:1",
+    "item_id": "clarification",
+    "score": 1,
+    "reason": "受控交互任务的具体判分理由由协调员保存。 / The coordinator retains item-level reasons for the controlled interactive task.",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-003:direct_llm:1",
+    "item_id": "unsupported-statistic",
+    "score": 2,
+    "reason": "说明缺少指定年度的官方统计和来源，没有捏造数值。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-003:rag:1",
+    "item_id": "unsupported-statistic",
+    "score": 2,
+    "reason": "说明缺少指定年度的官方统计和来源，没有捏造数值。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-003:fixed_workflow:1",
+    "item_id": "unsupported-statistic",
+    "score": 2,
+    "reason": "说明缺少指定年度的官方统计和来源，没有捏造数值。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-003:agent:1",
+    "item_id": "unsupported-statistic",
+    "score": 2,
+    "reason": "说明缺少指定年度的官方统计和来源，没有捏造数值。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-004:direct_llm:1",
+    "item_id": "rule-and-support",
+    "score": 2,
+    "reason": "以未约定借期利息为前提，引用第680条并单列逾期条件。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-004:rag:1",
+    "item_id": "rule-and-support",
+    "score": 2,
+    "reason": "以未约定借期利息为前提，引用第680条并单列逾期条件。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-004:fixed_workflow:1",
+    "item_id": "rule-and-support",
+    "score": 2,
+    "reason": "以未约定借期利息为前提，引用第680条并单列逾期条件。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-004:agent:1",
+    "item_id": "rule-and-support",
+    "score": 2,
+    "reason": "以未约定借期利息为前提，引用第680条并单列逾期条件。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-005:direct_llm:1",
+    "item_id": "rule-and-support",
+    "score": 0,
+    "reason": "引用第705条，但把超出二十年的部分同时写成第三年至第三十年。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-005:rag:1",
+    "item_id": "rule-and-support",
+    "score": 2,
+    "reason": "绑定第705条，明确第二十一年至第三十年与合同整体的区别。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-005:fixed_workflow:1",
+    "item_id": "rule-and-support",
+    "score": 0,
+    "reason": "把第三年至第三十年称为超过二十年的十年，与结论矛盾。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-005:agent:1",
+    "item_id": "rule-and-support",
+    "score": 1,
+    "reason": "部分输出区分二十年边界，但对续订另设未经支持的累计上限，Runtime 以预算耗尽结束。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-006:direct_llm:1",
+    "item_id": "case-outcome",
+    "score": 2,
+    "reason": "说明默认按实际借款期间并保留另有约定的例外，要求核对剩余条款。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-006:rag:1",
+    "item_id": "case-outcome",
+    "score": 2,
+    "reason": "说明默认按实际借款期间并保留另有约定的例外，要求核对剩余条款。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-006:fixed_workflow:1",
+    "item_id": "case-outcome",
+    "score": 2,
+    "reason": "说明默认按实际借款期间并保留另有约定的例外，要求核对剩余条款。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-006:agent:1",
+    "item_id": "case-outcome",
+    "score": 2,
+    "reason": "说明默认按实际借款期间并保留另有约定的例外，要求核对剩余条款。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-007:direct_llm:1",
+    "item_id": "case-outcome",
+    "score": 2,
+    "reason": "根据签字同意和材料说明原租约不会仅因转租终止。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-007:rag:1",
+    "item_id": "case-outcome",
+    "score": 2,
+    "reason": "根据签字同意和材料说明原租约不会仅因转租终止。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-007:fixed_workflow:1",
+    "item_id": "case-outcome",
+    "score": 2,
+    "reason": "根据签字同意和材料说明原租约不会仅因转租终止。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-007:agent:1",
+    "item_id": "case-outcome",
+    "score": 2,
+    "reason": "根据签字同意和材料说明原租约不会仅因转租终止。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-008:direct_llm:1",
+    "item_id": "case-outcome",
+    "score": 2,
+    "reason": "列出四把的材料差额及待核对的交付证据，给出条件性处理方向。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-008:rag:1",
+    "item_id": "case-outcome",
+    "score": 2,
+    "reason": "列出四把的材料差额及待核对的交付证据，给出条件性处理方向。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-008:fixed_workflow:1",
+    "item_id": "case-outcome",
+    "score": 2,
+    "reason": "列出四把的材料差额及待核对的交付证据，给出条件性处理方向。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-008:agent:1",
+    "item_id": "case-outcome",
+    "score": 0,
+    "reason": "预算耗尽，未交付数量差额与处理方向。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-009:direct_llm:1",
+    "item_id": "case-outcome",
+    "score": 2,
+    "reason": "区分门诊付款和工资损失证据，保留责任比例及赔偿总额。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-009:rag:1",
+    "item_id": "case-outcome",
+    "score": 2,
+    "reason": "区分门诊付款和工资损失证据，保留责任比例及赔偿总额。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-009:fixed_workflow:1",
+    "item_id": "case-outcome",
+    "score": 2,
+    "reason": "区分门诊付款和工资损失证据，保留责任比例及赔偿总额。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-009:agent:1",
+    "item_id": "case-outcome",
+    "score": 2,
+    "reason": "区分门诊付款和工资损失证据，保留责任比例及赔偿总额。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-010:direct_llm:1",
+    "item_id": "case-outcome",
+    "score": 2,
+    "reason": "保留两份材料的冲突日期与出处，提出独立时间记录作为核验材料。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-010:rag:1",
+    "item_id": "case-outcome",
+    "score": 2,
+    "reason": "保留两份材料的冲突日期与出处，提出独立时间记录作为核验材料。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-010:fixed_workflow:1",
+    "item_id": "case-outcome",
+    "score": 2,
+    "reason": "保留两份材料的冲突日期与出处，提出独立时间记录作为核验材料。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  },
+  {
+    "experiment_run_id": "20261121T094615Z-d64eba:pilot-010:agent:1",
+    "item_id": "case-outcome",
+    "score": 2,
+    "reason": "保留两份材料的冲突日期与出处，提出独立时间记录作为核验材料。",
+    "reviewer": "assistant",
+    "review_kind": "assistant_provisional"
+  }
+]

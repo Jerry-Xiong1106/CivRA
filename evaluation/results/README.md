@@ -2,6 +2,8 @@
 
 **中文**
 
+最新发布批次为 [20261121T085600Z-80f287](20261121T085600Z-80f287/README.md)，包含四模式对照、可共享的回答、逐项评分和缺陷复现记录。
+
 本目录仅收录经确认可共享的开发试点证据，方便组员查看输入、回答、检索候选、评分规则和理由。它不是正式测试集，也不是最终法律准确性结论。
 
 当前发布批次：[20261109T104304Z-dd61ec](20261109T104304Z-dd61ec/README.md)。包含5个开发任务、Direct LLM/RAG两种模式、10次真实生成。助手暂定必需项通过数量为3/5与4/5，标注和评分仍待团队复核。两种模式均未在交互设计题中接收控制器回复；Fixed Workflow与真实Agent效果尚未在本批比较。
@@ -11,6 +13,8 @@
 查看顺序：先读批次README，再看`records.json`中的`output`和`retrieval.matches`，然后对照`scoring_checklist.json`、`review_scores.json`与`score_summary.json`。可以离线查看，无需密钥或API调用。
 
 **English**
+
+The [20261121T085600Z-80f287 batch](20261121T085600Z-80f287/README.md) contains the latest four-setting comparison, shareable answers, item reviews, and defect reproduction notes.
 
 This directory publishes explicitly approved development-pilot evidence so team members can inspect inputs, answers, retrieval candidates, scoring rules, and reasons. It is not a final test set or a validated legal-accuracy claim.
 

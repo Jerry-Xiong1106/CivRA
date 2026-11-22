@@ -1,0 +1,236 @@
+[
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-001:direct_llm:1",
+    "item_id": "balance",
+    "score": 2,
+    "reason": "正确以本金减已还款得到8000元。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-001:direct_llm:1",
+    "item_id": "scope",
+    "score": 2,
+    "reason": "列明借条、还款记录和待确认事项。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-001:rag:1",
+    "item_id": "balance",
+    "score": 2,
+    "reason": "列出本金减还款的算式及8000元余额。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-001:rag:1",
+    "item_id": "scope",
+    "score": 2,
+    "reason": "提供材料清单和待确认事项。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-001:fixed_workflow:1",
+    "item_id": "balance",
+    "score": 2,
+    "reason": "按还款材料计算余额为8000元。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-001:fixed_workflow:1",
+    "item_id": "scope",
+    "score": 1,
+    "reason": "提供材料清单，但加入未被材料支持的逾期利息断言。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-001:agent:1",
+    "item_id": "balance",
+    "score": 0,
+    "reason": "运行标记完成但回答正文为空。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-001:agent:1",
+    "item_id": "scope",
+    "score": 0,
+    "reason": "回答为空，未交付材料清单。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-002:direct_llm:1",
+    "item_id": "uncertainty",
+    "score": 2,
+    "reason": "指出还款记录缺口，给出有条件的结论。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-002:rag:1",
+    "item_id": "uncertainty",
+    "score": 2,
+    "reason": "不猜余额，询问是否还款与记录。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-002:fixed_workflow:1",
+    "item_id": "uncertainty",
+    "score": 2,
+    "reason": "按预设还款追问取得允许披露的补充信息，回答正确使用该信息。具体回复与余额保留在受控记录。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-002:fixed_workflow:1",
+    "item_id": "clarification",
+    "score": 2,
+    "reason": "按预设还款追问取得允许披露的补充信息，回答正确使用该信息。具体回复与余额保留在受控记录。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-002:agent:1",
+    "item_id": "uncertainty",
+    "score": 2,
+    "reason": "指出还款缺口并保留有条件的10000元。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-002:agent:1",
+    "item_id": "clarification",
+    "score": 0,
+    "reason": "正文提出补充，但Runtime直接结束，没有结构化等待或获取补充事实。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-003:direct_llm:1",
+    "item_id": "unsupported-statistic",
+    "score": 2,
+    "reason": "说明缺少指定年份统计的官方来源，未编造数值。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-003:rag:1",
+    "item_id": "unsupported-statistic",
+    "score": 2,
+    "reason": "说明缺少指定年份统计的官方来源，未编造数值。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-003:fixed_workflow:1",
+    "item_id": "unsupported-statistic",
+    "score": 2,
+    "reason": "说明缺少指定年份统计的官方来源，未编造数值。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-003:agent:1",
+    "item_id": "unsupported-statistic",
+    "score": 2,
+    "reason": "说明缺少指定年份统计的官方来源，未编造数值。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-004:direct_llm:1",
+    "item_id": "rule-and-support",
+    "score": 0,
+    "reason": "误称法律禁止借款双方约定利息，即使后文给出无约定时不付利息。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-004:rag:1",
+    "item_id": "rule-and-support",
+    "score": 2,
+    "reason": "以无约定为前提，给出第680条及可关联来源，并把其他约定留待核查。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-004:fixed_workflow:1",
+    "item_id": "rule-and-support",
+    "score": 1,
+    "reason": "基本结论与第680条相关，但另以借期长短讨论付息，未限定于已存在利息义务的情形。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-004:agent:1",
+    "item_id": "rule-and-support",
+    "score": 1,
+    "reason": "基本结论出现，但混同未约定与约定不明，并把逾期规则限为有约定利率；没有检索。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-005:direct_llm:1",
+    "item_id": "rule-and-support",
+    "score": 0,
+    "reason": "引用非预期版本，且把第八年起写为超限，与20年边界矛盾。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-005:rag:1",
+    "item_id": "rule-and-support",
+    "score": 0,
+    "reason": "检索到第705条，仍把第八年起写为超限，结论前后不一致。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-005:fixed_workflow:1",
+    "item_id": "rule-and-support",
+    "score": 2,
+    "reason": "使用第705条区分20年内、超出部分和整个合同。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  },
+  {
+    "experiment_run_id": "20261121T085600Z-80f287:pilot-005:agent:1",
+    "item_id": "rule-and-support",
+    "score": 1,
+    "reason": "区分超出部分与整个合同，但未检索，使用的条文不是本题核对的第705条。",
+    "reviewer": "codex-assistant",
+    "review_kind": "assistant_provisional",
+    "human_review_status": "pending"
+  }
+]

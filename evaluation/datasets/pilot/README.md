@@ -1,4 +1,8 @@
-# 试点任务集v0.2 / Pilot task set v0.2
+# 试点任务集 / Pilot task sets
+
+`tasks_extended.jsonl`（v0.3）包含以下 5 题和 5 道新增开发题。本地隐藏事实和评分草案位于 `evaluation/private/pilot_v2/`。运行配置及复核方法见[集成报告](../../../docs/evaluation/integration_validation_20261121.md)。
+
+`tasks_extended.jsonl` (v0.3) contains the five scenarios below and five additional development scenarios. The local hidden facts and draft annotations are in `evaluation/private/pilot_v2/`. See the [integration report](../../../docs/evaluation/integration_validation_20261121.md) for configuration and review.
 
 **中文**
 
