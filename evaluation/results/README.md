@@ -2,6 +2,8 @@
 
 **中文**
 
+[2026-11-23 Civil50 Agent 评测报告](civil50_agent_20261123/README.md)记录 50 案真实交互、按案型评分、工具调用、RAG 检索和 18 张图。
+
 最新发布批次为 [20261121T085600Z-80f287](20261121T085600Z-80f287/README.md)，包含四模式对照、可共享的回答、逐项评分和缺陷复现记录。
 
 本目录仅收录经确认可共享的开发试点证据，方便组员查看输入、回答、检索候选、评分规则和理由。它不是正式测试集，也不是最终法律准确性结论。
@@ -13,6 +15,8 @@
 查看顺序：先读批次README，再看`records.json`中的`output`和`retrieval.matches`，然后对照`scoring_checklist.json`、`review_scores.json`与`score_summary.json`。可以离线查看，无需密钥或API调用。
 
 **English**
+
+The [Civil50 Agent evaluation report](civil50_agent_20261123/README.md) covers 50 live cases, category scores, tool calls, retrieval, and 18 figures.
 
 The [20261121T085600Z-80f287 batch](20261121T085600Z-80f287/README.md) contains the latest four-setting comparison, shareable answers, item reviews, and defect reproduction notes.
 

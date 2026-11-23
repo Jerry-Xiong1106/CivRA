@@ -1,0 +1,351 @@
+﻿task_id,domain,route,split,dimension,item,score,label,review
+civil50-001,tort,consultation,development,事实追问,S1,0,missing,可观察证据规则
+civil50-001,tort,consultation,development,事实追问,S2,0,missing,可观察证据规则
+civil50-001,tort,consultation,development,流程与工具,S3,0,missing,可观察证据规则
+civil50-001,tort,consultation,development,检索与上下文,S7,1,partial,可观察证据规则
+civil50-001,tort,consultation,development,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-001,tort,consultation,development,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-001,tort,consultation,development,最终交付,S6,2,correct,Codex 终稿复核
+civil50-002,tort,negotiation,development,事实追问,S1,0,missing,可观察证据规则
+civil50-002,tort,negotiation,development,事实追问,S2,0,missing,可观察证据规则
+civil50-002,tort,negotiation,development,流程与工具,S3,0,missing,可观察证据规则
+civil50-002,tort,negotiation,development,检索与上下文,S7,1,partial,可观察证据规则
+civil50-002,tort,negotiation,development,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-002,tort,negotiation,development,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-002,tort,negotiation,development,最终交付,S6,1,partial,Codex 终稿复核
+civil50-003,tort,litigation,development,事实追问,S1,1,partial,可观察证据规则
+civil50-003,tort,litigation,development,事实追问,S2,1,partial,可观察证据规则
+civil50-003,tort,litigation,development,流程与工具,S3,0,missing,可观察证据规则
+civil50-003,tort,litigation,development,检索与上下文,S7,1,partial,可观察证据规则
+civil50-003,tort,litigation,development,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-003,tort,litigation,development,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-003,tort,litigation,development,最终交付,S6,1,partial,Codex 终稿复核
+civil50-004,tort,consultation,final_test,事实追问,S1,2,correct,可观察证据规则
+civil50-004,tort,consultation,final_test,事实追问,S2,2,correct,可观察证据规则
+civil50-004,tort,consultation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-004,tort,consultation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-004,tort,consultation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-004,tort,consultation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-004,tort,consultation,final_test,最终交付,S6,2,correct,Codex 终稿复核
+civil50-005,tort,mediation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-005,tort,mediation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-005,tort,mediation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-005,tort,mediation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-005,tort,mediation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-005,tort,mediation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-005,tort,mediation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-006,tort,consultation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-006,tort,consultation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-006,tort,consultation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-006,tort,consultation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-006,tort,consultation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-006,tort,consultation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-006,tort,consultation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-007,tort,negotiation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-007,tort,negotiation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-007,tort,negotiation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-007,tort,negotiation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-007,tort,negotiation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-007,tort,negotiation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-007,tort,negotiation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-008,tort,consultation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-008,tort,consultation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-008,tort,consultation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-008,tort,consultation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-008,tort,consultation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-008,tort,consultation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-008,tort,consultation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-009,tort,litigation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-009,tort,litigation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-009,tort,litigation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-009,tort,litigation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-009,tort,litigation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-009,tort,litigation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-009,tort,litigation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-010,tort,litigation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-010,tort,litigation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-010,tort,litigation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-010,tort,litigation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-010,tort,litigation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-010,tort,litigation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-010,tort,litigation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-011,tort,consultation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-011,tort,consultation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-011,tort,consultation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-011,tort,consultation,final_test,检索与上下文,S7,2,correct,可观察证据规则
+civil50-011,tort,consultation,final_test,引用与不确定性,S4,2,correct,Codex 终稿复核
+civil50-011,tort,consultation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-011,tort,consultation,final_test,最终交付,S6,2,correct,Codex 终稿复核
+civil50-012,tort,consultation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-012,tort,consultation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-012,tort,consultation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-012,tort,consultation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-012,tort,consultation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-012,tort,consultation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-012,tort,consultation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-013,tort,negotiation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-013,tort,negotiation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-013,tort,negotiation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-013,tort,negotiation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-013,tort,negotiation,final_test,引用与不确定性,S4,2,correct,Codex 终稿复核
+civil50-013,tort,negotiation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-013,tort,negotiation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-014,tort,mediation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-014,tort,mediation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-014,tort,mediation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-014,tort,mediation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-014,tort,mediation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-014,tort,mediation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-014,tort,mediation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-015,lending,mediation,development,事实追问,S1,2,correct,可观察证据规则
+civil50-015,lending,mediation,development,事实追问,S2,0,missing,可观察证据规则
+civil50-015,lending,mediation,development,流程与工具,S3,0,missing,可观察证据规则
+civil50-015,lending,mediation,development,检索与上下文,S7,1,partial,可观察证据规则
+civil50-015,lending,mediation,development,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-015,lending,mediation,development,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-015,lending,mediation,development,最终交付,S6,1,partial,Codex 终稿复核
+civil50-016,lending,litigation,development,事实追问,S1,0,missing,可观察证据规则
+civil50-016,lending,litigation,development,事实追问,S2,0,missing,可观察证据规则
+civil50-016,lending,litigation,development,流程与工具,S3,0,missing,可观察证据规则
+civil50-016,lending,litigation,development,检索与上下文,S7,1,partial,可观察证据规则
+civil50-016,lending,litigation,development,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-016,lending,litigation,development,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-016,lending,litigation,development,最终交付,S6,1,partial,Codex 终稿复核
+civil50-017,lending,consultation,development,事实追问,S1,0,missing,可观察证据规则
+civil50-017,lending,consultation,development,事实追问,S2,0,missing,可观察证据规则
+civil50-017,lending,consultation,development,流程与工具,S3,0,missing,可观察证据规则
+civil50-017,lending,consultation,development,检索与上下文,S7,1,partial,可观察证据规则
+civil50-017,lending,consultation,development,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-017,lending,consultation,development,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-017,lending,consultation,development,最终交付,S6,1,partial,Codex 终稿复核
+civil50-018,lending,negotiation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-018,lending,negotiation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-018,lending,negotiation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-018,lending,negotiation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-018,lending,negotiation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-018,lending,negotiation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-018,lending,negotiation,final_test,最终交付,S6,2,correct,Codex 终稿复核
+civil50-019,lending,consultation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-019,lending,consultation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-019,lending,consultation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-019,lending,consultation,final_test,检索与上下文,S7,2,correct,可观察证据规则
+civil50-019,lending,consultation,final_test,引用与不确定性,S4,2,correct,Codex 终稿复核
+civil50-019,lending,consultation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-019,lending,consultation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-020,lending,litigation,final_test,事实追问,S1,2,correct,可观察证据规则
+civil50-020,lending,litigation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-020,lending,litigation,final_test,流程与工具,S3,1,partial,可观察证据规则
+civil50-020,lending,litigation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-020,lending,litigation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-020,lending,litigation,final_test,引用与不确定性,S5,1,partial,可观察证据规则
+civil50-020,lending,litigation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-021,lending,negotiation,final_test,事实追问,S1,2,correct,可观察证据规则
+civil50-021,lending,negotiation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-021,lending,negotiation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-021,lending,negotiation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-021,lending,negotiation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-021,lending,negotiation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-021,lending,negotiation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-022,lending,consultation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-022,lending,consultation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-022,lending,consultation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-022,lending,consultation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-022,lending,consultation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-022,lending,consultation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-022,lending,consultation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-023,lending,litigation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-023,lending,litigation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-023,lending,litigation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-023,lending,litigation,final_test,检索与上下文,S7,0,missing,可观察证据规则
+civil50-023,lending,litigation,final_test,引用与不确定性,S4,0,missing,Codex 终稿复核
+civil50-023,lending,litigation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-023,lending,litigation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-024,lending,mediation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-024,lending,mediation,final_test,事实追问,S2,2,correct,可观察证据规则
+civil50-024,lending,mediation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-024,lending,mediation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-024,lending,mediation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-024,lending,mediation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-024,lending,mediation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-025,lending,consultation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-025,lending,consultation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-025,lending,consultation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-025,lending,consultation,final_test,检索与上下文,S7,0,missing,可观察证据规则
+civil50-025,lending,consultation,final_test,引用与不确定性,S4,0,missing,Codex 终稿复核
+civil50-025,lending,consultation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-025,lending,consultation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-026,lending,negotiation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-026,lending,negotiation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-026,lending,negotiation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-026,lending,negotiation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-026,lending,negotiation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-026,lending,negotiation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-026,lending,negotiation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-027,lending,litigation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-027,lending,litigation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-027,lending,litigation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-027,lending,litigation,final_test,检索与上下文,S7,2,correct,可观察证据规则
+civil50-027,lending,litigation,final_test,引用与不确定性,S4,2,correct,Codex 终稿复核
+civil50-027,lending,litigation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-027,lending,litigation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-028,contract,consultation,development,事实追问,S1,0,missing,可观察证据规则
+civil50-028,contract,consultation,development,事实追问,S2,0,missing,可观察证据规则
+civil50-028,contract,consultation,development,流程与工具,S3,0,missing,可观察证据规则
+civil50-028,contract,consultation,development,检索与上下文,S7,2,correct,可观察证据规则
+civil50-028,contract,consultation,development,引用与不确定性,S4,2,correct,Codex 终稿复核
+civil50-028,contract,consultation,development,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-028,contract,consultation,development,最终交付,S6,1,partial,Codex 终稿复核
+civil50-029,contract,litigation,development,事实追问,S1,0,missing,可观察证据规则
+civil50-029,contract,litigation,development,事实追问,S2,0,missing,可观察证据规则
+civil50-029,contract,litigation,development,流程与工具,S3,0,missing,可观察证据规则
+civil50-029,contract,litigation,development,检索与上下文,S7,1,partial,可观察证据规则
+civil50-029,contract,litigation,development,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-029,contract,litigation,development,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-029,contract,litigation,development,最终交付,S6,1,partial,Codex 终稿复核
+civil50-030,contract,negotiation,final_test,事实追问,S1,2,correct,可观察证据规则
+civil50-030,contract,negotiation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-030,contract,negotiation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-030,contract,negotiation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-030,contract,negotiation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-030,contract,negotiation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-030,contract,negotiation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-031,contract,consultation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-031,contract,consultation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-031,contract,consultation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-031,contract,consultation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-031,contract,consultation,final_test,引用与不确定性,S4,0,missing,Codex 终稿复核
+civil50-031,contract,consultation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-031,contract,consultation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-032,contract,mediation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-032,contract,mediation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-032,contract,mediation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-032,contract,mediation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-032,contract,mediation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-032,contract,mediation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-032,contract,mediation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-033,contract,consultation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-033,contract,consultation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-033,contract,consultation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-033,contract,consultation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-033,contract,consultation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-033,contract,consultation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-033,contract,consultation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-034,contract,litigation,final_test,事实追问,S1,2,correct,可观察证据规则
+civil50-034,contract,litigation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-034,contract,litigation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-034,contract,litigation,final_test,检索与上下文,S7,2,correct,可观察证据规则
+civil50-034,contract,litigation,final_test,引用与不确定性,S4,2,correct,Codex 终稿复核
+civil50-034,contract,litigation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-034,contract,litigation,final_test,最终交付,S6,2,correct,Codex 终稿复核
+civil50-035,contract,negotiation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-035,contract,negotiation,final_test,事实追问,S2,2,correct,可观察证据规则
+civil50-035,contract,negotiation,final_test,流程与工具,S3,1,partial,可观察证据规则
+civil50-035,contract,negotiation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-035,contract,negotiation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-035,contract,negotiation,final_test,引用与不确定性,S5,1,partial,可观察证据规则
+civil50-035,contract,negotiation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-036,contract,mediation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-036,contract,mediation,final_test,事实追问,S2,2,correct,可观察证据规则
+civil50-036,contract,mediation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-036,contract,mediation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-036,contract,mediation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-036,contract,mediation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-036,contract,mediation,final_test,最终交付,S6,2,correct,Codex 终稿复核
+civil50-037,contract,consultation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-037,contract,consultation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-037,contract,consultation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-037,contract,consultation,final_test,检索与上下文,S7,0,missing,可观察证据规则
+civil50-037,contract,consultation,final_test,引用与不确定性,S4,0,missing,Codex 终稿复核
+civil50-037,contract,consultation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-037,contract,consultation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-038,contract,mediation,final_test,事实追问,S1,2,correct,可观察证据规则
+civil50-038,contract,mediation,final_test,事实追问,S2,2,correct,可观察证据规则
+civil50-038,contract,mediation,final_test,流程与工具,S3,2,correct,可观察证据规则
+civil50-038,contract,mediation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-038,contract,mediation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-038,contract,mediation,final_test,引用与不确定性,S5,1,partial,可观察证据规则
+civil50-038,contract,mediation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-039,contract,litigation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-039,contract,litigation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-039,contract,litigation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-039,contract,litigation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-039,contract,litigation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-039,contract,litigation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-039,contract,litigation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-040,contract,consultation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-040,contract,consultation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-040,contract,consultation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-040,contract,consultation,final_test,检索与上下文,S7,2,correct,可观察证据规则
+civil50-040,contract,consultation,final_test,引用与不确定性,S4,2,correct,Codex 终稿复核
+civil50-040,contract,consultation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-040,contract,consultation,final_test,最终交付,S6,2,correct,Codex 终稿复核
+civil50-041,leasing,consultation,development,事实追问,S1,0,missing,可观察证据规则
+civil50-041,leasing,consultation,development,事实追问,S2,0,missing,可观察证据规则
+civil50-041,leasing,consultation,development,流程与工具,S3,0,missing,可观察证据规则
+civil50-041,leasing,consultation,development,检索与上下文,S7,0,missing,可观察证据规则
+civil50-041,leasing,consultation,development,引用与不确定性,S4,0,missing,Codex 终稿复核
+civil50-041,leasing,consultation,development,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-041,leasing,consultation,development,最终交付,S6,1,partial,Codex 终稿复核
+civil50-042,leasing,mediation,development,事实追问,S1,0,missing,可观察证据规则
+civil50-042,leasing,mediation,development,事实追问,S2,0,missing,可观察证据规则
+civil50-042,leasing,mediation,development,流程与工具,S3,0,missing,可观察证据规则
+civil50-042,leasing,mediation,development,检索与上下文,S7,1,partial,可观察证据规则
+civil50-042,leasing,mediation,development,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-042,leasing,mediation,development,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-042,leasing,mediation,development,最终交付,S6,2,correct,Codex 终稿复核
+civil50-043,leasing,consultation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-043,leasing,consultation,final_test,事实追问,S2,1,partial,可观察证据规则
+civil50-043,leasing,consultation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-043,leasing,consultation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-043,leasing,consultation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-043,leasing,consultation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-043,leasing,consultation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-044,leasing,negotiation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-044,leasing,negotiation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-044,leasing,negotiation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-044,leasing,negotiation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-044,leasing,negotiation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-044,leasing,negotiation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-044,leasing,negotiation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-045,leasing,consultation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-045,leasing,consultation,final_test,事实追问,S2,2,correct,可观察证据规则
+civil50-045,leasing,consultation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-045,leasing,consultation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-045,leasing,consultation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-045,leasing,consultation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-045,leasing,consultation,final_test,最终交付,S6,2,correct,Codex 终稿复核
+civil50-046,leasing,mediation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-046,leasing,mediation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-046,leasing,mediation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-046,leasing,mediation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-046,leasing,mediation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-046,leasing,mediation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-046,leasing,mediation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-047,leasing,consultation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-047,leasing,consultation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-047,leasing,consultation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-047,leasing,consultation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-047,leasing,consultation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-047,leasing,consultation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-047,leasing,consultation,final_test,最终交付,S6,2,correct,Codex 终稿复核
+civil50-048,leasing,negotiation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-048,leasing,negotiation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-048,leasing,negotiation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-048,leasing,negotiation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-048,leasing,negotiation,final_test,引用与不确定性,S4,0,missing,Codex 终稿复核
+civil50-048,leasing,negotiation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-048,leasing,negotiation,final_test,最终交付,S6,1,partial,Codex 终稿复核
+civil50-049,leasing,consultation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-049,leasing,consultation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-049,leasing,consultation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-049,leasing,consultation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-049,leasing,consultation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-049,leasing,consultation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-049,leasing,consultation,final_test,最终交付,S6,2,correct,Codex 终稿复核
+civil50-050,leasing,mediation,final_test,事实追问,S1,0,missing,可观察证据规则
+civil50-050,leasing,mediation,final_test,事实追问,S2,0,missing,可观察证据规则
+civil50-050,leasing,mediation,final_test,流程与工具,S3,0,missing,可观察证据规则
+civil50-050,leasing,mediation,final_test,检索与上下文,S7,1,partial,可观察证据规则
+civil50-050,leasing,mediation,final_test,引用与不确定性,S4,1,partial,Codex 终稿复核
+civil50-050,leasing,mediation,final_test,引用与不确定性,S5,0,missing,可观察证据规则
+civil50-050,leasing,mediation,final_test,最终交付,S6,1,partial,Codex 终稿复核

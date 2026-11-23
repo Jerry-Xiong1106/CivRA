@@ -1,0 +1,72 @@
+{
+  "live": {
+    "civra_commit": "3c917e4f6217679f2e431097fe193602cb159256",
+    "dataset_commit": "0b7672100d9457a093b85ec7d81b873ae7d66115",
+    "dataset_manifest_sha256": "b14dfb56911543ab9543a17cfdee1f7a59d778e028fffef3f8caaa57fef3d9bc",
+    "vector_index_sha256": "30612c9347dcd039f8ae86fc3b7c08475184baa9b0e4dc9e218b4e497886e106",
+    "embedding": "BAAI/bge-m3",
+    "retrieval": "exact-vector / metadata",
+    "controller_sha256": "6c76f6d14bf6689583079641745dd49d38e1206560028887975fae53037c26cf",
+    "intents_sha256": "5ddbe081056910420aefd6ed2bbfe239e253659b376e2e7aa062175d2dd6ff8f",
+    "run_config": {
+      "max_search_calls": 8,
+      "max_clarification_rounds": 3,
+      "max_questions_per_round": 1,
+      "mode": "agent",
+      "model": null,
+      "temperature": 0.0,
+      "seed": null,
+      "max_output_tokens": 2200,
+      "max_steps": 56,
+      "max_model_calls": 16,
+      "max_tool_calls": 24,
+      "max_total_tokens": 400000,
+      "max_run_seconds": 300.0,
+      "max_tool_failures": 3,
+      "max_context_chars": 60000,
+      "enabled_tools": null,
+      "route_step_checks": true
+    },
+    "max_submissions": 20,
+    "endpoint": "CivRA production ASGI in-process, fresh conversation per case",
+    "started_utc": "2026-11-23T04:53:39.950714+00:00"
+  },
+  "corrected": {
+    "civra_commit": "3c917e4f6217679f2e431097fe193602cb159256",
+    "dataset_commit": "0b7672100d9457a093b85ec7d81b873ae7d66115",
+    "dataset_manifest_sha256": "b14dfb56911543ab9543a17cfdee1f7a59d778e028fffef3f8caaa57fef3d9bc",
+    "vector_index_sha256": "30612c9347dcd039f8ae86fc3b7c08475184baa9b0e4dc9e218b4e497886e106",
+    "embedding": "BAAI/bge-m3",
+    "retrieval": "exact-vector / metadata",
+    "controller_sha256": "e9f6891baea4fa1870bdbaa96fe5716e35ab4a3e997bb03b6edd01aa4565be49",
+    "intents_sha256": "5ddbe081056910420aefd6ed2bbfe239e253659b376e2e7aa062175d2dd6ff8f",
+    "run_config": {
+      "max_search_calls": 8,
+      "max_clarification_rounds": 3,
+      "max_questions_per_round": 1,
+      "mode": "agent",
+      "model": null,
+      "temperature": 0.0,
+      "seed": null,
+      "max_output_tokens": 2200,
+      "max_steps": 56,
+      "max_model_calls": 16,
+      "max_tool_calls": 24,
+      "max_total_tokens": 400000,
+      "max_run_seconds": 300.0,
+      "max_tool_failures": 3,
+      "max_context_chars": 60000,
+      "enabled_tools": null,
+      "route_step_checks": true
+    },
+    "max_submissions": 20,
+    "endpoint": "CivRA production ASGI in-process, fresh conversation per case",
+    "started_utc": "2026-11-23T04:58:03.990569+00:00"
+  },
+  "reported_sessions": {
+    "original": 20,
+    "corrected": 30,
+    "total": 50
+  },
+  "model": "deepseek-flash"
+}
